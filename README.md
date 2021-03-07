@@ -1,2 +1,2 @@
 # projects
-Coding projects in various languages
+Coding projects in various languages including Python

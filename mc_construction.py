@@ -42,12 +42,13 @@ class Rectangle:
         self.origin = origin
         self.xz_angle = xz_angle
         self.xy_angle = 0
+        self.tipped = False
         self._calc_opposite_corners()
 
     def __repr__(self):
         msg = f"Rectangle: name={self.name}, length={self.length}, height={self.height}, "
-        msg += f"origin({self.origin}), opposite_corner_xz({self.opposite_xz}), "
-        msg += f"xz_angle={self.xz_angle}"
+        msg += f"origin({self.origin}), opposite({self.opposite}), "
+        msg += f"xz_angle={self.xz_angle} tipped={self.tipped}"
         return msg
 
     def clone(self):
@@ -73,10 +74,29 @@ class Rectangle:
             z = r * sin(theta) * sin(phi)
             
         '''
-        print(f"Calculating corners at xz_angle = {self.xz_angle}")
-        opposite_x = round((self.length-1) * math.sin((math.pi/180)*self.xz_angle),1)
-        opposite_z = round((self.length-1) * math.cos((math.pi/180)*self.xz_angle),1)
-        self.opposite_xz = self.origin + Vec3(opposite_x, self.height-1, opposite_z)
+        theta = math.radians(self.xz_angle)
+        opp_sin = round(math.sin(theta))
+        opp_cos = round(math.cos(theta))
+        
+        print(f"Calculating corners at xz_angle = {self.xz_angle} ({self.tipped})")
+
+        opp_x = round((self.length-1) * opp_sin,1)
+        opp_y = self.height-1
+        opp_z = round((self.length-1) * opp_cos,1)
+        
+        
+        if self.tipped == True:
+            print(f"Rectangle is tipped ({self.xz_angle}), sin={opp_sin}, cos={opp_cos}")
+            if (opp_sin == 0) and (opp_cos == -1): # 180 degrees
+                self.opposite = self.origin + Vec3(opp_y, opp_x, opp_z)
+            elif (opp_sin == 0) and (opp_cos == 1): # 0 degrees
+                self.opposite = self.origin + Vec3(opp_y, opp_x, opp_z)
+            elif (opp_sin == 1) and (opp_cos == 0): # 90 degrees
+                self.opposite = self.origin + Vec3(opp_x, opp_z, opp_y)
+            elif (opp_sin == -1) and (opp_cos == 0): # 270 degrees
+                self.opposite = self.origin + Vec3(opp_x, opp_z, opp_y)
+        else:
+            self.opposite = self.origin + Vec3(opp_x, opp_y, opp_z)
 
     def setDirection(self, direction):
         ''' Sets the cardinal direction of a rectangle (e.g. Cardinal.North) '''
@@ -123,6 +143,10 @@ class Rectangle:
         ''' Moves the rectangle in the specified x, y, and z directions '''
         self.origin += Vec3(offset_x, offset_y, offset_z)
         self._calc_opposite_corners()
+        
+    def tip(self):
+        self.tipped = True
+        self._calc_opposite_corners()
 
     def delete(self):
         pass
@@ -133,7 +157,7 @@ class Rectangle:
             Subtype is an integer which affects certain material types as specified in the API
         '''
         x1, y1, z1 = self.origin
-        x2, y2, z2 = self.opposite_xz
+        x2, y2, z2 = self.opposite
         mc.setBlocks(x1, y1, z1, x2, y2, z2, material, subtype)
         
     def _draw_origin(self, material=None, subtype=0):
@@ -159,13 +183,15 @@ class Door(Rectangle):
         if position == None:
             position = round(self.parent_wall.length / 2) + 1
             
-        self.position = position
-        self.length = 1
-        self.height = 2
-        self.origin = self.parent_wall.along(position)
-        self.xz_angle = self.parent_wall.xz_angle
+        length = 1
+        height = 2
+        origin = self.parent_wall.along(position)
+        xz_angle = self.parent_wall.xz_angle
+        super().__init__(length, height, origin, xz_angle)
         self.material = block.AIR.id
         self.material_subtype = 0
+        self.position = position
+
         self._calc_opposite_corners()
         
     def __repr__(self):
@@ -184,24 +210,26 @@ class Window(Rectangle):
     ''' Position is relative to the origin of the parent wall '''
     def __init__(self, parent_wall, position_x=None, position_y=None):
         if not isinstance(parent_wall, Wall):
-            return None
-        self.parent_wall = parent_wall
+            return None #BUGBUG:  Should be an exception
         
         # If a position is not specified for the door, use the midpoint
         if position_x == None:
-            position_x = round(self.parent_wall.length / 2) + 1
+            position_x = round(parent_wall.length / 2) + 1
             
         if position_y == None:
-            position_y = round(self.parent_wall.height / 2)
+            position_y = round(parent_wall.height / 2)
         
-        print(f"Position y: {position_y}")
+        length = 1
+        height = 1
+        origin = parent_wall.along(position_x) + Vec3(0,position_y-1,0)
+        xz_angle = parent_wall.xz_angle
+        super().__init__(length, height, origin, xz_angle)
+
+        self.parent_wall = parent_wall
         self.position_x = position_x
         self.position_y = position_y
-        self.length = 1
-        self.height = 1
-        self.origin = self.parent_wall.along(position_x) + Vec3(0,position_y-1,0)
-        self.xz_angle = self.parent_wall.xz_angle
         self.material = block.AIR.id
+
         self._calc_opposite_corners()
         
     def __repr__(self):
@@ -229,13 +257,12 @@ class Wall(Rectangle):
         print(f"Setting corner material to {material}")
         self.corner_material = material
         self.corner_material_subtype = subtype
-        #bm2
         
     def _draw(self, material=None, subtype=0):
         super()._draw(material, subtype)
         if hasattr(self, "corner_material"):
             ll_x, ll_y, ll_z = self.origin
-            ur_x, ur_y, ur_z = self.opposite_xz
+            ur_x, ur_y, ur_z = self.opposite
             
             mc.setBlocks(ll_x, ll_y, ll_z, ll_x, ur_y, ll_z, self.corner_material, self.corner_material_subtype)
             mc.setBlocks(ur_x, ur_y, ur_z, ur_x, ll_y, ur_z, self.corner_material, self.corner_material_subtype)
@@ -307,11 +334,11 @@ def main():
     lot_height = 40
     lot_depth = 2
     lot_setback = 5
-    lot_material = block.GRASS.id
+    lot_material = block.STONE.id
     
     # Define the parameters of the house
-    house_length = 9
-    house_width = 9
+    house_length = 5
+    house_width = 5
     story_height = 3
     
     # Define parameters for the walls
@@ -325,43 +352,36 @@ def main():
 #    site._draw_origin(block.BEDROCK.id)
     print(site)
     
-    r1 = Rectangle(5, 3, Vec3(0,0,0), 0)
-    r1._draw(block.STONE.id)
-    r1._draw_origin(block.TNT.id, 1)
-    print(r1)
-    mc.setBlocks(0,0,0,2,0,4,block.DIRT.id)
-    
-    if False:
-        house_corner_stone = lot_origin + Vec3(lot_setback, 1, lot_setback)
-        wall1 = Wall(house_length, story_height, house_corner_stone, Cardinal.North)
-        wall1.setDirection(Cardinal.South)
-        wall1.name = "Wall1"
-        wall1.set_corner_material(corner_material, corner_material_subtype)
-        wall1.add_door()
-        wall1._draw(wall_material, wall_material_subtype)
-        wall1._draw_origin()
+    house_corner_stone = lot_origin + Vec3(lot_setback, 1, lot_setback)
+    wall1 = Wall(house_length, story_height, house_corner_stone, Cardinal.North)
+    wall1.setDirection(Cardinal.South)
+    wall1.name = "Wall1"
+    wall1.set_corner_material(corner_material, corner_material_subtype)
+    wall1.add_door()
+    wall1._draw(wall_material, wall_material_subtype)
+    wall1._draw_origin()
 
-        wall2 = wall1.clone()
-        wall2.name = "Wall 2"
-        wall2.rotateLeft()
-        wall2.add_window()
-        wall2._draw(wall_material, wall_material_subtype)
+    wall2 = wall1.clone()
+    wall2.name = "Wall 2"
+    wall2.rotateLeft()
+    wall2.add_window()
+    wall2._draw(wall_material, wall_material_subtype)
 
-        wall3 = wall1.clone()
-        wall3.name = "Wall 3"
-        wall3.shift(house_width-1,0,0)
-        wall3._draw(wall_material, wall_material_subtype)
+    wall3 = wall1.clone()
+    wall3.name = "Wall 3"
+    wall3.shift(house_width-1,0,0)
+    wall3._draw(wall_material, wall_material_subtype)
 
-        wall4 = wall2.clone()
-        wall4.name = "Wall 4"
-        wall4.shift(0,0, house_length-1)
-        wall4._draw(wall_material, wall_material_subtype)
-        print(wall3)
-        print(wall1)
-                
-        print(f"Block at lot origin is {mc.getBlock(lot_origin.x, lot_origin.y, lot_origin.z)}")
-        print(f"Nether core code is {block.NETHER_REACTOR_CORE.id}")
-        # mc.player.setPos(lot_origin.x, lot_origin.y+1, lot_origin.z)
+    wall4 = wall2.clone()
+    wall4.name = "Wall 4"
+    wall4.shift(0,0, house_length-1)
+    wall4._draw(wall_material, wall_material_subtype)
+    print(wall3)
+    print(wall1)
+            
+    print(f"Block at lot origin is {mc.getBlock(lot_origin.x, lot_origin.y, lot_origin.z)}")
+    print(f"Nether core code is {block.NETHER_REACTOR_CORE.id}")
+    # mc.player.setPos(lot_origin.x, lot_origin.y+1, lot_origin.z)
         
 if __name__ == '__main__':
     main()

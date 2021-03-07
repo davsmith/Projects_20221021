@@ -47,7 +47,7 @@ class Rectangle:
 
     def __repr__(self):
         msg = f"Rectangle: name={self.name}, length={self.length}, height={self.height}, "
-        msg += f"origin({self.origin}), opposite({self.opposite}), "
+        msg += f"origin({id(self.origin)}, {self.origin}), opposite({self.opposite}), "
         msg += f"xz_angle={self.xz_angle} tipped={self.tipped}"
         return msg
 
@@ -119,8 +119,10 @@ class Rectangle:
         
     def flip_origin(self):
         ''' Switches the origin of the rectangle to the other end (at the same height) '''
-        self.origin.x = self.opposite_xz.x
-        self.origin.z = self.opposite_xz.y
+        origin_y = self.origin.y
+        self.origin = self.opposite
+        self.origin.y = origin_y
+        self.xz_angle += 180
         self._calc_opposite_corners()
         
     def midpoint(self):
@@ -243,6 +245,8 @@ class Wall(Rectangle):
         super().__init__(length, height, origin, xz_angle)
         self.doors = []
         self.windows = []
+        self.wall_material = block.TNT.id
+        self.wall_material_subtype = 1
         self.parent_house = None
         
     def add_door(self, x = None):
@@ -253,12 +257,20 @@ class Wall(Rectangle):
         self.windows.append(Window(self, x, y))
         print(self.windows)
          
+    def set_wall_material(self, material, subtype=0):
+        print(f"Setting corner material to {material}")
+        self.wall_material = material
+        self.wall_material_subtype = subtype
+
     def set_corner_material(self, material, subtype=0):
         print(f"Setting corner material to {material}")
         self.corner_material = material
         self.corner_material_subtype = subtype
         
     def _draw(self, material=None, subtype=0):
+        if material is None:
+            material = self.wall_material
+            subtype = self.wall_material_subtype
         super()._draw(material, subtype)
         if hasattr(self, "corner_material"):
             ll_x, ll_y, ll_z = self.origin
@@ -292,30 +304,28 @@ class ConstructionSite():
         self.length = length
         self.width = width
         self.height = height
+
         self.depth = depth
-        self.base_material = block.STONE.id
+        self.ground_material = block.STONE.id
+        ground = Rectangle(length, width, origin, 0)
+        ground.tip()
+        
+        self.ground = ground
         
     def __repr__(self):
         msg = f"length={self.length}, width={self.width}, height={self.height},"
-        msg += f" depth={self.depth}, material={self.base_material} at {self.origin}"
+        msg += f" depth={self.depth}, material={self.ground_material} at {self.origin}"
         return msg
         
-    def clear(self, base_material=None):
-        if base_material is None:
-            base_material = self.base_material
+    def clear(self, ground_material=None):
+        if ground_material is None:
+            ground_material = self.ground_material
         
         x1, y1, z1 = self.origin
         x2, y2, z2 = self.origin + Vec3(self.length-1, -self.depth+1, self.width-1)
         
-        mc.setBlocks(x1, y1, z1, x2, y2, z2, base_material)
+        mc.setBlocks(x1, y1, z1, x2, y2, z2, ground_material)
         mc.setBlocks(x1, y1+1, z1, x2, y1+self.height-1, z2, block.AIR.id)
-
-    def _draw_cardinal_hc(self):
-        mc.setBlocks(0,0,0,0,2,4, block.SANDSTONE.id)   # South
-        mc.setBlocks(0,0,0,0,2,-4, block.TNT.id, 1)     # North
-        mc.setBlocks(0,0,0,4,2,0, block.ICE.id)         # East
-        mc.setBlocks(0,0,0,-4,2,0, block.WOOD.id)       # West
-
 
 def bump_player():
     ''' Offsets player position by 1 in all directions '''
@@ -343,7 +353,7 @@ def main():
     
     # Define parameters for the walls
     wall_material = block.WOOD_PLANKS.id
-    wall_material_subtype = 0
+    wall_material_subtype = 1
     corner_material = block.WOOD.id
     corner_material_subtype = 0
 
@@ -353,35 +363,27 @@ def main():
     print(site)
     
     house_corner_stone = lot_origin + Vec3(lot_setback, 1, lot_setback)
-    wall1 = Wall(house_length, story_height, house_corner_stone, Cardinal.North)
-    wall1.setDirection(Cardinal.South)
-    wall1.name = "Wall1"
-    wall1.set_corner_material(corner_material, corner_material_subtype)
-    wall1.add_door()
-    wall1._draw(wall_material, wall_material_subtype)
-    wall1._draw_origin()
-
-    wall2 = wall1.clone()
-    wall2.name = "Wall 2"
-    wall2.rotateLeft()
-    wall2.add_window()
-    wall2._draw(wall_material, wall_material_subtype)
-
-    wall3 = wall1.clone()
-    wall3.name = "Wall 3"
-    wall3.shift(house_width-1,0,0)
-    wall3._draw(wall_material, wall_material_subtype)
-
-    wall4 = wall2.clone()
-    wall4.name = "Wall 4"
-    wall4.shift(0,0, house_length-1)
-    wall4._draw(wall_material, wall_material_subtype)
-    print(wall3)
-    print(wall1)
-            
-    print(f"Block at lot origin is {mc.getBlock(lot_origin.x, lot_origin.y, lot_origin.z)}")
-    print(f"Nether core code is {block.NETHER_REACTOR_CORE.id}")
-    # mc.player.setPos(lot_origin.x, lot_origin.y+1, lot_origin.z)
+    
+    walls = []
+    wall = Wall(house_length, story_height, house_corner_stone, Cardinal.North)
+    wall.setDirection(Cardinal.South)
+    wall.name = "Wall1"
+    wall.set_wall_material(wall_material, wall_material_subtype)
+    wall.set_corner_material(corner_material, corner_material_subtype)
+    wall.add_door()
+    
+    walls.append(wall)
+    for index in range(2, 5):
+        wall = wall.clone()
+        wall.name = f"Wall{index}"
+        wall.flip_origin()
+        wall.rotateRight()
+        wall.add_window()
+        walls.append(wall)
         
+    for wall in walls:
+        wall._draw(wall_material, wall_material_subtype)
+        wall._draw_origin()
+
 if __name__ == '__main__':
     main()

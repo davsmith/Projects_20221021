@@ -17,7 +17,6 @@ class Cardinal(IntEnum):
     North = 180
     South = 0
     West = 270
-    Flat = -1
 
 @unique
 class WallType(IntEnum):

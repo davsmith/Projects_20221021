@@ -1,2 +1,2 @@
 # projects
-Coding projects in various languages including Python
+Coding projects in various languages including Python and Autohotkey

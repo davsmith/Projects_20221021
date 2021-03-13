@@ -290,7 +290,7 @@ class Wall(Rectangle):
         new_wall.set_corner_material(self.corner_material, self.corner_material_subtype)
         return new_wall
     
-class House():
+class Story():
     def __init__(self):
         walls = []
         

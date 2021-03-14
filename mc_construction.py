@@ -293,12 +293,26 @@ class Wall(Rectangle):
                     
     def clone(self):
         new_wall = Wall(self.length, self.height, self.origin.clone(), self.xz_angle)
+        new_wall.set_wall_material(self.wall_material, self.wall_material_subtype)
         new_wall.set_corner_material(self.corner_material, self.corner_material_subtype)
         return new_wall
     
 class Story():
-    def __init__(self):
+    def __init__(self, front_wall, side_wall=None):
         walls = []
+        
+        wall = front_wall
+        walls.append(wall)
+
+        for index in range(2, 5):
+            wall = wall.clone()
+            wall.name = f"Wall{index} {id(wall)}"
+            wall.flip_origin()
+            wall.rotateRight()
+            wall.add_window()
+            walls.append(wall)
+        
+        self.walls = walls
         
 class ConstructionSite():
     def __init__(self, length=25, width=25, height=40, depth=1, origin=None):
@@ -370,23 +384,15 @@ def main():
     
     house_corner_stone = lot_origin + Vec3(lot_setback, 1, lot_setback)
     
-    walls = []
     wall = Wall(house_length, story_height, house_corner_stone, Cardinal.South)
     wall.name = f"Wall1 {id(wall)}"
     wall.set_wall_material(wall_material, wall_material_subtype)
     wall.set_corner_material(corner_material, corner_material_subtype)
     wall.add_door()
-    walls.append(wall)
 
-    for index in range(2, 5):
-        wall = wall.clone()
-        wall.name = f"Wall{index} {id(wall)}"
-        wall.flip_origin()
-        wall.rotateRight()
-        wall.add_window()
-        walls.append(wall)
-        
-    for wall in walls:
+    story = Story(wall)
+    
+    for wall in story.walls:
         print(f"{wall}")
         for window in wall.windows:
             print(f"\t{window}")
@@ -397,6 +403,7 @@ def main():
         wall._draw_origin()
         
     # mc.setBlock(7.5,2,5,block.GRASS.id)
+    print(len(story.walls))
 
 if __name__ == '__main__':
     main()

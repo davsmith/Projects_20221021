@@ -47,7 +47,7 @@ class Rectangle:
 
     def __repr__(self):
         msg = f"Rectangle: name={self.name}, length={self.length}, height={self.height}, "
-        msg += f"origin({id(self.origin)}, {self.origin}), opposite({self.opposite}), "
+        msg += f"origin({self.origin}), opposite({self.opposite}), "
         msg += f"xz_angle={self.xz_angle} tipped={self.tipped}"
         return msg
 
@@ -127,14 +127,16 @@ class Rectangle:
         
     def midpoint(self):
         ''' Returns the mid-point of a rectangle as a 3-d vector '''
-        midpoint_x = (self.opposite_xz.x + self.origin.x)/2
-        midpoint_y = (self.opposite_xz.y + self.origin.y)/2
-        midpoint_z = (self.opposite_xz.z + self.origin.z)/2
+        midpoint_x = (self.opposite.x + self.origin.x)/2
+        midpoint_y = (self.opposite.y + self.origin.y)/2
+        midpoint_z = (self.opposite.z + self.origin.z)/2
+        print(f"Calculated midpoint from {self.origin} to {self.opposite} as {midpoint_x}, {midpoint_y}, {midpoint_z}")
         return Vec3(midpoint_x, midpoint_y, midpoint_z)
 #bm_along
     def along(self, distance):
         '''
-            Returns the x,y,z coordinate of a point along a rectangle
+            Returns the x,y,z coordinate of a point along the bottom of a
+            rectangle in absolute coordinates
             The point can be beyond the end-points of the rectangle
         '''
         along_x = round((distance-1) * math.sin((math.pi/180)*self.xz_angle),1)
@@ -172,68 +174,43 @@ class Rectangle:
         x1, y1, z1 = self.origin
         mc.setBlock(x1, y1, z1, material, subtype)
         
-class Door(Rectangle):
-    ''' A rectangle object to represent a door '''
-    ''' Position is relative to the origin of the parent wall '''
-    def __init__(self, parent_wall, position=None):
+        
+class Opening(Rectangle):
+    ''' A rectangle object to represent a door, window or other space in a wall
+        relative_x is distance relative to the origin of the parent wall (1 is left side)
+        relative_y is distance relative to the bottom of the wall (1 is bottom)
+        '''
+    def __init__(self, parent_wall, relative_x, relative_y, width, height):
         if not isinstance(parent_wall, Wall):
-            return None
+            return None #BUGBUG:  Should be an exception
         
         self.parent_wall = parent_wall
+        self.relative_x = relative_x
+        self.relative_y = relative_y
         
-        # If a position is not specified for the door, use the midpoint at the bottom of the wall
-        if position == None:
-            position = round(self.parent_wall.length / 2) + 1
-            
-        length = 1
-        height = 2
-        origin = self.parent_wall.along(position)
-        xz_angle = self.parent_wall.xz_angle
-        super().__init__(length, height, origin, xz_angle)
+        origin = self.absolute_origin
+        xz_angle = parent_wall.xz_angle
+        super().__init__(width, height, origin, xz_angle)
+
         self.material = block.AIR.id
-        self.material_subtype = 0
-        self.position = position
 
         self._calc_opposite_corners()
+    
+    @property
+    def absolute_origin(self):
+        return self.parent_wall.along(self.relative_x) + Vec3(0,self.relative_y-1)
         
     def __repr__(self):
-        msg = f"Door: parent:{id(self.parent_wall)}, position:{self.position}, origin:{self.origin}"
+        msg = f"Opening: parent:{id(self.parent_wall)}, origin:{self.origin}"
         return msg
+
     
     def _draw(self, material=None, subtype=0):
         if material is None:
             material = self.material
             subtype = self.material_subtype
         super()._draw(material, subtype)
-        
-
-#bm_window
-class Window(Rectangle):
-    ''' Position is relative to the origin of the parent wall '''
-    def __init__(self, parent_wall, position_x=None, position_y=None):
-        if not isinstance(parent_wall, Wall):
-            return None #BUGBUG:  Should be an exception
-        
-        # If a position is not specified for the door, use the midpoint
-        if position_x == None:
-            position_x = round(parent_wall.length / 2) + 1
-            
-        if position_y == None:
-            position_y = round(parent_wall.height / 2)
-        
-        length = 1
-        height = 1
-        origin = parent_wall.along(position_x) + Vec3(0,position_y-1,0)
-        xz_angle = parent_wall.xz_angle
-        super().__init__(length, height, origin, xz_angle)
-
-        self.parent_wall = parent_wall
-        self.position_x = position_x
-        self.position_y = position_y
-        self.material = block.AIR.id
-
-        self._calc_opposite_corners()
-        
+                
     def __repr__(self):
         msg = f"Window: parent:{id(self.parent_wall)}, origin:{self.origin}"
         return msg
@@ -249,13 +226,42 @@ class Wall(Rectangle):
         self.wall_material_subtype = 1
         self.parent_house = None
         
-    def add_door(self, x = None):
-        self.doors.append(Door(self))
-        print(self.doors)
+    def add_door(self, position = None):
+        ''' Position is relative to the origin of the parent wall '''
         
-    def add_window(self, x=None, y=None):
-        self.windows.append(Window(self, x, y))
-        print(self.windows)
+        # If a position is not specified for the door, use the midpoint at the bottom of the wall
+        if position is None:
+            position = round(self.length / 2) + 1
+            
+        width = 1
+        height = 2
+        origin = self.along(position)
+        xz_angle = self.xz_angle
+        door = Opening(self, position, 1, width, height)
+        door.material = block.GRASS.id
+        door.material_subtype = 0
+        self.position = position
+        self.doors.append(door)
+        
+    def add_window(self, position_x=None, position_y=None):
+        ''' Position is relative to the origin of the parent wall '''
+        
+        # If a position is not specified for the window, use the midpoint
+        rel_x, rel_y, rel_z = self.midpoint() - self.origin
+        print(f"mp:{self.midpoint()} origin:{self.origin} rel_x:{rel_x}, rel_y:{rel_y}, rel_z:{rel_z}")
+        if position_x is None:
+            position_x = (self.length / 2) + 1
+        if position_y is None:
+            position_y = self.midpoint().y
+        #glurb
+        width = 1
+        height = 1
+        xz_angle = self.xz_angle
+        window = Opening(self, position_x, position_y, width, height)
+        print(f"Created opening at position ({position_x}, {position_y}), width:{width}, height:{height}")
+        window.material = block.AIR.id
+        window.material_subtype = 0
+        self.windows.append(window)
          
     def set_wall_material(self, material, subtype=0):
         print(f"Setting corner material to {material}")
@@ -365,14 +371,13 @@ def main():
     house_corner_stone = lot_origin + Vec3(lot_setback, 1, lot_setback)
     
     walls = []
-    wall = Wall(house_length, story_height, house_corner_stone, Cardinal.North)
-    wall.setDirection(Cardinal.South)
+    wall = Wall(house_length, story_height, house_corner_stone, Cardinal.South)
     wall.name = "Wall1"
     wall.set_wall_material(wall_material, wall_material_subtype)
     wall.set_corner_material(corner_material, corner_material_subtype)
     wall.add_door()
-    
     walls.append(wall)
+
     for index in range(2, 5):
         wall = wall.clone()
         wall.name = f"Wall{index}"

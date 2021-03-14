@@ -212,7 +212,7 @@ class Opening(Rectangle):
         super()._draw(material, subtype)
                 
     def __repr__(self):
-        msg = f"Window: parent:{id(self.parent_wall)}, origin:{self.origin}"
+        msg = f"Opening: parent:{id(self.parent_wall)}, origin:{self.origin}, opposite:{self.opposite}"
         return msg
 
 
@@ -231,7 +231,7 @@ class Wall(Rectangle):
         
         # If a position is not specified for the door, use the midpoint at the bottom of the wall
         if position is None:
-            position = round(self.length / 2) + 1
+            position = (self.length + 1) / 2
             
         width = 1
         height = 2
@@ -250,15 +250,15 @@ class Wall(Rectangle):
         rel_x, rel_y, rel_z = self.midpoint() - self.origin
         print(f"mp:{self.midpoint()} origin:{self.origin} rel_x:{rel_x}, rel_y:{rel_y}, rel_z:{rel_z}")
         if position_x is None:
-            position_x = (self.length / 2) + 1
+            position_x = (self.length + 1) / 2
         if position_y is None:
-            position_y = self.midpoint().y
+            position_y = (self.height + 1) / 2
         #glurb
         width = 1
         height = 1
         xz_angle = self.xz_angle
         window = Opening(self, position_x, position_y, width, height)
-        print(f"Created opening at position ({position_x}, {position_y}), width:{width}, height:{height}")
+        print(f"Created opening ({id(window)}) at position ({position_x}, {position_y}), width:{width}, height:{height}")
         window.material = block.AIR.id
         window.material_subtype = 0
         self.windows.append(window)
@@ -372,7 +372,7 @@ def main():
     
     walls = []
     wall = Wall(house_length, story_height, house_corner_stone, Cardinal.South)
-    wall.name = "Wall1"
+    wall.name = f"Wall1 {id(wall)}"
     wall.set_wall_material(wall_material, wall_material_subtype)
     wall.set_corner_material(corner_material, corner_material_subtype)
     wall.add_door()
@@ -380,15 +380,23 @@ def main():
 
     for index in range(2, 5):
         wall = wall.clone()
-        wall.name = f"Wall{index}"
+        wall.name = f"Wall{index} {id(wall)}"
         wall.flip_origin()
         wall.rotateRight()
         wall.add_window()
         walls.append(wall)
         
     for wall in walls:
+        print(f"{wall}")
+        for window in wall.windows:
+            print(f"\t{window}")
+        for door in wall.doors:
+            print(f"\t{door}")
+
         wall._draw(wall_material, wall_material_subtype)
         wall._draw_origin()
+        
+    # mc.setBlock(7.5,2,5,block.GRASS.id)
 
 if __name__ == '__main__':
     main()

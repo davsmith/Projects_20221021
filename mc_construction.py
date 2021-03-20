@@ -11,19 +11,22 @@ print(mcpi)
 mc = Minecraft.create()
 
 @unique
-class Cardinal(IntEnum):
+class Direction(IntEnum):
     ''' Specifies the direction a an object along a compass '''
     East = 90
     North = 180
     South = 0
     West = 270
     Flat = -1
+    Left = 1000
+    Right = 1001
+    Flip = 1002
 
 @unique
 class WallType(IntEnum):
     ''' Specifies whether a wall is an internal or external wall '''
-    Perimeter = 0
-    Inside = 1
+    Exterior = 0
+    Interior = 1
 
 @unique
 class Plane(Enum):
@@ -98,9 +101,13 @@ class Rectangle:
         else:
             self.opposite = self.origin + Vec3(opp_x, opp_y, opp_z)
 
-    def setDirection(self, direction):
-        ''' Sets the cardinal direction of a rectangle (e.g. Cardinal.North) '''
+    def set_direction(self, direction):
+        ''' Sets the direction of a rectangle (e.g. Direction.North) '''
         self.xz_angle = int(direction)
+        self._calc_opposite_corners()
+        
+    def set_length(self, length):
+        self.length = length
         self._calc_opposite_corners()
         
     def rotate(self, angle=0):
@@ -117,6 +124,11 @@ class Rectangle:
         self.xz_angle -= 90
         self._calc_opposite_corners()
         
+    def flip(self):
+        ''' Rotates a rectangle to face the opposite direction in the x-z (vertical) plane '''
+        self.xz_angle -= 180
+        self._calc_opposite_corners()
+
     def flip_origin(self):
         ''' Switches the origin of the rectangle to the other end (at the same height) '''
         origin_y = self.origin.y
@@ -217,14 +229,15 @@ class Opening(Rectangle):
 
 
 class Wall(Rectangle):
-    ''' The parent of a Wall should be a House object '''
+    ''' The parent of a Wall should be a Story object '''
     def __init__(self, length, height, origin=None, xz_angle=0):
         super().__init__(length, height, origin, xz_angle)
         self.doors = []
         self.windows = []
         self.wall_material = block.TNT.id
         self.wall_material_subtype = 1
-        self.parent_house = None
+        self.parent_story = None
+        self.wall_type = WallType.Exterior
         
     def add_door(self, position = None):
         ''' Position is relative to the origin of the parent wall '''
@@ -296,12 +309,36 @@ class Wall(Rectangle):
         new_wall.set_wall_material(self.wall_material, self.wall_material_subtype)
         new_wall.set_corner_material(self.corner_material, self.corner_material_subtype)
         return new_wall
-    
+
+#bm_Story2
 class Story():
-    def __init__(self, front_wall, side_wall=None):
-        walls = []
+    def __init__(self, origin, width, depth, height, exterior_wall_def=None, interior_wall_def=None):
+        self.walls = None
+        self.origin = origin
+        self.width = width
+        self.depth = depth
+        self.height = height
+        self.exterior_wall_def = exterior_wall_def
+        self.interior_wall_def = interior_wall_def
         
-        wall = front_wall
+    def add_wall(self, wall):
+        self.walls.append(wall)
+    
+    def build_wall(self, length, direction):
+        if len(self.walls) == 0:
+            print("EXCEPTION: No existing wall definition")
+        
+    def build_rectangle(self):
+        ''' Creates a story with 4 exterior walls of prescribed length '''
+        walls = []
+        wall_lengths = [self.width, self.depth, self.width, self.depth]
+        
+        wall = self.exterior_wall_def
+        
+        wall.windows.clear()
+        wall.doors.clear()
+        wall.set_length(wall_lengths[0])
+        wall.add_door()
         walls.append(wall)
 
         for index in range(2, 5):
@@ -309,6 +346,7 @@ class Story():
             wall.name = f"Wall{index} {id(wall)}"
             wall.flip_origin()
             wall.rotateRight()
+            wall.set_length(wall_lengths[index-1])
             wall.add_window()
             walls.append(wall)
         
@@ -367,8 +405,8 @@ def main():
     lot_material = block.STONE.id
     
     # Define the parameters of the house
-    house_length = 5
-    house_width = 5
+    house_length = 7
+    house_width = 7
     story_height = 3
     
     # Define parameters for the walls
@@ -384,13 +422,14 @@ def main():
     
     house_corner_stone = lot_origin + Vec3(lot_setback, 1, lot_setback)
     
-    wall = Wall(house_length, story_height, house_corner_stone, Cardinal.South)
+    wall = Wall(house_length, story_height, house_corner_stone, Direction.South)
     wall.name = f"Wall1 {id(wall)}"
     wall.set_wall_material(wall_material, wall_material_subtype)
     wall.set_corner_material(corner_material, corner_material_subtype)
-    wall.add_door()
-
-    story = Story(wall)
+#bm_story1
+    story = Story(house_corner_stone, house_width, house_length, story_height, wall)
+    story.build_rectangle()
+#    story.build_wall()
     
     for wall in story.walls:
         print(f"{wall}")
@@ -403,7 +442,6 @@ def main():
         wall._draw_origin()
         
     # mc.setBlock(7.5,2,5,block.GRASS.id)
-    print(len(story.walls))
 
 if __name__ == '__main__':
     main()

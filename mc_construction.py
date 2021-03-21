@@ -11,6 +11,13 @@ print(mcpi)
 mc = Minecraft.create()
 
 @unique
+class Plane(Enum):
+    ''' Defines friendly names for each of the 3 dimensional planes '''
+    XY = 1 # East/West
+    XZ = 2 # Up/Down
+    YZ = 3 # South/North
+
+@unique
 class Direction(IntEnum):
     ''' Specifies the direction a an object along a compass '''
     East = 90
@@ -21,19 +28,35 @@ class Direction(IntEnum):
     Left = 1000
     Right = 1001
     Flip = 1002
+    
+    # BUGBUG: Implement rotation operations based on direction
+    def rotate_left(self):
+        return 0
+    def rotate_right(self):
+        pass
+    def flip(self):
+        pass
+    def tip(self):
+        pass
+    def _normalize_direction(self):
+        pass
+    def _get_xz_angle(self):
+        ''' Returns the angle in the xz-plane based on the direction '''
+        pass
 
 @unique
 class WallType(IntEnum):
     ''' Specifies whether a wall is an internal or external wall '''
-    Exterior = 0
-    Interior = 1
+    Exterior = 1
+    Interior = 2
 
 @unique
-class Plane(Enum):
-    ''' Defines friendly names for each of the 3 dimensional planes '''
-    XY = 0 # East/West
-    XZ = 1 # Up/Down
-    YZ = 2 # South/North
+class WallLocation(IntEnum):
+    ''' Specifies whether a wall is at the front, back or side of a story '''
+    Front = 1
+    Back = 2
+    Side = 3
+
 
 class Rectangle:
     ''' Definition of rectangular structure for MineCraft Pi '''
@@ -226,8 +249,47 @@ class Opening(Rectangle):
     def __repr__(self):
         msg = f"Opening: parent:{id(self.parent_wall)}, origin:{self.origin}, opposite:{self.opposite}"
         return msg
+    
+class WallDefinition():
+    def __init__(self):
+        self.origin = (0,0,0) # parent story origin
+        self.length = 5 # parent story width
+        self.height = 3 # parent story height
 
-
+        self.type = WallType.Exterior # Exterior|Interior
+        self._set_materials()
+        
+        self.xz_angle = self._set_angle()
+        self.location = WallLocation.Front
+        
+    def __repr__(self):
+        msg = f"Wall Definition: origin={self.origin}, length={self.length}, height={self.height}\n"
+        msg += f"  type={self.type}, material={self.material}({self.material_subtype}), corner_material={self.corner_material}({self.corner_subtype})\n"
+        msg += f"  angle={self.xz_angle}\n"
+        msg += f"  location={self.location}"
+        return msg
+        
+    def _set_materials(self):
+        if self.type == WallType.Exterior:
+            self.material = block.GRASS.id # parent_story.parent_house.exterior_wall_material
+            self.material_subtype = 1 # parent_story.parent_house.exterior_wall_material_subtype
+            self.corner_material = block.TNT.id # parent_story.parent_house.exterior_corner_material
+            self.corner_subtype = 1 # parent_story.parent_house.exterior_wall_corner_subtype
+        elif self.type == WallType.Interior:
+            self.material = block.DIRT.id # parent_story.parent_house.exterior_wall_material
+            self.material_subtype = 1 # parent_story.parent_house.exterior_wall_material_subtype
+            self.corner_material = block.STONE.id # parent_story.parent_house.exterior_corner_material
+            self.corner_subtype = 1 # parent_story.parent_house.exterior_wall_corner_subtype
+        else:
+            print(f"EXCEPTION: No wall type set")
+            
+    def _set_angle(self, xz_angle=None):
+        ''' Sets the angle of the wall to the specified value, or the 'facing' property if it exists '''
+        if xz_angle is None:
+            # xz_angle = self.parent_story._calc_angle_from_facing()
+            pass
+        self.xz_angle = xz_angle
+                    
 class Wall(Rectangle):
     ''' The parent of a Wall should be a Story object '''
     def __init__(self, length, height, origin=None, xz_angle=0):
@@ -324,7 +386,7 @@ class Story():
     def add_wall(self, wall):
         self.walls.append(wall)
     
-    def build_wall(self, length, direction):
+    def build_wall(self, length, direction, wall_type):
         if len(self.walls) == 0:
             print("EXCEPTION: No existing wall definition")
         
@@ -351,39 +413,51 @@ class Story():
             walls.append(wall)
         
         self.walls = walls
+
+class SiteDefinition():
+    def __init__(self):
+        self.origin = None
+        self.width = None
+        self.depth = None
+        self.height = None
+        self.thickness = None
+        self.base_material = None
+        self.base_material_subtype = None
+        self.setbacks = None # Should be (front/back, sides) or (front, left, back, right)
         
 class ConstructionSite():
-    def __init__(self, length=25, width=25, height=40, depth=1, origin=None):
+    def __init__(self, site_definition):
+        self.site_definition = site_definition
         
         # If an origin is not specified, use the space under the player
-        if origin is None:
-            origin = mc.player.getPos() - Vec3(0,1,0)
-        self.origin = origin
-        self.length = length
-        self.width = width
-        self.height = height
-
-        self.depth = depth
-        self.ground_material = block.STONE.id
-        ground = Rectangle(length, width, origin, 0)
+        if site_definition.origin is None:
+            self.site_definition.origin = mc.player.getPos() - Vec3(0,1,0)
+            
+        if site_definition.base_material_subtype == None:
+            self.site_definition.base_material_subtype = 1
+        
+        ground = Rectangle(site_definition.depth, site_definition.width, site_definition.origin, 0)
         ground.tip()
         
         self.ground = ground
         
     def __repr__(self):
-        msg = f"length={self.length}, width={self.width}, height={self.height},"
-        msg += f" depth={self.depth}, material={self.ground_material} at {self.origin}"
+        sd = self.site_definition
+        msg = f"Site: width={sd.width}, depth={sd.depth}\n"
+        msg += f" thickness={sd.thickness}, material={sd.base_material} at {sd.origin}"
         return msg
         
-    def clear(self, ground_material=None):
+    def clear(self, ground_material=None, ground_material_subtype=None):
+        sd = self.site_definition
         if ground_material is None:
-            ground_material = self.ground_material
+            ground_material = sd.base_material
+            ground_material_subtype = sd.base_material_subtype
         
-        x1, y1, z1 = self.origin
-        x2, y2, z2 = self.origin + Vec3(self.length-1, -self.depth+1, self.width-1)
+        x1, y1, z1 = sd.origin
+        x2, y2, z2 = sd.origin + Vec3(sd.depth-1, -sd.thickness+1, sd.width-1)
         
-        mc.setBlocks(x1, y1, z1, x2, y2, z2, ground_material)
-        mc.setBlocks(x1, y1+1, z1, x2, y1+self.height-1, z2, block.AIR.id)
+        mc.setBlocks(x1, y1, z1, x2, y2, z2, ground_material, ground_material_subtype)
+        mc.setBlocks(x1, y1+1, z1, x2, y1+sd.height-1, z2, block.AIR.id)
 
 def bump_player():
     ''' Offsets player position by 1 in all directions '''
@@ -396,13 +470,15 @@ def main():
     mc.postToChat(f"Player is at {mc.player.getPos()}")
     
     # Define the parameters of the lot
-    lot_origin = Vec3(0, 0, 0)
-    lot_length = 30
-    lot_width = 20
-    lot_height = 40
-    lot_depth = 2
-    lot_setback = 5
-    lot_material = block.STONE.id
+    site_def = SiteDefinition()
+    site_def.origin = Vec3(0, 0, 0)
+    site_def.width = 20
+    site_def.height = 40
+    site_def.depth = 30
+    site_def.thickness = 3
+    site_def.setbacks = (5,5)
+    site_def.base_material = block.STONE.id
+    site_def.base_material_subtype = 1
     
     # Define the parameters of the house
     house_length = 7
@@ -410,38 +486,42 @@ def main():
     story_height = 3
     
     # Define parameters for the walls
+    wall_definition = WallDefinition()
     wall_material = block.WOOD_PLANKS.id
     wall_material_subtype = 1
     corner_material = block.WOOD.id
     corner_material_subtype = 0
-
-    site = ConstructionSite(lot_length, lot_width, lot_height, lot_depth, lot_origin)
-    site.clear(lot_material)
-#    site._draw_origin(block.BEDROCK.id)
+       
+    site = ConstructionSite(site_def)
+    site.clear()
     print(site)
-    
-    house_corner_stone = lot_origin + Vec3(lot_setback, 1, lot_setback)
-    
-    wall = Wall(house_length, story_height, house_corner_stone, Direction.South)
-    wall.name = f"Wall1 {id(wall)}"
-    wall.set_wall_material(wall_material, wall_material_subtype)
-    wall.set_corner_material(corner_material, corner_material_subtype)
-#bm_story1
-    story = Story(house_corner_stone, house_width, house_length, story_height, wall)
-    story.build_rectangle()
-#    story.build_wall()
-    
-    for wall in story.walls:
-        print(f"{wall}")
-        for window in wall.windows:
-            print(f"\t{window}")
-        for door in wall.doors:
-            print(f"\t{door}")
 
-        wall._draw(wall_material, wall_material_subtype)
-        wall._draw_origin()
+    if False:
+
+
+#    site._draw_origin(block.BEDROCK.id)
+        print(site)
         
-    # mc.setBlock(7.5,2,5,block.GRASS.id)
+        house_corner_stone = lot_origin + Vec3(lot_setback, 1, lot_setback)
+        
+        wall = Wall(house_length, story_height, house_corner_stone, Direction.South)
+        wall.name = f"Wall1 {id(wall)}"
+        wall.set_wall_material(wall_material, wall_material_subtype)
+        wall.set_corner_material(corner_material, corner_material_subtype)
+    #bm_story1
+        story = Story(house_corner_stone, house_width, house_length, story_height, wall)
+        
+        for wall in story.walls:
+            print(f"{wall}")
+            for window in wall.windows:
+                print(f"\t{window}")
+            for door in wall.doors:
+                print(f"\t{door}")
+
+            wall._draw(wall_material, wall_material_subtype)
+            wall._draw_origin()
+            
+        # mc.setBlock(7.5,2,5,block.GRASS.id)
 
 if __name__ == '__main__':
     main()

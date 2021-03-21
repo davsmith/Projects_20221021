@@ -425,7 +425,7 @@ class SiteDefinition():
         self.base_material_subtype = None
         self.setbacks = None # Should be (front/back, sides) or (front, left, back, right)
         
-class ConstructionSite():
+class Site():
     def __init__(self, site_definition):
         self.site_definition = site_definition
         
@@ -446,6 +446,11 @@ class ConstructionSite():
         msg = f"Site: width={sd.width}, depth={sd.depth}\n"
         msg += f" thickness={sd.thickness}, material={sd.base_material} at {sd.origin}"
         return msg
+    
+    def _draw_origin(self, material):
+        origin_x, origin_y, origin_z = self.site_definition.origin
+        mc.setBlock(origin_x, origin_y, origin_z, material)
+        print(f"Site origin is at {origin_x},{origin_y},{origin_z}")
         
     def clear(self, ground_material=None, ground_material_subtype=None):
         sd = self.site_definition
@@ -492,15 +497,11 @@ def main():
     corner_material = block.WOOD.id
     corner_material_subtype = 0
        
-    site = ConstructionSite(site_def)
-    site.clear()
-    print(site)
-
+    construction_site = Site(site_def)
+    construction_site.clear()
+    construction_site._draw_origin(block.TNT.id)
+    print(construction_site)
     if False:
-
-
-#    site._draw_origin(block.BEDROCK.id)
-        print(site)
         
         house_corner_stone = lot_origin + Vec3(lot_setback, 1, lot_setback)
         

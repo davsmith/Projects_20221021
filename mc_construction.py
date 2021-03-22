@@ -429,7 +429,7 @@ class HouseDefinition():
 class House():
     def __init__(self, house_definition, parent_site=None):
         hd = house_definition
-        sd = parent_site.site_definition
+        sd = parent_site.ground_definition
         
         self.parent_site = parent_site
         self.house_definition = hd
@@ -444,28 +444,22 @@ class House():
             
         
         # Create the foundation of the house
-        foundation_def = SiteDefinition()
+        foundation_def = GroundDefinition()
         foundation_def.origin = hd.origin
         foundation_def.width = hd.width
         foundation_def.depth = hd.depth
         foundation_def.height = 1
         foundation_def.thickness = 2
-        foundation_def.base_material = block.GRASS.id
+        foundation_def.base_material = block.STONE.id
         foundation_def.base_material_subtype = 1
-        foundation_def.setback = 0
         
-        self.foundation = Site(foundation_def)
+        self.foundation = Ground(foundation_def)
         
     def add_story(self, story):
         story.parent_house = self
         self.stories = []
         
-    
-    
-        
-        
-
-class SiteDefinition():
+class GroundDefinition():
     def __init__(self):
         self.origin = None
         self.width = None
@@ -474,42 +468,37 @@ class SiteDefinition():
         self.thickness = None
         self.base_material = None
         self.base_material_subtype = None
-        self.setback = None # Same setback on each front, back, and sides
-        
-class Site():
-    def __init__(self, site_definition):
-        self.site_definition = site_definition
+    
+class Ground():
+    def __init__(self, ground_definition):
+        self.ground_definition = ground_definition
         
         # If an origin is not specified, use the space under the player
-        if site_definition.origin is None:
-            self.site_definition.origin = mc.player.getPos() - Vec3(0,1,0)
+        if ground_definition.origin is None:
+            self.ground_definition.origin = mc.player.getPos() - Vec3(0,1,0)
             
-        if site_definition.base_material_subtype == None:
-            self.site_definition.base_material_subtype = 1
-        
-        ground = Rectangle(site_definition.depth, site_definition.width, site_definition.origin, 0)
+        ground = Rectangle(ground_definition.depth, ground_definition.width, ground_definition.origin, 0)
         ground.tip()
         
         self.ground = ground
-        
+
     def __repr__(self):
-        sd = self.site_definition
-        msg = f"Site: width={sd.width}, depth={sd.depth}\n"
+        sd = self.ground_definition
+        msg = f"Ground: width={sd.width}, depth={sd.depth}\n"
         msg += f" thickness={sd.thickness}, material={sd.base_material} at {sd.origin}"
         return msg
     
     def _draw_origin(self, material):
-        origin_x, origin_y, origin_z = self.site_definition.origin
+        origin_x, origin_y, origin_z = self.ground_definition.origin
         mc.setBlock(origin_x, origin_y, origin_z, material)
-        print(f"Site origin is at {origin_x},{origin_y},{origin_z}")
+        print(f"Ground origin is at {origin_x},{origin_y},{origin_z}")
         
     def clear(self, ground_material=None, ground_material_subtype=None):
-        sd = self.site_definition
+        sd = self.ground_definition
         if ground_material is None:
             ground_material = sd.base_material
             ground_material_subtype = sd.base_material_subtype
         
-        print(f"DEBUG: depth:{sd.depth}, thickness:{sd.thickness}, width:{sd.width}")
         x1, y1, z1 = sd.origin
         x2, y2, z2 = sd.origin + Vec3(sd.depth-1, -sd.thickness+1, sd.width-1)
         
@@ -518,7 +507,15 @@ class Site():
     
         if sd.height > 1:
             mc.setBlocks(x1, y1+1, z1, x2, y1+sd.height-1, z2, block.AIR.id)
-
+        
+        
+class Site(Ground):
+    def add_structure(self, structure_definition):
+        sd = structure_definition
+        
+        
+        
+        
 def bump_player():
     ''' Offsets player position by 1 in all directions '''
     player_x, player_y, player_z = mc.player.getPos()
@@ -530,14 +527,14 @@ def main():
     mc.postToChat(f"Player is at {mc.player.getPos()}")
     
     # Define the parameters of the lot
-    site_def = SiteDefinition()
+    site_def = GroundDefinition()
     site_def.origin = Vec3(0, 0, 0)
     site_def.width = 20
     site_def.height = 40
     site_def.depth = 30
     site_def.thickness = 3
     site_def.setback = 5
-    site_def.base_material = block.STONE.id
+    site_def.base_material = block.GRASS.id
     site_def.base_material_subtype = 1
     
     # Define the parameters of the house
@@ -569,7 +566,7 @@ def main():
 
     # Build out the house foundation
     house = House(house_def, lot)
-    house.foundation.clear(block.DIRT.id)
+    house.foundation.clear(block.STONE.id)
     house.foundation._draw_origin(block.TNT.id)
     print(house)
 

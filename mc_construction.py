@@ -413,6 +413,57 @@ class Story():
             walls.append(wall)
         
         self.walls = walls
+        
+class HouseDefinition():
+    def __init__(self):
+        self.origin = None
+        self.width = None
+        self.depth = None
+        self.exterior_wall_material = None
+        self.exterior_wall_subtype = None
+        self.interior_wall_material = None
+        self.interior_wall_subtype = None
+        self.story_height = None
+        self.facing = None
+        
+class House():
+    def __init__(self, house_definition, parent_site=None):
+        hd = house_definition
+        sd = parent_site.site_definition
+        
+        self.parent_site = parent_site
+        self.house_definition = hd
+        self.stories = []
+        
+        if hd.origin is None:
+            if parent_site is None:
+                hd.origin = Vec3(0,0,0)
+            else:
+                print(f"Parent site def: {sd.thickness}")
+                hd.origin = sd.origin + Vec3(sd.setback, 0, sd.setback)
+            
+        
+        # Create the foundation of the house
+        foundation_def = SiteDefinition()
+        foundation_def.origin = hd.origin
+        foundation_def.width = hd.width
+        foundation_def.depth = hd.depth
+        foundation_def.height = 1
+        foundation_def.thickness = 2
+        foundation_def.base_material = block.GRASS.id
+        foundation_def.base_material_subtype = 1
+        foundation_def.setback = 0
+        
+        self.foundation = Site(foundation_def)
+        
+    def add_story(self, story):
+        story.parent_house = self
+        self.stories = []
+        
+    
+    
+        
+        
 
 class SiteDefinition():
     def __init__(self):
@@ -423,7 +474,7 @@ class SiteDefinition():
         self.thickness = None
         self.base_material = None
         self.base_material_subtype = None
-        self.setbacks = None # Should be (front/back, sides) or (front, left, back, right)
+        self.setback = None # Same setback on each front, back, and sides
         
 class Site():
     def __init__(self, site_definition):
@@ -458,11 +509,15 @@ class Site():
             ground_material = sd.base_material
             ground_material_subtype = sd.base_material_subtype
         
+        print(f"DEBUG: depth:{sd.depth}, thickness:{sd.thickness}, width:{sd.width}")
         x1, y1, z1 = sd.origin
         x2, y2, z2 = sd.origin + Vec3(sd.depth-1, -sd.thickness+1, sd.width-1)
         
+        print(f"DEBUG: ({x1}, {y1}, {z1}), ({x2}, {y2}, {z2}), material:{ground_material}")
         mc.setBlocks(x1, y1, z1, x2, y2, z2, ground_material, ground_material_subtype)
-        mc.setBlocks(x1, y1+1, z1, x2, y1+sd.height-1, z2, block.AIR.id)
+    
+        if sd.height > 1:
+            mc.setBlocks(x1, y1+1, z1, x2, y1+sd.height-1, z2, block.AIR.id)
 
 def bump_player():
     ''' Offsets player position by 1 in all directions '''
@@ -481,14 +536,23 @@ def main():
     site_def.height = 40
     site_def.depth = 30
     site_def.thickness = 3
-    site_def.setbacks = (5,5)
+    site_def.setback = 5
     site_def.base_material = block.STONE.id
     site_def.base_material_subtype = 1
     
     # Define the parameters of the house
-    house_length = 7
-    house_width = 7
-    story_height = 3
+    house_def = HouseDefinition()
+    house_def.origin = None
+    house_def.width = 7
+    house_def.depth = 7
+    house_def.story_height = 3
+    house_def.exterior_wall_material = block.WOOD_PLANKS.id
+    house_def.exterior_wall_subtype = 1
+    house_def.exterior_corner_material = block.WOOD.id
+    house_def.exterior_corner_subtype = 1
+    house_def.interior_wall_material = block.SANDSTONE.id
+    house_def.interior_wall_subtype = 1
+    house_def.facing = Direction.East
     
     # Define parameters for the walls
     wall_definition = WallDefinition()
@@ -496,11 +560,19 @@ def main():
     wall_material_subtype = 1
     corner_material = block.WOOD.id
     corner_material_subtype = 0
-       
-    construction_site = Site(site_def)
-    construction_site.clear()
-    construction_site._draw_origin(block.TNT.id)
-    print(construction_site)
+
+    # Build out the lot
+    lot = Site(site_def)
+    lot.clear()
+    lot._draw_origin(block.GRASS.id)
+    print(lot)
+
+    # Build out the house foundation
+    house = House(house_def, lot)
+    house.foundation.clear(block.DIRT.id)
+    house.foundation._draw_origin(block.TNT.id)
+    print(house)
+
     if False:
         
         house_corner_stone = lot_origin + Vec3(lot_setback, 1, lot_setback)

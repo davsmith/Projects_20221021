@@ -19,7 +19,10 @@ class Plane(Enum):
 
 @unique
 class Direction(IntEnum):
-    ''' Specifies the direction a an object along a compass '''
+    '''
+        Specifies the direction of an object with methods for rotation
+        along different axes
+    '''
     East = 90
     North = 180
     South = 0
@@ -373,16 +376,31 @@ class Wall(Rectangle):
         return new_wall
 
 #bm_Story2
+class StoryDefinition():
+    def __init__(self):
+        self.origin = None
+        self.width = None
+        self.depth = None
+        self.height = None
+        self.exterior_wall_def = None
+        self.interior_wall_def = None
+        self.facing = None
+    def __repr__(self):
+        msg = f"<STORYDEFINITION: origin:{self.origin}, width:{self.width}, depth:{self.depth}, height:{self.height}>"
+        return msg
+
 class Story():
-    def __init__(self, origin, width, depth, height, exterior_wall_def=None, interior_wall_def=None):
-        self.walls = None
-        self.origin = origin
-        self.width = width
-        self.depth = depth
-        self.height = height
-        self.exterior_wall_def = exterior_wall_def
-        self.interior_wall_def = interior_wall_def
+    def __init__(self, story_definition, parent_structure):
+        self.parent_structure = parent_structure
+        self.story_definition = story_definition
+        self.walls = []
+        self.floor = None # Ground class
         
+        # BUGBUG: origin (and other properties) must be set by caller (i.e. don't set from parent)
+        
+    def __repr__(self):
+        msg = f"STORY: def = {self.story_definition}, parent = {self.parent_structure}"
+        return msg
     def add_wall(self, wall):
         self.walls.append(wall)
     
@@ -414,7 +432,7 @@ class Story():
         
         self.walls = walls
         
-class HouseDefinition():
+class StructureDefinition():
     def __init__(self):
         self.origin = None
         self.width = None
@@ -426,42 +444,45 @@ class HouseDefinition():
         self.story_height = None
         self.facing = None
         
-class House():
-    def __init__(self, house_definition, parent_site=None):
-        hd = house_definition
-        sd = parent_site.ground_definition
+class Structure():
+    def __init__(self, structure_definition, parent_site):
+        sd = structure_definition
+        gd = parent_site.floor_definition
         
         self.parent_site = parent_site
-        self.house_definition = hd
+        self.structure_definition = sd
         self.stories = []
         
-        if hd.origin is None:
+        if sd.origin is None:
             if parent_site is None:
-                hd.origin = Vec3(0,0,0)
+                sd.origin = Vec3(0,0,0)
             else:
-                print(f"Parent site def: {sd.thickness}")
-                hd.origin = sd.origin + Vec3(sd.setback, 0, sd.setback)
-            
+                sd.origin = gd.origin + Vec3(gd.setback, 0, gd.setback)
         
-        # Create the foundation of the house
-        foundation_def = GroundDefinition()
-        foundation_def.origin = hd.origin
-        foundation_def.width = hd.width
-        foundation_def.depth = hd.depth
+        # Create the foundation of the structure
+        foundation_def = FloorDefinition()
+        foundation_def.origin = sd.origin
+        foundation_def.width = sd.width
+        foundation_def.depth = sd.depth
         foundation_def.height = 1
         foundation_def.thickness = 2
         foundation_def.base_material = block.STONE.id
         foundation_def.base_material_subtype = 1
         
-        self.foundation = Ground(foundation_def)
+        self.foundation = Floor(foundation_def)
         
-    def add_story(self, story):
-        story.parent_house = self
-        self.stories = []
+#BM_1
+    def add_story(self, story_definition):
+        print("STRUCTURE: add_story")
+        story = Story(story_definition, self)
+        self.stories.append(story)
+        return story
+
         
-class GroundDefinition():
+class FloorDefinition():
     def __init__(self):
-        self.origin = None
+        # Default the origin to the space under the player
+        self.origin = mc.player.getPos() - Vec3(0,1,0)
         self.width = None
         self.depth = None
         self.height = None
@@ -469,53 +490,51 @@ class GroundDefinition():
         self.base_material = None
         self.base_material_subtype = None
     
-class Ground():
-    def __init__(self, ground_definition):
-        self.ground_definition = ground_definition
+class Floor():
+    def __init__(self, floor_definition):
+        self.floor_definition = floor_definition
         
-        # If an origin is not specified, use the space under the player
-        if ground_definition.origin is None:
-            self.ground_definition.origin = mc.player.getPos() - Vec3(0,1,0)
-            
-        ground = Rectangle(ground_definition.depth, ground_definition.width, ground_definition.origin, 0)
-        ground.tip()
+        floor = Rectangle(floor_definition.depth, floor_definition.width, floor_definition.origin, 0)
+        floor.tip()
         
-        self.ground = ground
+        self.floor = floor
 
     def __repr__(self):
-        sd = self.ground_definition
-        msg = f"Ground: width={sd.width}, depth={sd.depth}\n"
+        sd = self.floor_definition
+        msg = f"Floor: width={sd.width}, depth={sd.depth}\n"
         msg += f" thickness={sd.thickness}, material={sd.base_material} at {sd.origin}"
         return msg
     
     def _draw_origin(self, material):
-        origin_x, origin_y, origin_z = self.ground_definition.origin
+        origin_x, origin_y, origin_z = self.floor_definition.origin
         mc.setBlock(origin_x, origin_y, origin_z, material)
-        print(f"Ground origin is at {origin_x},{origin_y},{origin_z}")
+        print(f"Floor origin is at {origin_x},{origin_y},{origin_z}")
         
-    def clear(self, ground_material=None, ground_material_subtype=None):
-        sd = self.ground_definition
-        if ground_material is None:
-            ground_material = sd.base_material
-            ground_material_subtype = sd.base_material_subtype
+    def clear(self, floor_material=None, floor_material_subtype=None):
+        fd = self.floor_definition
+        if floor_material is None:
+            floor_material = fd.base_material
+            floor_material_subtype = fd.base_material_subtype
         
-        x1, y1, z1 = sd.origin
-        x2, y2, z2 = sd.origin + Vec3(sd.depth-1, -sd.thickness+1, sd.width-1)
+        x1, y1, z1 = fd.origin
+        x2, y2, z2 = fd.origin + Vec3(fd.depth-1, -fd.thickness+1, fd.width-1)
         
-        print(f"DEBUG: ({x1}, {y1}, {z1}), ({x2}, {y2}, {z2}), material:{ground_material}")
-        mc.setBlocks(x1, y1, z1, x2, y2, z2, ground_material, ground_material_subtype)
+        mc.setBlocks(x1, y1, z1, x2, y2, z2, floor_material, floor_material_subtype)
     
-        if sd.height > 1:
-            mc.setBlocks(x1, y1+1, z1, x2, y1+sd.height-1, z2, block.AIR.id)
+        if fd.height > 1:
+            mc.setBlocks(x1, y1+1, z1, x2, y1+fd.height-1, z2, block.AIR.id)
         
         
-class Site(Ground):
+class Site(Floor):
+    def __init__(self, site_definition):
+        self.structures = []
+        super().__init__(site_definition)
     def add_structure(self, structure_definition):
-        sd = structure_definition
+        house = Structure(structure_definition, self)
+        self.structures.append(house)
+        return house
         
-        
-        
-        
+
 def bump_player():
     ''' Offsets player position by 1 in all directions '''
     player_x, player_y, player_z = mc.player.getPos()
@@ -527,7 +546,7 @@ def main():
     mc.postToChat(f"Player is at {mc.player.getPos()}")
     
     # Define the parameters of the lot
-    site_def = GroundDefinition()
+    site_def = FloorDefinition()
     site_def.origin = Vec3(0, 0, 0)
     site_def.width = 20
     site_def.height = 40
@@ -535,13 +554,13 @@ def main():
     site_def.thickness = 3
     site_def.setback = 5
     site_def.base_material = block.GRASS.id
-    site_def.base_material_subtype = 1
+#    site_def.base_material_subtype = 1
     
     # Define the parameters of the house
-    house_def = HouseDefinition()
+    house_def = StructureDefinition()
     house_def.origin = None
     house_def.width = 7
-    house_def.depth = 7
+    house_def.depth = 5
     house_def.story_height = 3
     house_def.exterior_wall_material = block.WOOD_PLANKS.id
     house_def.exterior_wall_subtype = 1
@@ -550,6 +569,14 @@ def main():
     house_def.interior_wall_material = block.SANDSTONE.id
     house_def.interior_wall_subtype = 1
     house_def.facing = Direction.East
+    
+    story_def = StoryDefinition()
+    # BUGBUG: Move assignment of these properties to the story class from the parent class
+    story_def.facing = house_def.facing
+    story_def.width = house_def.width
+    story_def.height = house_def.story_height
+    story_def.origin = house_def.origin
+    
     
     # Define parameters for the walls
     wall_definition = WallDefinition()
@@ -565,15 +592,16 @@ def main():
     print(lot)
 
     # Build out the house foundation
-    house = House(house_def, lot)
-    house.foundation.clear(block.STONE.id)
+    house = lot.add_structure(house_def)
+    house.foundation.clear()
     house.foundation._draw_origin(block.TNT.id)
     print(house)
+    
+    story = house.add_story(story_def)
+    print(story)
+#    story._draw(block.MOSS_STONE.id)
 
     if False:
-        
-        house_corner_stone = lot_origin + Vec3(lot_setback, 1, lot_setback)
-        
         wall = Wall(house_length, story_height, house_corner_stone, Direction.South)
         wall.name = f"Wall1 {id(wall)}"
         wall.set_wall_material(wall_material, wall_material_subtype)

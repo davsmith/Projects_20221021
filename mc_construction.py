@@ -71,6 +71,11 @@ class WallLocation(IntEnum):
 
 
 class ComponentDefinition():
+    '''
+    Provides base class with init that pulls attributes from a template,
+    and enumerates the attributes through __repr__
+    '''
+
     def __init__(self, attribute_list=[], template=None):
         # Copy attributes from the template
         for attribute in attribute_list:
@@ -88,6 +93,10 @@ class ComponentDefinition():
 
 
 class Component():
+    '''
+    Provides a base class implementation of __repr__ to enumerage attributes
+    '''
+
     def __repr__(self):
         msg = f"{type(self).__name__}\n"
         for attribute in self.__dict__:
@@ -110,8 +119,6 @@ class Rectangle(Component):
 
     def clone(self):
         ''' Creates a copy of the rectangle with the same dimensions '''
-        print(
-            f"Cloning rectangle: length={self.length}, height={self.height}, origin={self.origin}, xz_angle={self.xz_angle}")
         # The clone method is called on the origin so that the new wall has a copy of
         # the origin rather than a reference to the same origin
         return Rectangle(self.length, self.height, self.origin.clone(), self.xz_angle)
@@ -143,7 +150,7 @@ class Rectangle(Component):
         opp_y = self.height-1
         opp_z = round((self.length-1) * opp_cos, 1)
 
-        if self.tipped == True:
+        if self.tipped:
             print(
                 f"Rectangle is tipped ({self.xz_angle}), sin={opp_sin}, cos={opp_cos}")
             if (opp_sin == 0) and (opp_cos == -1):  # 180 degrees
@@ -163,6 +170,7 @@ class Rectangle(Component):
         self._calc_opposite_corners()
 
     def set_length(self, length):
+        ''' Sets the length attribute and recalculates the opposite corner '''
         self.length = length
         self._calc_opposite_corners()
 
@@ -220,11 +228,9 @@ class Rectangle(Component):
         self._calc_opposite_corners()
 
     def tip(self):
+        ''' Tips a rectangle from the vertical plane to the horizaontal plane '''
         self.tipped = True
         self._calc_opposite_corners()
-
-    def delete(self):
-        pass
 
     def _draw(self, material, subtype=0):
         ''' Draws the rectangle in MineCraft space
@@ -247,10 +253,11 @@ class Rectangle(Component):
 
 
 class Opening(Rectangle):
-    ''' A rectangle object to represent a door, window or other space in a wall
-        relative_x is distance relative to the origin of the parent wall (1 is left side)
-        relative_y is distance relative to the bottom of the wall (1 is bottom)
-        '''
+    ''' 
+    A rectangle object to represent a door, window or other space in a wall
+    relative_x is distance relative to the origin of the parent wall (1 is left side)
+    relative_y is distance relative to the bottom of the wall (1 is bottom)
+    '''
 
     def __init__(self, parent_wall, relative_x, relative_y, width, height):
         if not isinstance(parent_wall, Wall):
@@ -282,6 +289,8 @@ class Opening(Rectangle):
 
 
 class WallDefinition(ComponentDefinition):
+    ''' Class to define the attributes of a wall object '''
+
     def __init__(self, template=None):
         attributes = ["origin", "length", "height", "xz_angle", "location"]
         super().__init__(attributes, template)
@@ -347,8 +356,6 @@ class Wall(Rectangle):
 
         # If a position is not specified for the window, use the midpoint
         rel_x, rel_y, rel_z = self.midpoint() - self.origin
-        print(
-            f"mp:{self.midpoint()} origin:{self.origin} rel_x:{rel_x}, rel_y:{rel_y}, rel_z:{rel_z}")
         if position_x is None:
             position_x = (self.length + 1) / 2
         if position_y is None:
@@ -358,19 +365,17 @@ class Wall(Rectangle):
         height = 1
         xz_angle = self.xz_angle
         window = Opening(self, position_x, position_y, width, height)
-        print(
-            f"Created opening ({id(window)}) at position ({position_x}, {position_y}), width:{width}, height:{height}")
         window.material = block.AIR.id
         window.material_subtype = 0
         self.windows.append(window)
 
     def set_wall_material(self, material, subtype=0):
-        print(f"Setting corner material to {material}")
+        ''' Sets the attributes for wall material '''
         self.wall_material = material
         self.wall_material_subtype = subtype
 
     def set_corner_material(self, material, subtype=0):
-        print(f"Setting corner material to {material}")
+        ''' Sets the attributes for corner material '''
         self.corner_material = material
         self.corner_material_subtype = subtype
 
@@ -405,6 +410,8 @@ class Wall(Rectangle):
 
 
 class StoryDefinition(ComponentDefinition):
+    ''' Class to define the attributes of a Story object '''
+
     def __init__(self, template=None):
         attributes = ['origin', 'width', 'depth', 'height', 'facing']
         attributes += ['exterior_wall_def', 'interior_wall_def']
@@ -412,12 +419,15 @@ class StoryDefinition(ComponentDefinition):
 
 
 class Story(Component):
+    ''' Class to represent a story in a structure '''
+
     def __init__(self, story_definition):
         self.story_definition = story_definition
         self.walls = []
         self.floor = None  # Ground class
 
     def add_wall(self, wall_definition):
+        ''' Creates a wall using a WallDefinition as a template, and adds it to the collection '''
         wall = Wall(wall_definition)
         self.walls.append(wall)
         return wall
@@ -448,6 +458,8 @@ class Story(Component):
 
 
 class StructureDefinition(ComponentDefinition):
+    ''' Class to define the attributes of a Structure object '''
+
     def __init__(self, template=None):
         # Copy attributes from the template
         attributes = ['origin', 'width', 'depth', 'story_height', 'facing']
@@ -462,6 +474,8 @@ class StructureDefinition(ComponentDefinition):
 
 
 class Structure(Component):
+    ''' Class to represent a Structure (e.g. a house) on a site '''
+
     def __init__(self, structure_definition):
         sd = structure_definition
 
@@ -490,6 +504,8 @@ class Structure(Component):
 
 
 class FloorDefinition(ComponentDefinition):
+    ''' Class to define the attributes of a Floor object '''
+
     def __init__(self, template=None):
         # Copy attributes from the template
         attributes = ['origin', 'width', 'depth', 'height', 'thickness']
@@ -502,6 +518,8 @@ class FloorDefinition(ComponentDefinition):
 
 
 class Floor(Component):
+    ''' Class to represent a Floor for a Story, or Ground of a site '''
+
     def __init__(self, floor_definition):
         self.floor_definition = floor_definition
         floor_definition.name = "FLOOR"

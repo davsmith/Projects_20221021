@@ -61,7 +61,32 @@ class WallLocation(IntEnum):
     Side = 3
 
 
-class Rectangle:
+
+class ComponentDefinition():
+    def __init__(self, attribute_list=[], template=None):
+        # Copy attributes from the template
+        for attribute in attribute_list:
+            setattr(self, attribute, getattr(template, attribute, None))
+
+        # Default the origin to the space under the player
+        if self.origin is None:
+            self.origin = mc.player.getPos() - Vec3(0,1,0)
+
+    def __repr__(self):
+        msg = f"{type(self).__name__}\n"
+        for attribute in self.__dict__:
+            msg += f"  {attribute}:{getattr(self, attribute, '<undefined>')}\n"
+        return msg
+    
+class Component():
+    def __repr__(self):
+        msg = f"{type(self).__name__}\n"
+        for attribute in self.__dict__:
+            msg += f"  {attribute}:{getattr(self, attribute, '<undefined>')}\n"
+        return msg
+
+
+class Rectangle(Component):
     ''' Definition of rectangular structure for MineCraft Pi '''
 
     def __init__(self, length, height, origin, xz_angle):
@@ -74,11 +99,6 @@ class Rectangle:
         self.tipped = False
         self._calc_opposite_corners()
 
-    def __repr__(self):
-        msg = f"Rectangle: name={self.name}, length={self.length}, height={self.height}, "
-        msg += f"origin({self.origin}), opposite({self.opposite}), "
-        msg += f"xz_angle={self.xz_angle} tipped={self.tipped}"
-        return msg
 
     def clone(self):
         ''' Creates a copy of the rectangle with the same dimensions '''
@@ -238,39 +258,23 @@ class Opening(Rectangle):
     def absolute_origin(self):
         return self.parent_wall.along(self.relative_x) + Vec3(0,self.relative_y-1)
         
-    def __repr__(self):
-        msg = f"Opening: parent:{id(self.parent_wall)}, origin:{self.origin}"
-        return msg
-
-    
     def _draw(self, material=None, subtype=0):
         if material is None:
             material = self.material
             subtype = self.material_subtype
         super()._draw(material, subtype)
                 
-    def __repr__(self):
-        msg = f"Opening: parent:{id(self.parent_wall)}, origin:{self.origin}, opposite:{self.opposite}"
-        return msg
-    
-class WallDefinition():
-    def __init__(self):
-        self.origin = (0,0,0) # parent story origin
-        self.length = 5 # parent story width
-        self.height = 3 # parent story height
-
-        self.type = WallType.Exterior # Exterior|Interior
-        self._set_materials()
+#BM_1
+class WallDefinition(ComponentDefinition):
+    def __init__(self, template=None):
+        attributes = ["origin", "length", "height","xz_angle","location"]
+        super().__init__(attributes, template)
         
-        self.xz_angle = self._set_angle()
-        self.location = WallLocation.Front
-        
-    def __repr__(self):
-        msg = f"Wall Definition: origin={self.origin}, length={self.length}, height={self.height}\n"
-        msg += f"  type={self.type}, material={self.material}({self.material_subtype}), corner_material={self.corner_material}({self.corner_subtype})\n"
-        msg += f"  angle={self.xz_angle}\n"
-        msg += f"  location={self.location}"
-        return msg
+#        if self.xz_angle is None:
+#            self.xz_angle = self._set_angle()
+            
+#        if self.location is None:
+#            self.location = WallLocation.Front
         
     def _set_materials(self):
         if self.type == WallType.Exterior:
@@ -295,13 +299,16 @@ class WallDefinition():
                     
 class Wall(Rectangle):
     ''' The parent of a Wall should be a Story object '''
-    def __init__(self, length, height, origin=None, xz_angle=0):
-        super().__init__(length, height, origin, xz_angle)
+    def __init__(self, wall_definition):
+        #length, height, origin=None, xz_angle=0):
+        wd = wall_definition
+        super().__init__(wd.length, wd.height, wd.origin, wd.xz_angle)
         self.doors = []
         self.windows = []
         self.wall_material = block.TNT.id
         self.wall_material_subtype = 1
-        self.parent_story = None
+        self.corner_material = block.WOOL.id
+        self.corner_subtype = 1
         self.wall_type = WallType.Exterior
         
     def add_door(self, position = None):
@@ -352,13 +359,14 @@ class Wall(Rectangle):
         self.corner_material_subtype = subtype
         
     def _draw(self, material=None, subtype=0):
+        wd = self.wall_definiiton
         if material is None:
-            material = self.wall_material
-            subtype = self.wall_material_subtype
+            material = wd.wall_material
+            subtype = wd.wall_material_subtype
         super()._draw(material, subtype)
         if hasattr(self, "corner_material"):
-            ll_x, ll_y, ll_z = self.origin
-            ur_x, ur_y, ur_z = self.opposite
+            ll_x, ll_y, ll_z = wd.origin
+            ur_x, ur_y, ur_z = wd.opposite
             
             mc.setBlocks(ll_x, ll_y, ll_z, ll_x, ur_y, ll_z, self.corner_material, self.corner_material_subtype)
             mc.setBlocks(ur_x, ur_y, ur_z, ur_x, ll_y, ur_z, self.corner_material, self.corner_material_subtype)
@@ -367,7 +375,6 @@ class Wall(Rectangle):
 
         for window in self.windows:
             window._draw(block.AIR.id)
-            
                     
     def clone(self):
         new_wall = Wall(self.length, self.height, self.origin.clone(), self.xz_angle)
@@ -375,34 +382,27 @@ class Wall(Rectangle):
         new_wall.set_corner_material(self.corner_material, self.corner_material_subtype)
         return new_wall
 
-#bm_Story2
-class StoryDefinition():
-    def __init__(self):
-        self.origin = None
-        self.width = None
-        self.depth = None
-        self.height = None
-        self.exterior_wall_def = None
-        self.interior_wall_def = None
-        self.facing = None
-    def __repr__(self):
-        msg = f"<STORYDEFINITION: origin:{self.origin}, width:{self.width}, depth:{self.depth}, height:{self.height}>"
-        return msg
 
-class Story():
-    def __init__(self, story_definition, parent_structure):
-        self.parent_structure = parent_structure
+class StoryDefinition(ComponentDefinition):
+    def __init__(self, template=None):
+        attributes = ['origin', 'width', 'depth', 'height', 'facing']
+        attributes += ['exterior_wall_def', 'interior_wall_def']
+        super().__init__(attributes, template)
+
+
+class Story(Component):
+    def __init__(self, story_definition):
         self.story_definition = story_definition
         self.walls = []
         self.floor = None # Ground class
         
         # BUGBUG: origin (and other properties) must be set by caller (i.e. don't set from parent)
         
-    def __repr__(self):
-        msg = f"STORY: def = {self.story_definition}, parent = {self.parent_structure}"
-        return msg
-    def add_wall(self, wall):
+    def add_wall(self, wall_definition):
+        print(f"STORY: Adding wall to story {self}")
+        wall = Wall(wall_definition, self)
         self.walls.append(wall)
+        return wall
     
     def build_wall(self, length, direction, wall_type):
         if len(self.walls) == 0:
@@ -432,33 +432,28 @@ class Story():
         
         self.walls = walls
         
-class StructureDefinition():
-    def __init__(self):
-        self.origin = None
-        self.width = None
-        self.depth = None
-        self.exterior_wall_material = None
-        self.exterior_wall_subtype = None
-        self.interior_wall_material = None
-        self.interior_wall_subtype = None
-        self.story_height = None
-        self.facing = None
-        
-class Structure():
-    def __init__(self, structure_definition, parent_site):
+class StructureDefinition(ComponentDefinition):
+    def __init__(self, template=None):
+        # Copy attributes from the template
+        attributes = ['origin', 'width', 'depth', 'story_height', 'facing']
+        attributes += ['exterior_wall_material', 'exterior_wall_subtype']
+        attributes += ['interior_wall_material', 'interior_wall_subtype']
+        attributes += ['foundation_material', 'foundation_subtype']
+        super().__init__(attributes, template)
+
+        # Default the origin to the space under the player
+        if self.origin is None:
+            self.origin = mc.player.getPos() - Vec3(0,1,0)
+
+class Structure(Component):
+    def __init__(self, structure_definition):
         sd = structure_definition
-        gd = parent_site.floor_definition
         
-        self.parent_site = parent_site
         self.structure_definition = sd
+        self.roof = None
         self.stories = []
-        
-        if sd.origin is None:
-            if parent_site is None:
-                sd.origin = Vec3(0,0,0)
-            else:
-                sd.origin = gd.origin + Vec3(gd.setback, 0, gd.setback)
-        
+        self.foundation = None
+
         # Create the foundation of the structure
         foundation_def = FloorDefinition()
         foundation_def.origin = sd.origin
@@ -471,39 +466,32 @@ class Structure():
         
         self.foundation = Floor(foundation_def)
         
-#BM_1
     def add_story(self, story_definition):
         print("STRUCTURE: add_story")
         story = Story(story_definition, self)
         self.stories.append(story)
         return story
-
         
-class FloorDefinition():
-    def __init__(self):
-        # Default the origin to the space under the player
-        self.origin = mc.player.getPos() - Vec3(0,1,0)
-        self.width = None
-        self.depth = None
-        self.height = None
-        self.thickness = None
-        self.base_material = None
-        self.base_material_subtype = None
     
-class Floor():
+class FloorDefinition(ComponentDefinition):
+    def __init__(self, template=None):
+        # Copy attributes from the template
+        attributes = ['origin', 'width', 'depth', 'height', 'thickness']
+        attributes += ['base_material', 'base_material_subtype']
+        super().__init__(attributes, template)
+
+        # Default the origin to the space under the player
+        if self.origin is None:
+            self.origin = mc.player.getPos() - Vec3(0,1,0)
+    
+class Floor(Component):
     def __init__(self, floor_definition):
         self.floor_definition = floor_definition
-        
+        floor_definition.name = "FLOOR"
         floor = Rectangle(floor_definition.depth, floor_definition.width, floor_definition.origin, 0)
         floor.tip()
         
         self.floor = floor
-
-    def __repr__(self):
-        sd = self.floor_definition
-        msg = f"Floor: width={sd.width}, depth={sd.depth}\n"
-        msg += f" thickness={sd.thickness}, material={sd.base_material} at {sd.origin}"
-        return msg
     
     def _draw_origin(self, material):
         origin_x, origin_y, origin_z = self.floor_definition.origin
@@ -529,8 +517,9 @@ class Site(Floor):
     def __init__(self, site_definition):
         self.structures = []
         super().__init__(site_definition)
+
     def add_structure(self, structure_definition):
-        house = Structure(structure_definition, self)
+        house = Structure(structure_definition)
         self.structures.append(house)
         return house
         
@@ -547,6 +536,7 @@ def main():
     
     # Define the parameters of the lot
     site_def = FloorDefinition()
+    site_def.name = "LOT_DEFINITION"
     site_def.origin = Vec3(0, 0, 0)
     site_def.width = 20
     site_def.height = 40
@@ -554,11 +544,11 @@ def main():
     site_def.thickness = 3
     site_def.setback = 5
     site_def.base_material = block.GRASS.id
-#    site_def.base_material_subtype = 1
-    
+    print(f"{site_def}")
+
     # Define the parameters of the house
     house_def = StructureDefinition()
-    house_def.origin = None
+    house_def.name = "HOUSE_DEFINITION"
     house_def.width = 7
     house_def.depth = 5
     house_def.story_height = 3
@@ -569,21 +559,30 @@ def main():
     house_def.interior_wall_material = block.SANDSTONE.id
     house_def.interior_wall_subtype = 1
     house_def.facing = Direction.East
-    
+    print(f"{house_def}")
+        
     story_def = StoryDefinition()
     # BUGBUG: Move assignment of these properties to the story class from the parent class
+    story_def.name = "STORY_DEFINITION"
     story_def.facing = house_def.facing
     story_def.width = house_def.width
     story_def.height = house_def.story_height
     story_def.origin = house_def.origin
-    
-    
+    print(story_def)
+
     # Define parameters for the walls
-    wall_definition = WallDefinition()
-    wall_material = block.WOOD_PLANKS.id
-    wall_material_subtype = 1
-    corner_material = block.WOOD.id
-    corner_material_subtype = 0
+    wall_def = WallDefinition()
+    wall_def.name = "EXTERIOR_WALL_DEFINITION"
+    wall_def.length = house_def.width
+    wall_def.height = house_def.story_height
+    wall_def.wall_type = WallType.Exterior
+    wall_def.material = block.WOOD_PLANKS.id
+    wall_def.material_subtype = 1
+    wall_def.corner_material = block.WOOD.id
+    wall_def.corner_material_subtype = 0
+    wall_def.origin = Vec3(0,0,0)
+    wall_def.xz_angle = Direction.North
+    print(f"{wall_def}")
 
     # Build out the lot
     lot = Site(site_def)
@@ -595,19 +594,16 @@ def main():
     house = lot.add_structure(house_def)
     house.foundation.clear()
     house.foundation._draw_origin(block.TNT.id)
+    print("Printing the house")
     print(house)
-    
-    story = house.add_story(story_def)
-    print(story)
-#    story._draw(block.MOSS_STONE.id)
-
+            
     if False:
-        wall = Wall(house_length, story_height, house_corner_stone, Direction.South)
-        wall.name = f"Wall1 {id(wall)}"
-        wall.set_wall_material(wall_material, wall_material_subtype)
-        wall.set_corner_material(corner_material, corner_material_subtype)
-    #bm_story1
-        story = Story(house_corner_stone, house_width, house_length, story_height, wall)
+        story = house.add_story(story_def)
+        print(story)
+    #    story._draw(block.MOSS_STONE.id)
+
+        wall = story.add_wall(wall_def)
+        wall._draw(block.BRICK_BLOCK.id)
         
         for wall in story.walls:
             print(f"{wall}")

@@ -190,7 +190,7 @@ class Rectangle(Component):
         midpoint_z = (self.opposite.z + self.origin.z)/2
         print(f"Calculated midpoint from {self.origin} to {self.opposite} as {midpoint_x}, {midpoint_y}, {midpoint_z}")
         return Vec3(midpoint_x, midpoint_y, midpoint_z)
-#bm_along
+
     def along(self, distance):
         '''
             Returns the x,y,z coordinate of a point along the bottom of a
@@ -269,13 +269,7 @@ class WallDefinition(ComponentDefinition):
     def __init__(self, template=None):
         attributes = ["origin", "length", "height","xz_angle","location"]
         super().__init__(attributes, template)
-        
-#        if self.xz_angle is None:
-#            self.xz_angle = self._set_angle()
-            
-#        if self.location is None:
-#            self.location = WallLocation.Front
-        
+                
     def _set_materials(self):
         if self.type == WallType.Exterior:
             self.material = block.GRASS.id # parent_story.parent_house.exterior_wall_material
@@ -379,7 +373,7 @@ class Wall(Rectangle):
     def clone(self):
         new_wall = Wall(self.length, self.height, self.origin.clone(), self.xz_angle)
         new_wall.set_wall_material(self.wall_material, self.wall_material_subtype)
-        new_wall.set_corner_material(self.corner_material, self.corner_material_subtype)
+        new_wall.set_cornerparent_wall_material(self.corner_material, self.corner_material_subtype)
         return new_wall
 
 
@@ -396,18 +390,11 @@ class Story(Component):
         self.walls = []
         self.floor = None # Ground class
         
-        # BUGBUG: origin (and other properties) must be set by caller (i.e. don't set from parent)
-        
     def add_wall(self, wall_definition):
-        print(f"STORY: Adding wall to story {self}")
-        wall = Wall(wall_definition, self)
+        wall = Wall(wall_definition)
         self.walls.append(wall)
         return wall
     
-    def build_wall(self, length, direction, wall_type):
-        if len(self.walls) == 0:
-            print("EXCEPTION: No existing wall definition")
-        
     def build_rectangle(self):
         ''' Creates a story with 4 exterior walls of prescribed length '''
         walls = []

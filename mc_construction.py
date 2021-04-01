@@ -1,4 +1,29 @@
-''' Template for writing scripts for Minecraft Pi '''
+'''
+Library for building houses in MineCraft Pi
+
+A build consists of several components (lot, house, floors, walls, ...)
+Each component inherits from the Component class which provides a
+base implementation for __init__ and __repr__
+
+A component is initialized with an instance of a "definition" object
+for that component type (e.g. WallDefinition for Wall).
+
+Setting attributes (e.g. origin) for a child component should occur
+in the add_<component> method of the parent class
+
+Order of operations for setting attributes:
+- Set default values (or None) in the __init__ of the definition class
+- Override default values to specific values on the definition instance
+- Set no overrides nor defaults in the __init__ for the component
+    - Use only the values from the definition class
+- For components created by a parent, use an add_<component> method on the parent
+    - Set values from the parent (e.g. direction, wall material) on the
+      template in the add_<component> method before creating the instance
+
+To do:
+
+
+'''
 from enum import Enum, IntEnum, unique
 from mcpi.minecraft import Minecraft
 from mcpi import block
@@ -233,12 +258,14 @@ class Rectangle(Component):
         self._calc_opposite_corners()
 
     def _draw(self, material, subtype=0):
-        ''' Draws the rectangle in MineCraft space
+        '''
+            Draws the rectangle in MineCraft space
             Material is specified as an integer or as a constant (e.g. block.GRASS.id)
             Subtype is an integer which affects certain material types as specified in the API
         '''
         x1, y1, z1 = self.origin
         x2, y2, z2 = self.opposite
+        print(f"RECTANGLE._draw {x1} {y1} {z1} {x2} {y2} {z2} {material} {subtype}")
         mc.setBlocks(x1, y1, z1, x2, y2, z2, material, subtype)
 
     def _draw_origin(self, material=None, subtype=0):
@@ -326,6 +353,7 @@ class Wall(Rectangle):
         # length, height, origin=None, xz_angle=0):
         wd = wall_definition
         super().__init__(wd.length, wd.height, wd.origin, wd.xz_angle)
+        self.wall_definition = wd
         self.doors = []
         self.windows = []
         self.wall_material = block.TNT.id
@@ -379,20 +407,20 @@ class Wall(Rectangle):
         self.corner_material = material
         self.corner_material_subtype = subtype
 
-    def _draw(self, material=None, subtype=0):
-        wd = self.wall_definiiton
+    def _draw(self, material=None, subtype=1):
+        wd = self.wall_definition
         if material is None:
-            material = wd.wall_material
-            subtype = wd.wall_material_subtype
+            material = wd.material
+            subtype = wd.material_subtype
         super()._draw(material, subtype)
         if hasattr(self, "corner_material"):
             ll_x, ll_y, ll_z = wd.origin
-            ur_x, ur_y, ur_z = wd.opposite
+            ur_x, ur_y, ur_z = self.opposite
 
             mc.setBlocks(ll_x, ll_y, ll_z, ll_x, ur_y, ll_z,
-                         self.corner_material, self.corner_material_subtype)
+                         wd.corner_material, wd.corner_material_subtype)
             mc.setBlocks(ur_x, ur_y, ur_z, ur_x, ll_y, ur_z,
-                         self.corner_material, self.corner_material_subtype)
+                         wd.corner_material, wd.corner_material_subtype)
         for door in self.doors:
             door._draw(block.AIR.id)
 
@@ -428,6 +456,8 @@ class Story(Component):
 
     def add_wall(self, wall_definition):
         ''' Creates a wall using a WallDefinition as a template, and adds it to the collection '''
+        if wall_definition.origin is None:
+            wall_definition.origin = self.story_definition.origin
         wall = Wall(wall_definition)
         self.walls.append(wall)
         return wall
@@ -456,6 +486,9 @@ class Story(Component):
 
         self.walls = walls
 
+    def _draw_origin(self, material, material_subtype=1):
+        x, y, z = self.story_definition.origin
+        mc.setBlock(x, y, z, material, material_subtype)
 
 class StructureDefinition(ComponentDefinition):
     ''' Class to define the attributes of a Structure object '''
@@ -471,7 +504,7 @@ class StructureDefinition(ComponentDefinition):
         # Default the origin to the space under the player
         if self.origin is None:
             self.origin = mc.player.getPos() - Vec3(0, 1, 0)
-
+#BM_3
 
 class Structure(Component):
     ''' Class to represent a Structure (e.g. a house) on a site '''
@@ -484,6 +517,9 @@ class Structure(Component):
         self.stories = []
         self.foundation = None
 
+    def add_foundation(self, material, material_subtype):
+        sd = self.structure_definition
+        
         # Create the foundation of the structure
         foundation_def = FloorDefinition()
         foundation_def.origin = sd.origin
@@ -491,18 +527,21 @@ class Structure(Component):
         foundation_def.depth = sd.depth
         foundation_def.height = 1
         foundation_def.thickness = 2
-        foundation_def.base_material = block.STONE.id
-        foundation_def.base_material_subtype = 1
+        foundation_def.xz_angle = sd.xz_angle
+        foundation_def.base_material = material
+        foundation_def.base_material_subtype = material_subtype
 
         self.foundation = Floor(foundation_def)
 
     def add_story(self, story_definition):
         print("STRUCTURE: add_story")
-        story = Story(story_definition, self)
+        if story_definition.origin is None:
+            story_definition.origin = self.structure_definition.origin + Vec3(0,1,0)
+        story = Story(story_definition)
         self.stories.append(story)
         return story
-
-
+    
+    
 class FloorDefinition(ComponentDefinition):
     ''' Class to define the attributes of a Floor object '''
 
@@ -521,10 +560,10 @@ class Floor(Component):
     ''' Class to represent a Floor for a Story, or Ground of a site '''
 
     def __init__(self, floor_definition):
-        self.floor_definition = floor_definition
-        floor_definition.name = "FLOOR"
-        floor = Rectangle(floor_definition.depth,
-                          floor_definition.width, floor_definition.origin, 0)
+        fd = floor_definition
+        self.floor_definition = fd
+        fd.name = "FLOOR"
+        floor = Rectangle(fd.depth, fd.width, fd.origin, fd.xz_angle)
         floor.tip()
 
         self.floor = floor
@@ -549,13 +588,16 @@ class Floor(Component):
         if fd.height > 1:
             mc.setBlocks(x1, y1+1, z1, x2, y1+fd.height-1, z2, block.AIR.id)
 
-
+#BM_1
 class Site(Floor):
     def __init__(self, site_definition):
         self.structures = []
         super().__init__(site_definition)
 
     def add_structure(self, structure_definition):
+        ''' Add a structure (e.g. house) to the site '''
+        if structure_definition.origin is None:
+            structure_definition.origin = self.floor_definition.origin + Vec3(self.floor_definition.setback, 0, self.floor_definition.setback)
         house = Structure(structure_definition)
         self.structures.append(house)
         return house
@@ -571,10 +613,12 @@ def main():
     ''' Main function '''
     mc.postToChat(f"Player is at {mc.player.getPos()}")
 
-    # Define the parameters of the lot
+
+    # Build out the lot
     site_def = FloorDefinition()
     site_def.name = "LOT_DEFINITION"
     site_def.origin = Vec3(0, 0, 0)
+    site_def.xz_angle = Direction.North
     site_def.width = 20
     site_def.height = 40
     site_def.depth = 30
@@ -583,9 +627,16 @@ def main():
     site_def.base_material = block.GRASS.id
     print(f"{site_def}")
 
+    lot = Site(site_def)
+    lot.clear()
+    lot._draw_origin(block.GRASS.id)
+    print(lot)
+
+    # Build out the house foundation
     # Define the parameters of the house
     house_def = StructureDefinition()
     house_def.name = "HOUSE_DEFINITION"
+    house_def.origin = None
     house_def.width = 7
     house_def.depth = 5
     house_def.story_height = 3
@@ -596,7 +647,14 @@ def main():
     house_def.interior_wall_material = block.SANDSTONE.id
     house_def.interior_wall_subtype = 1
     house_def.facing = Direction.East
+    house_def.xz_angle = Direction.South # BUGBUG: Remove this
     print(f"{house_def}")
+
+    house = lot.add_structure(house_def)
+    house.add_foundation(block.STONE.id, 1)
+    house.foundation.clear()
+    house.foundation._draw_origin(block.TNT.id)
+    print(house)
 
     story_def = StoryDefinition()
     # BUGBUG: Move assignment of these properties to the story class from the parent class
@@ -604,8 +662,12 @@ def main():
     story_def.facing = house_def.facing
     story_def.width = house_def.width
     story_def.height = house_def.story_height
-    story_def.origin = house_def.origin
+    story_def.origin = None
     print(story_def)
+    
+    first_floor = house.add_story(story_def)
+    print(first_floor)
+    first_floor._draw_origin(block.WOOL.id)
 
     # Define parameters for the walls
     wall_def = WallDefinition()
@@ -617,24 +679,26 @@ def main():
     wall_def.material_subtype = 1
     wall_def.corner_material = block.WOOD.id
     wall_def.corner_material_subtype = 0
-    wall_def.origin = Vec3(0, 0, 0)
-    wall_def.xz_angle = Direction.North
+    wall_def.origin = None
+    wall_def.xz_angle = Direction.South
     print(f"{wall_def}")
+    wall = first_floor.add_wall(wall_def)
+    wall._draw()
+    
+    wall_def.xz_angle = Direction.East
+    wall = first_floor.add_wall(wall_def)
+    wall._draw()
 
-    # Build out the lot
-    lot = Site(site_def)
-    lot.clear()
-    lot._draw_origin(block.GRASS.id)
-    print(lot)
+    wall_def.xz_angle = Direction.West
+    wall = first_floor.add_wall(wall_def)
+    wall._draw()
 
-    # Build out the house foundation
-    house = lot.add_structure(house_def)
-    house.foundation.clear()
-    house.foundation._draw_origin(block.TNT.id)
-    print("Printing the house")
-    print(house)
+    
 
     if False:
+#    x,y,z = site_def.origin
+#    mc.player.setPos(0,0,0)
+
         story = house.add_story(story_def)
         print(story)
     #    story._draw(block.MOSS_STONE.id)

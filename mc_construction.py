@@ -231,8 +231,9 @@ class Rectangle(Component):
         midpoint_x = (self.opposite.x + self.origin.x)/2
         midpoint_y = (self.opposite.y + self.origin.y)/2
         midpoint_z = (self.opposite.z + self.origin.z)/2
-        print(
-            f"Calculated midpoint from {self.origin} to {self.opposite} as {midpoint_x}, {midpoint_y}, {midpoint_z}")
+        msg = f"Calculated midpoint from {self.origin} to {self.opposite}"
+        msg += f"as {midpoint_x}, {midpoint_y}, {midpoint_z}"
+        print(msg)
         return Vec3(midpoint_x, midpoint_y, midpoint_z)
 
     def along(self, distance):

@@ -35,8 +35,8 @@ def main():
 
     direction = Direction.North
     for rotation in range(0, 4):
-        direction = direction.rotate_left()
-        print(f"{direction}")
+        direction = None
+        print(f"{rotation}, {direction}")
 
 
 if __name__ == '__main__':

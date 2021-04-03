@@ -103,12 +103,12 @@ class ComponentDefinition():
 
     def __init__(self, attribute_list=[], template=None):
         # Copy attributes from the template
+        # BUGBUG: Add default values to attribute list (changte to a dictionary)
+        common_attributes = ['name']
+        
+        attribute_list += common_attributes
         for attribute in attribute_list:
             setattr(self, attribute, getattr(template, attribute, None))
-
-        # Default the origin to the space under the player
-        if self.origin is None:
-            self.origin = mc.player.getPos() - Vec3(0, 1, 0)
 
     def __repr__(self):
         msg = f"{type(self).__name__}\n"
@@ -121,6 +121,10 @@ class Component():
     '''
     Provides a base class implementation of __repr__ to enumerage attributes
     '''
+    def _copy_definition(self, definition):
+        for attribute in definition.__dict__:
+            print(f"COPYDEFINITION: {attribute} = {getattr(definition, attribute, None)}")
+            setattr(self, attribute, getattr(definition, attribute, None))
 
     def __repr__(self):
         msg = f"{type(self).__name__}\n"
@@ -321,7 +325,15 @@ class WallDefinition(ComponentDefinition):
 
     def __init__(self, template=None):
         attributes = ["origin", "length", "height", "xz_angle", "location"]
+
         super().__init__(attributes, template)
+
+        # Default the origin to the space under the player
+        if self.origin is None:
+            self.origin = mc.player.getPos() - Vec3(0, 1, 0)
+            print(f"WALLDEFINITION: Defaulting origin to {self.origin}")
+            fail
+
 
     def _set_materials(self):
         if self.type == WallType.Exterior:
@@ -352,16 +364,17 @@ class Wall(Rectangle):
 
     def __init__(self, wall_definition):
         # length, height, origin=None, xz_angle=0):
-        wd = wall_definition
-        super().__init__(wd.length, wd.height, wd.origin, wd.xz_angle)
-        self.wall_definition = wd
+        self._copy_definition(wall_definition)
+#        wd = wall_definition
+        super().__init__(self.length, self.height, self.origin, self.xz_angle)
+#        self.wall_definition = wd
         self.doors = []
         self.windows = []
-        self.wall_material = block.TNT.id
-        self.wall_material_subtype = 1
-        self.corner_material = block.WOOL.id
-        self.corner_subtype = 1
-        self.wall_type = WallType.Exterior
+#        self.wall_material = block.TNT.id
+#        self.wall_material_subtype = 1
+#        self.corner_material = block.WOOL.id
+#        self.corner_subtype = 1
+#        self.wall_type = WallType.Exterior
 
     def add_door(self, position=None):
         ''' Position is relative to the origin of the parent wall '''
@@ -409,19 +422,19 @@ class Wall(Rectangle):
         self.corner_material_subtype = subtype
 
     def _draw(self, material=None, subtype=1):
-        wd = self.wall_definition
+#        wd = self.wall_definition
         if material is None:
-            material = wd.material
-            subtype = wd.material_subtype
+            material = self.material
+            subtype = self.material_subtype
         super()._draw(material, subtype)
-        if hasattr(self, "corner_material"):
-            ll_x, ll_y, ll_z = wd.origin
+        if not (getattr(self, "corner_material", None) is None):
+            ll_x, ll_y, ll_z = self.origin
             ur_x, ur_y, ur_z = self.opposite
 
             mc.setBlocks(ll_x, ll_y, ll_z, ll_x, ur_y, ll_z,
-                         wd.corner_material, wd.corner_material_subtype)
+                         self.corner_material, self.corner_material_subtype)
             mc.setBlocks(ur_x, ur_y, ur_z, ur_x, ll_y, ur_z,
-                         wd.corner_material, wd.corner_material_subtype)
+                         self.corner_material, self.corner_material_subtype)
         for door in self.doors:
             door._draw(block.AIR.id)
 
@@ -685,6 +698,7 @@ def main():
     print(f"{wall_def}")
     wall = first_floor.add_wall(wall_def)
     wall._draw()
+    fail
     
     wall_def.xz_angle = Direction.East
     wall = first_floor.add_wall(wall_def)

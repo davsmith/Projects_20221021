@@ -602,6 +602,7 @@ class Floor(Component):
         fd = floor_definition
 #        self.floor_definition = fd
         fd.name = "FLOOR"
+        # BUGBUG: Call __init__ on the parent then tip on self
         floor = Rectangle(self.depth, self.width, self.origin, self.xz_angle)
         floor.tip()
 
@@ -629,12 +630,14 @@ class Floor(Component):
 
 #BM_1
 class Site(Floor):
+    #BUGBUG: Review how a site_definition can be used here.  Is it a FloorDefinition?
     def __init__(self, site_definition):
         self.structures = []
         super().__init__(site_definition)
 
     def add_structure(self, structure_definition):
         ''' Add a structure (e.g. house) to the site '''
+        # BUGBUG:  Make sure this is consistent with other Components
         if structure_definition.origin is None:
             structure_definition.origin = self.origin + Vec3(self.setback, 0, self.setback)
         house = Structure(structure_definition)

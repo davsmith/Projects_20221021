@@ -101,11 +101,11 @@ class ComponentDefinition():
     and enumerates the attributes through __repr__
     '''
 
-    def __init__(self, attribute_list=[], template=None):
+    def __init__(self, attribute_list=None, template=None):
         # Copy attributes from the template
         # BUGBUG: Add default values to attribute list (changte to a dictionary)
         common_attributes = ['name']
-        
+
         attribute_list += common_attributes
         for attribute in attribute_list:
             setattr(self, attribute, getattr(template, attribute, None))
@@ -121,9 +121,11 @@ class Component():
     '''
     Provides a base class implementation of __repr__ to enumerage attributes
     '''
+
     def _copy_definition(self, definition):
         for attribute in definition.__dict__:
-            print(f"COPYDEFINITION: {attribute} = {getattr(definition, attribute, None)}")
+            print(
+                f"COPYDEFINITION: {attribute} = {getattr(definition, attribute, None)}")
             setattr(self, attribute, getattr(definition, attribute, None))
 
     def __repr__(self):
@@ -237,7 +239,7 @@ class Rectangle(Component):
 
     def midpoint(self):
         ''' Returns the mid-point of a rectangle as a 3-d vector '''
-        #BUGBUG: Make this a property
+        # BUGBUG: Make this a property
         midpoint_x = (self.opposite.x + self.origin.x)/2
         midpoint_y = (self.opposite.y + self.origin.y)/2
         midpoint_z = (self.opposite.z + self.origin.z)/2
@@ -276,7 +278,8 @@ class Rectangle(Component):
         '''
         x1, y1, z1 = self.origin
         x2, y2, z2 = self.opposite
-        print(f"RECTANGLE._draw {x1} {y1} {z1} {x2} {y2} {z2} {material} {subtype}")
+        print(
+            f"RECTANGLE._draw {x1} {y1} {z1} {x2} {y2} {z2} {material} {subtype}")
         mc.setBlocks(x1, y1, z1, x2, y2, z2, material, subtype)
 
     def _draw_origin(self, material=None, subtype=0):
@@ -340,7 +343,7 @@ class WallDefinition(ComponentDefinition):
         if self.origin is None:
             self.origin = mc.player.getPos() - Vec3(0, 1, 0)
             print(f"WALLDEFINITION: Defaulting origin to {self.origin}")
-        
+
     def _set_materials(self):
         if self.type == WallType.Exterior:
             self.material = block.GRASS.id  # parent_story.parent_house.exterior_wall_material
@@ -428,7 +431,7 @@ class Wall(Rectangle):
         self.corner_material_subtype = subtype
 
     def _draw(self, material=None, subtype=1):
-#        wd = self.wall_definition
+        #        wd = self.wall_definition
         if material is None:
             material = self.material
             subtype = self.material_subtype
@@ -459,8 +462,8 @@ class Wall(Rectangle):
 
 class StoryDefinition(ComponentDefinition):
     ''' Class to define the attributes of a Story object '''
-    #BUGBUG: Make sure all ComponentDefinitions follow this pattern.
-    #BUGBUG:      Declare attributes to initialize, call parent __init__ to assign values from template
+    # BUGBUG: Make sure all ComponentDefinitions follow this pattern.
+    # BUGBUG:      Declare attributes to initialize, call parent __init__ to assign values from template
 
     def __init__(self, template=None):
         attributes = ['origin', 'width', 'depth', 'height', 'facing']
@@ -489,7 +492,7 @@ class Story(Component):
                 wall_definition.origin = self.story_definition.origin
             else:
                 print(f"Getting origin from previous wall")
-                
+
         wall = Wall(wall_definition)
         self.walls.append(wall)
         return wall
@@ -522,6 +525,7 @@ class Story(Component):
         x, y, z = self.story_definition.origin
         mc.setBlock(x, y, z, material, material_subtype)
 
+
 class StructureDefinition(ComponentDefinition):
     ''' Class to define the attributes of a Structure object '''
 
@@ -540,13 +544,14 @@ class StructureDefinition(ComponentDefinition):
         # BUGBUG: Is this a best practice?  If so, confirm other definition classes
         if self.origin is None:
             self.origin = mc.player.getPos() - Vec3(0, 1, 0)
-#BM_3
+# BM_3
+
 
 class Structure(Component):
     ''' Class to represent a Structure (e.g. a house) on a site '''
 
     def __init__(self, structure_definition):
-        #BUGBUG: Fix to call _copy_definition and __init__ for parent
+        # BUGBUG: Fix to call _copy_definition and __init__ for parent
         sd = structure_definition
 
         self.structure_definition = sd
@@ -557,7 +562,7 @@ class Structure(Component):
     def add_foundation(self, material, material_subtype):
         # BUGBUG: Make this consistent with add_wall and/or add_story
         sd = self.structure_definition
-        
+
         # Create the foundation of the structure
         foundation_def = FloorDefinition()
         foundation_def.origin = sd.origin
@@ -574,12 +579,13 @@ class Structure(Component):
     def add_story(self, story_definition):
         print("STRUCTURE: add_story")
         if story_definition.origin is None:
-            story_definition.origin = self.structure_definition.origin + Vec3(0,1,0)
+            story_definition.origin = self.structure_definition.origin + \
+                Vec3(0, 1, 0)
         story = Story(story_definition)
         self.stories.append(story)
         return story
-    
-    
+
+
 class FloorDefinition(ComponentDefinition):
     ''' Class to define the attributes of a Floor object '''
 
@@ -619,18 +625,21 @@ class Floor(Component):
             floor_material_subtype = self.base_material_subtype
 
         x1, y1, z1 = self.origin
-        x2, y2, z2 = self.origin + Vec3(self.depth-1, -self.thickness+1, self.width-1)
+        x2, y2, z2 = self.origin + \
+            Vec3(self.depth-1, -self.thickness+1, self.width-1)
 
         mc.setBlocks(x1, y1, z1, x2, y2, z2,
                      floor_material, floor_material_subtype)
 
-        # Clear out the space above the area of the horizontal plane        
+        # Clear out the space above the area of the horizontal plane
         if self.height > 1:
             mc.setBlocks(x1, y1+1, z1, x2, y1+self.height-1, z2, block.AIR.id)
 
-#BM_1
+# BM_1
+
+
 class Site(Floor):
-    #BUGBUG: Review how a site_definition can be used here.  Is it a FloorDefinition?
+    # BUGBUG: Review how a site_definition can be used here.  Is it a FloorDefinition?
     def __init__(self, site_definition):
         self.structures = []
         super().__init__(site_definition)
@@ -639,7 +648,8 @@ class Site(Floor):
         ''' Add a structure (e.g. house) to the site '''
         # BUGBUG:  Make sure this is consistent with other Components
         if structure_definition.origin is None:
-            structure_definition.origin = self.origin + Vec3(self.setback, 0, self.setback)
+            structure_definition.origin = self.origin + \
+                Vec3(self.setback, 0, self.setback)
         house = Structure(structure_definition)
         self.structures.append(house)
         return house
@@ -654,7 +664,6 @@ def bump_player():
 def main():
     ''' Main function '''
     mc.postToChat(f"Player is at {mc.player.getPos()}")
-
 
     # Build out the lot
     site_def = FloorDefinition()
@@ -674,7 +683,6 @@ def main():
     lot._draw_origin(block.TNT.id)
     print(lot)
 
-
     # Build out the house foundation
     # Define the parameters of the house
     house_def = StructureDefinition()
@@ -690,7 +698,7 @@ def main():
     house_def.interior_wall_material = block.SANDSTONE.id
     house_def.interior_wall_subtype = 1
     house_def.facing = Direction.East
-    house_def.xz_angle = Direction.South # BUGBUG: Remove this
+    house_def.xz_angle = Direction.South  # BUGBUG: Remove this
     print(f"{house_def}")
 
     house = lot.add_structure(house_def)
@@ -707,7 +715,7 @@ def main():
     story_def.height = house_def.story_height
     story_def.origin = None
     print(story_def)
-    
+
     first_floor = house.add_story(story_def)
     print(first_floor)
     first_floor._draw_origin(block.WOOL.id)
@@ -729,7 +737,7 @@ def main():
     wall = first_floor.add_wall(wall_def)
     wall._draw()
     print(wall)
-    
+
     wall_def.xz_angle = Direction.East
     wall = first_floor.add_wall(wall_def)
     wall._draw()
@@ -738,11 +746,9 @@ def main():
     wall = first_floor.add_wall(wall_def)
     wall._draw()
 
-    
-
     if False:
-#    x,y,z = site_def.origin
-#    mc.player.setPos(0,0,0)
+        #    x,y,z = site_def.origin
+        #    mc.player.setPos(0,0,0)
 
         story = house.add_story(story_def)
         print(story)

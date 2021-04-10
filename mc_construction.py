@@ -102,9 +102,15 @@ class ComponentDefinition():
     '''
 
     def __init__(self, attribute_list=None, template=None):
-        # Copy attributes from the template
-        # BUGBUG: Add default values to attribute list (changte to a dictionary)
+        # Copy exclusively the specified attributes from the template
+        # If a specified attribute doesn't exist on the template, the
+        # attribute is initialized to None
+
+        # BUGBUG: Make common_attributes a NV pair with default values
         common_attributes = ['name']
+
+        if attribute_list is None:
+            attribute_list = []
 
         attribute_list += common_attributes
         for attribute in attribute_list:
@@ -133,6 +139,17 @@ class Component():
         for attribute in self.__dict__:
             msg += f"  {attribute}:{getattr(self, attribute, '<undefined>')}\n"
         return msg
+
+# BM_1
+
+
+class RectangleDefinition(ComponentDefinition):
+    ''' Defines the attributes for a rectangle '''
+
+    def __init__(self, temlplate):
+        attributes = ['length', 'height', 'origin', 'xz_angle', 'xy_angle']
+        attributes += ['tipped']
+        super().__init__(attributes, template)
 
 
 class Rectangle(Component):
@@ -294,7 +311,7 @@ class Rectangle(Component):
 
 
 class Opening(Rectangle):
-    ''' 
+    '''
     A rectangle object to represent a door, window or other space in a wall
     relative_x is distance relative to the origin of the parent wall (1 is left side)
     relative_y is distance relative to the bottom of the wall (1 is bottom)
@@ -461,9 +478,11 @@ class Wall(Rectangle):
 
 
 class StoryDefinition(ComponentDefinition):
+    # BM_2
     ''' Class to define the attributes of a Story object '''
     # BUGBUG: Make sure all ComponentDefinitions follow this pattern.
-    # BUGBUG:      Declare attributes to initialize, call parent __init__ to assign values from template
+    # BUGBUG:      Declare attributes to initialize, call super __init__
+    # BUGBUG:        to assign values from template
 
     def __init__(self, template=None):
         attributes = ['origin', 'width', 'depth', 'height', 'facing']
@@ -634,8 +653,6 @@ class Floor(Component):
         # Clear out the space above the area of the horizontal plane
         if self.height > 1:
             mc.setBlocks(x1, y1+1, z1, x2, y1+self.height-1, z2, block.AIR.id)
-
-# BM_1
 
 
 class Site(Floor):

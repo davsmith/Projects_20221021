@@ -146,7 +146,7 @@ class Component():
 class RectangleDefinition(ComponentDefinition):
     ''' Defines the attributes for a rectangle '''
 
-    def __init__(self, temlplate):
+    def __init__(self, template):
         attributes = ['length', 'height', 'origin', 'xz_angle', 'xy_angle']
         attributes += ['tipped']
         super().__init__(attributes, template)

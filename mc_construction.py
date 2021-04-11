@@ -31,6 +31,7 @@ from mcpi.vec3 import Vec3
 import mcpi
 import math
 import time
+from mc_test_data import *
 
 print(mcpi)
 mc = Minecraft.create()
@@ -163,12 +164,6 @@ class Rectangle(Component):
         super()._copy_definition(definition)
         self._calc_opposite_corners()
 
-    def clone(self):
-        ''' Creates a copy of the rectangle with the same dimensions '''
-        # The clone method is called on the origin so that the new wall has a copy of
-        # the origin rather than a reference to the same origin
-        return Rectangle(self.length, self.height, self.origin.clone(), self.xz_angle)
-
     def _calc_opposite_corners(self):
         ''' Calculates the opposite corner on the rectange based on origin, length and angle.
             In MineCraft space, the axes are different than convention, so:
@@ -279,7 +274,7 @@ class Rectangle(Component):
         self._calc_opposite_corners()
 
     def tip(self):
-        ''' Tips a rectangle from the vertical plane to the horizaontal plane '''
+        ''' Tips a rectangle to the East or South horizontal plane '''
         self.tipped = True
         self._calc_opposite_corners()
 
@@ -302,6 +297,70 @@ class Rectangle(Component):
             subtype = 1
         x1, y1, z1 = self.origin
         mc.setBlock(x1, y1, z1, material, subtype)
+
+
+class FloorDefinition(ComponentDefinition):
+    ''' Class to define the attributes of a Floor object '''
+
+    def __init__(self, template=None):
+        # Copy attributes from the template
+        attributes = ['origin', 'width', 'depth', 'height', 'thickness']
+        attributes += ['base_material', 'base_material_subtype']
+        super().__init__(attributes, template)
+
+        # Default the origin to the space under the player
+        if self.origin is None:
+            self.origin = mc.player.getPos() - Vec3(0, 1, 0)
+
+
+class Floor(Component):
+    ''' Base class to represent the horizontal plane for a floor, site, or foundation '''
+
+    def __init__(self, floor_definition):
+        self._copy_definition(floor_definition)
+
+        floor = Rectangle(floor_definition)
+        floor.tip()
+
+#        self.floor = floor
+
+    def _draw_origin(self, material):
+        origin_x, origin_y, origin_z = self.origin
+        mc.setBlock(origin_x, origin_y, origin_z, material)
+        print(f"Floor origin is at {origin_x},{origin_y},{origin_z}")
+
+    def clear(self, floor_material=None, floor_material_subtype=None):
+        if floor_material is None:
+            floor_material = self.base_material
+            floor_material_subtype = self.base_material_subtype
+
+        x1, y1, z1 = self.origin
+        x2, y2, z2 = self.origin + \
+            Vec3(self.depth-1, -self.thickness+1, self.width-1)
+
+        mc.setBlocks(x1, y1, z1, x2, y2, z2,
+                     floor_material, floor_material_subtype)
+
+        # Clear out the space above the area of the horizontal plane
+        if self.height > 1:
+            mc.setBlocks(x1, y1+1, z1, x2, y1+self.height-1, z2, block.AIR.id)
+
+
+class Site(Floor):
+    # BUGBUG: Review how a site_definition can be used here.  Is it a FloorDefinition?
+    def __init__(self, site_definition):
+        self.structures = []
+        super().__init__(site_definition)
+
+    def add_structure(self, structure_definition):
+        ''' Add a structure (e.g. house) to the site '''
+        # BUGBUG:  Make sure this is consistent with other Components
+        if structure_definition.origin is None:
+            structure_definition.origin = self.origin + \
+                Vec3(self.setback, 0, self.setback)
+        house = Structure(structure_definition)
+        self.structures.append(house)
+        return house
 
 # BM_1
 
@@ -609,70 +668,6 @@ class Structure(Component):
         return story
 
 
-class FloorDefinition(ComponentDefinition):
-    ''' Class to define the attributes of a Floor object '''
-
-    def __init__(self, template=None):
-        # Copy attributes from the template
-        attributes = ['origin', 'width', 'depth', 'height', 'thickness']
-        attributes += ['base_material', 'base_material_subtype']
-        super().__init__(attributes, template)
-
-        # Default the origin to the space under the player
-        if self.origin is None:
-            self.origin = mc.player.getPos() - Vec3(0, 1, 0)
-
-
-class Floor(Component):
-    ''' Base class to represent the horizontal plane for a floor, site, or foundation '''
-
-    def __init__(self, floor_definition):
-        self._copy_definition(floor_definition)
-
-        floor = Rectangle(floor_definition)
-        floor.tip()
-
-#        self.floor = floor
-
-    def _draw_origin(self, material):
-        origin_x, origin_y, origin_z = self.origin
-        mc.setBlock(origin_x, origin_y, origin_z, material)
-        print(f"Floor origin is at {origin_x},{origin_y},{origin_z}")
-
-    def clear(self, floor_material=None, floor_material_subtype=None):
-        if floor_material is None:
-            floor_material = self.base_material
-            floor_material_subtype = self.base_material_subtype
-
-        x1, y1, z1 = self.origin
-        x2, y2, z2 = self.origin + \
-            Vec3(self.depth-1, -self.thickness+1, self.width-1)
-
-        mc.setBlocks(x1, y1, z1, x2, y2, z2,
-                     floor_material, floor_material_subtype)
-
-        # Clear out the space above the area of the horizontal plane
-        if self.height > 1:
-            mc.setBlocks(x1, y1+1, z1, x2, y1+self.height-1, z2, block.AIR.id)
-
-
-class Site(Floor):
-    # BUGBUG: Review how a site_definition can be used here.  Is it a FloorDefinition?
-    def __init__(self, site_definition):
-        self.structures = []
-        super().__init__(site_definition)
-
-    def add_structure(self, structure_definition):
-        ''' Add a structure (e.g. house) to the site '''
-        # BUGBUG:  Make sure this is consistent with other Components
-        if structure_definition.origin is None:
-            structure_definition.origin = self.origin + \
-                Vec3(self.setback, 0, self.setback)
-        house = Structure(structure_definition)
-        self.structures.append(house)
-        return house
-
-
 def bump_player():
     ''' Offsets player position by 1 in all directions '''
     player_x, player_y, player_z = mc.player.getPos()
@@ -680,28 +675,37 @@ def bump_player():
 
 
 def debug_clear_space():
-    mc.player.setPos(15, 0, 5)
-    mc.setBlocks(-100, -5, -100, 100, 0, 100, block.GRASS.id)
-    mc.setBlocks(-50, 0, -50, 50, 50, 50, block.AIR.id)
+    x1 = -(TEST_SITE_E_BOUND * TEST_WORLD_RATIO)
+    y1 = -(TEST_SITE_DEPTH)
+    z1 = -(TEST_SITE_S_BOUND * TEST_WORLD_RATIO)
+    x2 = TEST_SITE_E_BOUND * TEST_WORLD_RATIO
+    y2 = TEST_SITE_DEPTH * 10
+    z2 = TEST_SITE_S_BOUND * TEST_WORLD_RATIO
+    mc.setBlocks(x1, y1, z1, x2, TEST_ORIGIN_Y, z2, block.GRASS.id)
+    mc.setBlocks(x1, TEST_ORIGIN_Y, z1,
+                 x2, y2, z2, block.AIR.id)
+    mc.player.setPos(TEST_ORIGIN_X - 5, TEST_ORIGIN_Y, TEST_ORIGIN_Z - 5)
 
 def test_rectangle_directions():
     mc.postToChat("Testing rectangle directions")
     mc.postToChat("Confirm 4 rectangles with red pointing North")
 
     rectangle_basics = [
-        {"direction": Direction.South, "material": block.WOOL.id, "subtype": 11},
-        {"direction": Direction.North,
-         "material": block.WOOL.id, "subtype": 14},
-        {"direction": Direction.East,
-         "material": block.WOOL.id, "subtype": 11},
-        {"direction": Direction.West,
-         "material": block.WOOL.id, "subtype": 11},
+        {"direction": Direction.South, "material": block.WOOL.id, "subtype": TEST_RED},
+        {"direction": Direction.North, "material": block.WOOL.id, "subtype": TEST_BLUE},
+        {"direction": Direction.East,  "material": block.WOOL.id, "subtype": TEST_BLUE},
+        {"direction": Direction.West,  "material": block.WOOL.id, "subtype": TEST_BLUE},
     ]
+    
+    o_x = TEST_ORIGIN_X
+    o_y = TEST_ORIGIN_Y
+    o_z = TEST_ORIGIN_Z
+    
     for _definition in rectangle_basics:
         rectangle_definition = RectangleDefinition()
-        rectangle_definition.origin = Vec3(20, 0, 10)
-        rectangle_definition.length = 5
-        rectangle_definition.height = 3
+        rectangle_definition.origin = Vec3(o_x, o_y, o_z)
+        rectangle_definition.length = TEST_WALL_LENGTH
+        rectangle_definition.height = TEST_WALL_HEIGHT
         rectangle_definition.xz_angle = _definition["direction"]
         rec = Rectangle(rectangle_definition)
         rec.draw(_definition["material"], _definition["subtype"])
@@ -710,22 +714,22 @@ def test_rectangle_directions():
 
 def test_tipped_rectangles():
     mc.postToChat("Testing tipped rectangles")
-    mc.postToChat("Confirm 4 'couch' structures.  2 South, 2 East.")
+    mc.postToChat("Confirm 4 'couch' structures.  2 South, 2 East")
 
     rectangle_basics = [
-        {"direction": Direction.South, "material": block.WOOL.id, "subtype": 11},
-        {"direction": Direction.North, "material": block.WOOL.id, "subtype": 14},
-        {"direction": Direction.East,  "material": block.WOOL.id, "subtype": 11},
-        {"direction": Direction.West,  "material": block.WOOL.id, "subtype": 11},
+        {"direction": Direction.South, "material": block.WOOL.id, "subtype": TEST_RED},
+        {"direction": Direction.North, "material": block.WOOL.id, "subtype": TEST_RED},
+        {"direction": Direction.East,  "material": block.WOOL.id, "subtype": TEST_BLUE},
+        {"direction": Direction.West,  "material": block.WOOL.id, "subtype": TEST_BLUE},
     ]
-    origin_x = 20
-    origin_y = 0
-    origin_z = 10
+    origin_x = TEST_ORIGIN_X
+    origin_y = TEST_ORIGIN_Y
+    origin_z = TEST_ORIGIN_Z
     for _definition in rectangle_basics:
         rectangle_definition = RectangleDefinition()
         rectangle_definition.origin = Vec3(origin_x, origin_y, origin_z)
-        rectangle_definition.length = 5
-        rectangle_definition.height = 3
+        rectangle_definition.length = TEST_WALL_LENGTH
+        rectangle_definition.height = TEST_WALL_HEIGHT
         rectangle_definition.xz_angle = _definition["direction"]
         rec_vertical = Rectangle(rectangle_definition)
         rec_tipped = Rectangle(rectangle_definition)
@@ -738,12 +742,134 @@ def test_tipped_rectangles():
         
         origin_z -= 10
 
+#bm_tests
+def test_rectangle_rotate():
+    mc.postToChat("Testing rectangle rotate methods")
+
+    rectangle_basics = [
+        {"direction": Direction.South, "material": block.WOOL.id, "subtype": TEST_RED},
+        {"direction": Direction.North, "material": block.WOOL.id, "subtype": TEST_RED},
+        {"direction": Direction.East,  "material": block.WOOL.id, "subtype": TEST_BLUE},
+        {"direction": Direction.West,  "material": block.WOOL.id, "subtype": TEST_BLUE},
+    ]
+    origin_x = TEST_ORIGIN_X
+    origin_y = TEST_ORIGIN_Y
+    origin_z = TEST_ORIGIN_Z
+    _definition = rectangle_basics[0]
+
+    rectangle_definition = RectangleDefinition()
+    rectangle_definition.origin = Vec3(origin_x, origin_y, origin_z)
+    rectangle_definition.length = TEST_WALL_LENGTH
+    rectangle_definition.height = TEST_WALL_HEIGHT
+    rectangle_definition.xz_angle = _definition["direction"]
+    rec_left = Rectangle(rectangle_definition)
+    
+    origin_x -= 10
+    rectangle_definition.origin = Vec3(origin_x, origin_y, origin_z)
+    rec_right = Rectangle(rectangle_definition)    
+
+    origin_x -= 10
+    rectangle_definition.origin = Vec3(origin_x, origin_y, origin_z)
+    rec_flip = Rectangle(rectangle_definition)    
+
+    origin_x -= 10
+    rectangle_definition.origin = Vec3(origin_x, origin_y, origin_z)
+    rec_flip_origin = Rectangle(rectangle_definition)    
+
+    rec_left.draw(TEST_MATERIAL, TEST_RED)
+    rec_left._draw_origin()
+    
+    rec_left.rotateLeft()
+    rec_left.draw(TEST_MATERIAL, TEST_BLUE)
+
+    rec_left.rotateLeft()
+    rec_left.draw(TEST_MATERIAL, TEST_YELLOW)
+
+    rec_right.draw(TEST_MATERIAL, TEST_RED)
+    rec_right._draw_origin()
+    
+    rec_right.rotateRight()
+    rec_right.draw(TEST_MATERIAL, TEST_BLUE)
+
+    rec_right.rotateRight()
+    rec_right.draw(TEST_MATERIAL, TEST_YELLOW)
+
+    rec_flip.draw(TEST_MATERIAL, TEST_RED)
+    rec_flip._draw_origin()
+    
+    rec_flip.flip()
+    rec_flip.draw(TEST_MATERIAL, TEST_BLUE)
+    rec_flip._draw_origin()
+    
+    rec_flip_origin.draw(TEST_MATERIAL, TEST_RED)
+    rec_flip_origin._draw_origin()
+
+    rec_flip_origin.flip_origin()
+    rec_flip_origin.shift(-2)
+    
+    rec_flip_origin.draw(TEST_MATERIAL, TEST_BLUE)
+    rec_flip_origin._draw_origin()
+
+def test_rectangle_math():
+    mc.postToChat("Testing rectangle math")
+
+    rectangle_basics = [
+        {"direction": Direction.South, "material": block.WOOL.id, "subtype": TEST_RED},
+        {"direction": Direction.North, "material": block.WOOL.id, "subtype": TEST_RED},
+        {"direction": Direction.East,  "material": block.WOOL.id, "subtype": TEST_BLUE},
+        {"direction": Direction.West,  "material": block.WOOL.id, "subtype": TEST_BLUE},
+    ]
+    origin_x = TEST_ORIGIN_X
+    origin_y = TEST_ORIGIN_Y
+    origin_z = TEST_ORIGIN_Z
+    _definition = rectangle_basics[0]
+
+    rectangle_definition = RectangleDefinition()
+    rectangle_definition.origin = Vec3(origin_x, origin_y, origin_z)
+    rectangle_definition.length = TEST_WALL_LENGTH
+    rectangle_definition.height = TEST_WALL_HEIGHT
+    rectangle_definition.xz_angle = _definition["direction"]
+    rec_mp = Rectangle(rectangle_definition)
+    
+    origin_x -= 10
+    rectangle_definition.origin = Vec3(origin_x, origin_y, origin_z)
+    rec_along = Rectangle(rectangle_definition)
+    
+    rec_mp.draw(TEST_MATERIAL, TEST_RED)
+    mp_x, mp_y, mp_z = rec_mp.midpoint()
+    mc.setBlock(mp_x, mp_y, mp_z, TEST_MATERIAL, TEST_YELLOW)
+    print(f"Rectangle midpoint: {rec_mp.midpoint()}")
+
+    rec_along.draw(TEST_MATERIAL, TEST_RED)
+    along_x, along_y, along_z = rec_along.along(2)
+    mc.setBlock(along_x, along_y, along_z, TEST_MATERIAL, TEST_YELLOW)
+    along_x, along_y, along_z = rec_along.along(4)
+    mc.setBlock(along_x, along_y, along_z, TEST_MATERIAL, TEST_YELLOW)
+
+    rec_along.shift(0,0,-5)
+    rec_along.rotateRight()
+    rec_along.draw(TEST_MATERIAL, TEST_RED)
+    along_x, along_y, along_z = rec_along.along(2)
+    mc.setBlock(along_x, along_y, along_z, TEST_MATERIAL, TEST_YELLOW)
+    along_x, along_y, along_z = rec_along.along(4)
+    mc.setBlock(along_x, along_y, along_z, TEST_MATERIAL, TEST_YELLOW)
+
+    rec_along.shift(0,0,-5)
+    rec_along.flip()
+    rec_along.draw(TEST_MATERIAL, TEST_RED)
+    along_x, along_y, along_z = rec_along.along(2)
+    mc.setBlock(along_x, along_y, along_z, TEST_MATERIAL, TEST_YELLOW)
+    along_x, along_y, along_z = rec_along.along(4)
+    mc.setBlock(along_x, along_y, along_z, TEST_MATERIAL, TEST_YELLOW)
+
 
 def main():
     ''' Main function '''
     debug_clear_space()
 #    test_rectangle_directions()
-    test_tipped_rectangles()
+#    test_tipped_rectangles()
+#    test_rectangle_rotate()
+    test_rectangle_math()
     halt
 
     # Build out the lot

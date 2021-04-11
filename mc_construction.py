@@ -679,6 +679,11 @@ def bump_player():
     mc.player.setPos(player_x+1, player_y+1, player_z+1)
 
 
+def debug_clear_space():
+    mc.player.setPos(15, 0, 5)
+    mc.setBlocks(-100, -5, -100, 100, 0, 100, block.GRASS.id)
+    mc.setBlocks(-50, 0, -50, 50, 50, 50, block.AIR.id)
+
 def test_rectangle_directions():
     mc.postToChat("Testing rectangle directions")
     mc.postToChat("Confirm 4 rectangles with red pointing North")
@@ -703,31 +708,42 @@ def test_rectangle_directions():
         rec._draw_origin()
         print(rec)
 
+def test_tipped_rectangles():
+    mc.postToChat("Testing tipped rectangles")
+    mc.postToChat("Confirm 4 'couch' structures.  2 South, 2 East.")
 
-def test_tipped_rectangle():
-    rectangle_definition = RectangleDefinition()
-    rectangle_definition.origin = Vec3(20, 0, 11)
-    rectangle_definition.length = 5
-    rectangle_definition.height = 3
-    rectangle_definition.xz_angle = Direction.South
-
-    rec = Rectangle(rectangle_definition)
-    rec.tip()
-    rec.draw(block.STONE.id)
-    rec._draw_origin()
-    print(rec)
-
-
-def debug_clear_space():
-    mc.player.setPos(15, 0, 5)
-    mc.setBlocks(-100, -5, -100, 100, 0, 100, block.GRASS.id)
-    mc.setBlocks(-10, 0, -10, 30, 50, 30, block.AIR.id)
+    rectangle_basics = [
+        {"direction": Direction.South, "material": block.WOOL.id, "subtype": 11},
+        {"direction": Direction.North, "material": block.WOOL.id, "subtype": 14},
+        {"direction": Direction.East,  "material": block.WOOL.id, "subtype": 11},
+        {"direction": Direction.West,  "material": block.WOOL.id, "subtype": 11},
+    ]
+    origin_x = 20
+    origin_y = 0
+    origin_z = 10
+    for _definition in rectangle_basics:
+        rectangle_definition = RectangleDefinition()
+        rectangle_definition.origin = Vec3(origin_x, origin_y, origin_z)
+        rectangle_definition.length = 5
+        rectangle_definition.height = 3
+        rectangle_definition.xz_angle = _definition["direction"]
+        rec_vertical = Rectangle(rectangle_definition)
+        rec_tipped = Rectangle(rectangle_definition)
+        rec_tipped.tip()
+        rec_vertical.draw(_definition["material"], _definition["subtype"])
+        rec_vertical._draw_origin()
+        rec_tipped.draw(_definition["material"], _definition["subtype"])
+        rec_tipped._draw_origin()
+        print(rec_tipped)
+        
+        origin_z -= 10
 
 
 def main():
     ''' Main function '''
     debug_clear_space()
-    test_rectangle_directions()
+#    test_rectangle_directions()
+    test_tipped_rectangles()
     halt
 
     # Build out the lot

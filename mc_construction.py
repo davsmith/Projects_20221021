@@ -1,4 +1,29 @@
-''' Template for writing scripts for Minecraft Pi '''
+'''
+Library for building houses in MineCraft Pi
+
+A build consists of several components (lot, house, floors, walls, ...)
+Each component inherits from the Component class which provides a
+base implementation for __init__ and __repr__
+
+A component is initialized with an instance of a "definition" object
+for that component type (e.g. WallDefinition for Wall).
+
+Setting attributes (e.g. origin) for a child component should occur
+in the add_<component> method of the parent class
+
+Order of operations for setting attributes:
+- Set default values (or None) in the __init__ of the definition class
+- Override default values to specific values on the definition instance
+- Set no overrides nor defaults in the __init__ for the component
+    - Use only the values from the definition class
+- For components created by a parent, use an add_<component> method on the parent
+    - Set values from the parent (e.g. direction, wall material) on the
+      template in the add_<component> method before creating the instance
+
+To do:
+
+
+'''
 from enum import Enum, IntEnum, unique
 from mcpi.minecraft import Minecraft
 from mcpi import block
@@ -10,112 +35,213 @@ import time
 print(mcpi)
 mc = Minecraft.create()
 
-@unique
-class Cardinal(IntEnum):
-    ''' Specifies the direction a an object along a compass '''
-    East = 90
-    North = 180
-    South = 0
-    West = 270
-
-@unique
-class WallType(IntEnum):
-    ''' Specifies whether a wall is an internal or external wall '''
-    Perimeter = 0
-    Inside = 1
 
 @unique
 class Plane(Enum):
     ''' Defines friendly names for each of the 3 dimensional planes '''
-    XY = 0 # East/West
-    XZ = 1 # Up/Down
-    YZ = 2 # South/North
+    XY = 1  # East/West
+    XZ = 2  # Up/Down
+    YZ = 3  # South/North
 
-class Rectangle:
-    ''' Definition of rectangular structure for MineCraft Pi '''
 
-    def __init__(self, length, height, origin, xz_angle):
-        self.name = ""
-        self.length = length
-        self.height = height
-        self.origin = origin
-        self.xz_angle = xz_angle
-        self.xy_angle = 0
-        self.tipped = False
-        self._calc_opposite_corners()
+@unique
+class Direction(IntEnum):
+    '''
+        Specifies the direction of an object with methods for rotation
+        along different axes
+    '''
+    East = 90
+    North = 180
+    South = 0
+    West = 270
+    Flat = -1
+    Left = 1000
+    Right = 1001
+    Flip = 1002
+
+    def rotate_left(self):
+        ''' Returns the direction at 90 degrees counter clockwise '''
+        return Direction(self._normalize_angle(self.value + 90))
+
+    def rotate_right(self):
+        ''' Returns the direction at 90 degrees clockwise '''
+        return Direction(self._normalize_angle(self.value - 90))
+
+    def flip(self):
+        ''' Returns the direction at 180 degrees from the current direction '''
+        return Direction(self._normalize_angle(self.value - 180))
+
+    def _normalize_angle(self, angle):
+        ''' Normalizes an angle in degrees to a value between 0 and 360 '''
+        while angle <= 0:
+            angle += 360
+        while angle >= 360:
+            angle -= 360
+        return angle
+
+
+@unique
+class WallType(IntEnum):
+    ''' Specifies whether a wall is an internal or external wall '''
+    Exterior = 1
+    Interior = 2
+
+
+@unique
+class WallLocation(IntEnum):
+    ''' Specifies whether a wall is at the front, back or side of a story '''
+    Front = 1
+    Back = 2
+    Side = 3
+
+
+class ComponentDefinition():
+    '''
+    Provides base class with init that pulls attributes from a template,
+    and enumerates the attributes through __repr__
+    '''
+
+    def __init__(self, attribute_list=None, template=None):
+        # Copy exclusively the specified attributes from the template
+        # If a specified attribute doesn't exist on the template, the
+        # attribute is initialized to None
+
+        # BUGBUG: Make common_attributes a NV pair with default values
+        common_attributes = ['name']
+
+        if attribute_list is None:
+            attribute_list = []
+
+        attribute_list += common_attributes
+        for attribute in attribute_list:
+            setattr(self, attribute, getattr(template, attribute, None))
 
     def __repr__(self):
-        msg = f"Rectangle: name={self.name}, length={self.length}, height={self.height}, "
-        msg += f"origin({id(self.origin)}, {self.origin}), opposite({self.opposite}), "
-        msg += f"xz_angle={self.xz_angle} tipped={self.tipped}"
+        msg = f"{type(self).__name__}\n"
+        for attribute in self.__dict__:
+            msg += f"  {attribute}:{getattr(self, attribute, '<undefined>')}\n"
         return msg
+
+
+class Component():
+    '''
+    Provides a base class implementation of __repr__ to enumerage attributes
+    '''
+
+    def _copy_definition(self, definition):
+        for attribute in definition.__dict__:
+            print(
+                f"COPYDEFINITION: {attribute} = {getattr(definition, attribute, None)}")
+            setattr(self, attribute, getattr(definition, attribute, None))
+
+    def __repr__(self):
+        msg = f"{type(self).__name__}\n"
+        for attribute in self.__dict__:
+            msg += f"  {attribute}:{getattr(self, attribute, '<undefined>')}\n"
+        return msg
+
+# BM_1
+
+
+class RectangleDefinition(ComponentDefinition):
+    ''' Defines the attributes for a rectangle '''
+
+    def __init__(self, template=None):
+        attributes = ['length', 'height', 'origin', 'xz_angle', 'xy_angle']
+        attributes += ['tipped']
+        super().__init__(attributes, template)
+
+        if self.tipped is None:
+            self.tipped = False
+
+
+class Rectangle(Component):
+    ''' Definition of rectangular structure for MineCraft Pi '''
+
+    def __init__(self, definition):
+        # BUGBUG: Convert this to use a component definition to be consistent
+        super()._copy_definition(definition)
+        self._calc_opposite_corners()
 
     def clone(self):
         ''' Creates a copy of the rectangle with the same dimensions '''
-        print(f"Cloning rectangle: length={self.length}, height={self.height}, origin={self.origin}, xz_angle={self.xz_angle}")
         # The clone method is called on the origin so that the new wall has a copy of
         # the origin rather than a reference to the same origin
         return Rectangle(self.length, self.height, self.origin.clone(), self.xz_angle)
-    
+
     def _calc_opposite_corners(self):
         ''' Calculates the opposite corner on the rectange based on origin, length and angle.
             In MineCraft space, the axes are different than convention, so:
             x = East/West
             y = Altitude
             z = South/North
-        
+
             theta = angle between vertical and horizontal planes, yx_angle (0 = vertical)
             phi = angle around the horizontal plane, xz_angle (0 = East?)
             r = the length of the radius (rectangle)
-            
+
             x = r * sin(theta) * cos(phi)
             y = r * cos(theta)
             z = r * sin(theta) * sin(phi)
-            
+
         '''
         theta = math.radians(self.xz_angle)
         opp_sin = round(math.sin(theta))
         opp_cos = round(math.cos(theta))
-        
-        print(f"Calculating corners at xz_angle = {self.xz_angle} ({self.tipped})")
 
-        opp_x = round((self.length-1) * opp_sin,1)
+        print(
+            f"Calculating corners at xz_angle = {self.xz_angle} ({self.tipped})")
+
+        opp_x = round((self.length-1) * opp_sin, 1)
         opp_y = self.height-1
-        opp_z = round((self.length-1) * opp_cos,1)
-        
-        
-        if self.tipped == True:
-            print(f"Rectangle is tipped ({self.xz_angle}), sin={opp_sin}, cos={opp_cos}")
-            if (opp_sin == 0) and (opp_cos == -1): # 180 degrees
+        opp_z = round((self.length-1) * opp_cos, 1)
+
+        # The rectangle is always tipped in the positive direction
+        # BUGBUG: This is cheating.  Use the spherical coordinates
+        if self.tipped:
+            if (opp_sin == 0) and (opp_cos == -1):  # 180 degrees
                 self.opposite = self.origin + Vec3(opp_y, opp_x, opp_z)
-            elif (opp_sin == 0) and (opp_cos == 1): # 0 degrees
+            elif (opp_sin == 0) and (opp_cos == 1):  # 0 degrees
                 self.opposite = self.origin + Vec3(opp_y, opp_x, opp_z)
-            elif (opp_sin == 1) and (opp_cos == 0): # 90 degrees
+            elif (opp_sin == 1) and (opp_cos == 0):  # 90 degrees
                 self.opposite = self.origin + Vec3(opp_x, opp_z, opp_y)
-            elif (opp_sin == -1) and (opp_cos == 0): # 270 degrees
+            elif (opp_sin == -1) and (opp_cos == 0):  # 270 degrees
                 self.opposite = self.origin + Vec3(opp_x, opp_z, opp_y)
         else:
             self.opposite = self.origin + Vec3(opp_x, opp_y, opp_z)
 
-    def setDirection(self, direction):
-        ''' Sets the cardinal direction of a rectangle (e.g. Cardinal.North) '''
+    def set_direction(self, direction):
+        ''' Sets the direction of a rectangle (e.g. Direction.North) '''
         self.xz_angle = int(direction)
         self._calc_opposite_corners()
-        
+
+    def set_length(self, length):
+        ''' Sets the length attribute and recalculates the opposite corner '''
+        self.length = length
+        self._calc_opposite_corners()
+
     def rotate(self, angle=0):
         ''' Stubbed out to rotate a rectangle about an axis '''
         pass
-        
+
     def rotateLeft(self):
         ''' Rotates a rectangle counter-clockwise in the x-z (vertical) plane '''
+        # BUGBUG: Convert these to the methods on the Direction class
         self.xz_angle += 90
         self._calc_opposite_corners()
 
     def rotateRight(self):
         ''' Rotates a rectangle clockwise in the x-z (vertical) plane '''
+        # BUGBUG: Convert these to the methods on the Direction class
         self.xz_angle -= 90
         self._calc_opposite_corners()
-        
+
+    def flip(self):
+        ''' Rotates a rectangle to face the opposite direction in the x-z (vertical) plane '''
+        # BUGBUG: Convert these to the methods on the Direction class
+        self.xz_angle -= 180
+        self._calc_opposite_corners()
+
     def flip_origin(self):
         ''' Switches the origin of the rectangle to the other end (at the same height) '''
         origin_y = self.origin.y
@@ -123,44 +249,50 @@ class Rectangle:
         self.origin.y = origin_y
         self.xz_angle += 180
         self._calc_opposite_corners()
-        
+
     def midpoint(self):
         ''' Returns the mid-point of a rectangle as a 3-d vector '''
-        midpoint_x = (self.opposite_xz.x + self.origin.x)/2
-        midpoint_y = (self.opposite_xz.y + self.origin.y)/2
-        midpoint_z = (self.opposite_xz.z + self.origin.z)/2
+        # BUGBUG: Make this a property
+        midpoint_x = (self.opposite.x + self.origin.x)/2
+        midpoint_y = (self.opposite.y + self.origin.y)/2
+        midpoint_z = (self.opposite.z + self.origin.z)/2
+        msg = f"Calculated midpoint from {self.origin} to {self.opposite}"
+        msg += f"as {midpoint_x}, {midpoint_y}, {midpoint_z}"
+        print(msg)
         return Vec3(midpoint_x, midpoint_y, midpoint_z)
-#bm_along
+
     def along(self, distance):
         '''
-            Returns the x,y,z coordinate of a point along a rectangle
+            Returns the x,y,z coordinate of a point along the bottom of a
+            rectangle in absolute coordinates
             The point can be beyond the end-points of the rectangle
         '''
-        along_x = round((distance-1) * math.sin((math.pi/180)*self.xz_angle),1)
-        along_z = round((distance-1) * math.cos((math.pi/180)*self.xz_angle),1)
+        along_x = round(
+            (distance-1) * math.sin((math.pi/180)*self.xz_angle), 1)
+        along_z = round(
+            (distance-1) * math.cos((math.pi/180)*self.xz_angle), 1)
         return self.origin + Vec3(along_x, 0, along_z)
-        
+
     def shift(self, offset_x=0, offset_y=0, offset_z=0):
         ''' Moves the rectangle in the specified x, y, and z directions '''
         self.origin += Vec3(offset_x, offset_y, offset_z)
         self._calc_opposite_corners()
-        
+
     def tip(self):
+        ''' Tips a rectangle from the vertical plane to the horizaontal plane '''
         self.tipped = True
         self._calc_opposite_corners()
 
-    def delete(self):
-        pass
-        
-    def _draw(self, material, subtype=0):
-        ''' Draws the rectangle in MineCraft space
+    def draw(self, material, subtype=0):
+        '''
+            Draws the rectangle in MineCraft space
             Material is specified as an integer or as a constant (e.g. block.GRASS.id)
             Subtype is an integer which affects certain material types as specified in the API
         '''
         x1, y1, z1 = self.origin
         x2, y2, z2 = self.opposite
         mc.setBlocks(x1, y1, z1, x2, y2, z2, material, subtype)
-        
+
     def _draw_origin(self, material=None, subtype=0):
         ''' Marks the origin of a rectangle with the specified material type
             This method is mostly for debugging
@@ -170,161 +302,376 @@ class Rectangle:
             subtype = 1
         x1, y1, z1 = self.origin
         mc.setBlock(x1, y1, z1, material, subtype)
-        
-class Door(Rectangle):
-    ''' A rectangle object to represent a door '''
-    ''' Position is relative to the origin of the parent wall '''
-    def __init__(self, parent_wall, position=None):
-        if not isinstance(parent_wall, Wall):
-            return None
-        
-        self.parent_wall = parent_wall
-        
-        # If a position is not specified for the door, use the midpoint at the bottom of the wall
-        if position == None:
-            position = round(self.parent_wall.length / 2) + 1
-            
-        length = 1
-        height = 2
-        origin = self.parent_wall.along(position)
-        xz_angle = self.parent_wall.xz_angle
-        super().__init__(length, height, origin, xz_angle)
-        self.material = block.AIR.id
-        self.material_subtype = 0
-        self.position = position
 
-        self._calc_opposite_corners()
-        
-    def __repr__(self):
-        msg = f"Door: parent:{id(self.parent_wall)}, position:{self.position}, origin:{self.origin}"
-        return msg
-    
-    def _draw(self, material=None, subtype=0):
-        if material is None:
-            material = self.material
-            subtype = self.material_subtype
-        super()._draw(material, subtype)
-        
+# BM_1
 
-#bm_window
-class Window(Rectangle):
-    ''' Position is relative to the origin of the parent wall '''
-    def __init__(self, parent_wall, position_x=None, position_y=None):
-        if not isinstance(parent_wall, Wall):
-            return None #BUGBUG:  Should be an exception
-        
-        # If a position is not specified for the door, use the midpoint
-        if position_x == None:
-            position_x = round(parent_wall.length / 2) + 1
-            
-        if position_y == None:
-            position_y = round(parent_wall.height / 2)
-        
-        length = 1
-        height = 1
-        origin = parent_wall.along(position_x) + Vec3(0,position_y-1,0)
-        xz_angle = parent_wall.xz_angle
-        super().__init__(length, height, origin, xz_angle)
 
-        self.parent_wall = parent_wall
-        self.position_x = position_x
-        self.position_y = position_y
-        self.material = block.AIR.id
+class WallDefinition(ComponentDefinition):
+    ''' Class to define the attributes of a wall object '''
 
-        self._calc_opposite_corners()
-        
-    def __repr__(self):
-        msg = f"Window: parent:{id(self.parent_wall)}, origin:{self.origin}"
-        return msg
+    def __init__(self, template=None):
+        attributes = ["origin", "length", "height", "xz_angle", "location"]
+
+        super().__init__(attributes, template)
+
+        # Default the origin to the space under the player
+        if self.origin is None:
+            self.origin = mc.player.getPos() - Vec3(0, 1, 0)
+            print(f"WALLDEFINITION: Defaulting origin to {self.origin}")
+
+    def _set_materials(self):
+        if self.type == WallType.Exterior:
+            self.material = block.GRASS.id  # parent_story.parent_house.exterior_wall_material
+            self.material_subtype = 1  # parent_story.parent_house.exterior_wall_material_subtype
+            # parent_story.parent_house.exterior_corner_material
+            self.corner_material = block.TNT.id
+            self.corner_subtype = 1  # parent_story.parent_house.exterior_wall_corner_subtype
+        elif self.type == WallType.Interior:
+            self.material = block.DIRT.id  # parent_story.parent_house.exterior_wall_material
+            self.material_subtype = 1  # parent_story.parent_house.exterior_wall_material_subtype
+            # parent_story.parent_house.exterior_corner_material
+            self.corner_material = block.STONE.id
+            self.corner_subtype = 1  # parent_story.parent_house.exterior_wall_corner_subtype
+        else:
+            print(f"EXCEPTION: No wall type set")
+
+    def _set_angle(self, xz_angle=None):
+        ''' Sets the angle of the wall to the specified value, or the 'facing' property if it exists '''
+        if xz_angle is None:
+            # xz_angle = self.parent_story._calc_angle_from_facing()
+            pass
+        self.xz_angle = xz_angle
 
 
 class Wall(Rectangle):
-    ''' The parent of a Wall should be a House object '''
-    def __init__(self, length, height, origin=None, xz_angle=0):
-        super().__init__(length, height, origin, xz_angle)
+    ''' The parent of a Wall should be a Story object '''
+
+    def __init__(self, wall_definition):
+        # length, height, origin=None, xz_angle=0):
+        self._copy_definition(wall_definition)
+#        wd = wall_definition
+        super().__init__(self.length, self.height, self.origin, self.xz_angle)
+#        self.wall_definition = wd
         self.doors = []
         self.windows = []
-        self.wall_material = block.TNT.id
-        self.wall_material_subtype = 1
-        self.parent_house = None
-        
-    def add_door(self, x = None):
-        self.doors.append(Door(self))
-        print(self.doors)
-        
-    def add_window(self, x=None, y=None):
-        self.windows.append(Window(self, x, y))
-        print(self.windows)
-         
+#        self.wall_material = block.TNT.id
+#        self.wall_material_subtype = 1
+#        self.corner_material = block.WOOL.id
+#        self.corner_subtype = 1
+#        self.wall_type = WallType.Exterior
+
+    def add_door(self, position=None):
+        ''' Position is relative to the origin of the parent wall '''
+
+        # If a position is not specified for the door, use the midpoint at the bottom of the wall
+        if position is None:
+            position = (self.length + 1) / 2
+
+        width = 1
+        height = 2
+        origin = self.along(position)
+        xz_angle = self.xz_angle
+        door = Opening(self, position, 1, width, height)
+        door.material = block.GRASS.id
+        door.material_subtype = 0
+        self.position = position
+        self.doors.append(door)
+
+    def add_window(self, position_x=None, position_y=None):
+        ''' Position is relative to the origin of the parent wall '''
+
+        # If a position is not specified for the window, use the midpoint
+        rel_x, rel_y, rel_z = self.midpoint() - self.origin
+        if position_x is None:
+            position_x = (self.length + 1) / 2
+        if position_y is None:
+            position_y = (self.height + 1) / 2
+        # glurb
+        width = 1
+        height = 1
+        xz_angle = self.xz_angle
+        window = Opening(self, position_x, position_y, width, height)
+        window.material = block.AIR.id
+        window.material_subtype = 0
+        self.windows.append(window)
+
     def set_wall_material(self, material, subtype=0):
-        print(f"Setting corner material to {material}")
+        ''' Sets the attributes for wall material '''
         self.wall_material = material
         self.wall_material_subtype = subtype
 
     def set_corner_material(self, material, subtype=0):
-        print(f"Setting corner material to {material}")
+        ''' Sets the attributes for corner material '''
         self.corner_material = material
         self.corner_material_subtype = subtype
-        
-    def _draw(self, material=None, subtype=0):
+
+    def _draw(self, material=None, subtype=1):
+        #        wd = self.wall_definition
         if material is None:
-            material = self.wall_material
-            subtype = self.wall_material_subtype
+            material = self.material
+            subtype = self.material_subtype
         super()._draw(material, subtype)
-        if hasattr(self, "corner_material"):
+        if not (getattr(self, "corner_material", None) is None):
             ll_x, ll_y, ll_z = self.origin
             ur_x, ur_y, ur_z = self.opposite
-            
-            mc.setBlocks(ll_x, ll_y, ll_z, ll_x, ur_y, ll_z, self.corner_material, self.corner_material_subtype)
-            mc.setBlocks(ur_x, ur_y, ur_z, ur_x, ll_y, ur_z, self.corner_material, self.corner_material_subtype)
+
+            mc.setBlocks(ll_x, ll_y, ll_z, ll_x, ur_y, ll_z,
+                         self.corner_material, self.corner_material_subtype)
+            mc.setBlocks(ur_x, ur_y, ur_z, ur_x, ll_y, ur_z,
+                         self.corner_material, self.corner_material_subtype)
         for door in self.doors:
             door._draw(block.AIR.id)
 
         for window in self.windows:
             window._draw(block.AIR.id)
-            
-                    
-    def clone(self):
-        new_wall = Wall(self.length, self.height, self.origin.clone(), self.xz_angle)
-        new_wall.set_corner_material(self.corner_material, self.corner_material_subtype)
-        return new_wall
-    
-class House():
-    def __init__(self):
-        walls = []
-        
-class ConstructionSite():
-    def __init__(self, length=25, width=25, height=40, depth=1, origin=None):
-        
-        # If an origin is not specified, use the space under the player
-        if origin is None:
-            origin = mc.player.getPos() - Vec3(0,1,0)
-        self.origin = origin
-        self.length = length
-        self.width = width
-        self.height = height
 
-        self.depth = depth
-        self.ground_material = block.STONE.id
-        ground = Rectangle(length, width, origin, 0)
-        ground.tip()
-        
-        self.ground = ground
-        
-    def __repr__(self):
-        msg = f"length={self.length}, width={self.width}, height={self.height},"
-        msg += f" depth={self.depth}, material={self.ground_material} at {self.origin}"
-        return msg
-        
-    def clear(self, ground_material=None):
-        if ground_material is None:
-            ground_material = self.ground_material
-        
+    def clone(self):
+        new_wall = Wall(self.length, self.height,
+                        self.origin.clone(), self.xz_angle)
+        new_wall.set_wall_material(
+            self.wall_material, self.wall_material_subtype)
+        new_wall.set_cornerparent_wall_material(
+            self.corner_material, self.corner_material_subtype)
+        return new_wall
+
+
+class OpeningDefinition(ComponentDefinition):
+    # BUGBUG: Should this inherit from a RectangleDefinition?
+    def __init__(self, template):
+        attributes = ["parent_wall", "relative_x",
+                      "relative_y", "width", "height"]
+        attributes += ["material", "subtype"]
+        super().init(attributes, template)
+
+        if self.material is None:
+            self.material = block.AIR.id
+
+
+class Opening(Rectangle):
+    '''
+    A rectangle object to represent a door, window or other space in a wall
+    relative_x is distance relative to the origin of the parent wall (1 is left side)
+    relative_y is distance relative to the bottom of the wall (1 is bottom)
+    '''
+
+    # BUGBUG: Use the component parent methods
+    def __init__(self, definition):
+        super()._copy_definition(definition)
+
+        if not isinstance(parent_wall, Wall):
+            return None  # BUGBUG:  Should be an exception
+
+        origin = self.absolute_origin
+        xz_angle = self.parent_wall.xz_angle
+        super().__init__(definition)
+
+        self.material = block.AIR.id
+
+        self._calc_opposite_corners()
+
+    @property
+    def absolute_origin(self):
+        return self.parent_wall.along(self.relative_x) + Vec3(0, self.relative_y-1)
+
+    def _draw(self, material=None, subtype=0):
+        # BUGBUG: Remove the overridden function.  Rely on the parent function.
+        if material is None:
+            material = self.material
+            subtype = self.material_subtype
+        super()._draw(material, subtype)
+
+
+class StoryDefinition(ComponentDefinition):
+    # BM_2
+    ''' Class to define the attributes of a Story object '''
+    # BUGBUG: Make sure all ComponentDefinitions follow this pattern.
+    # BUGBUG:      Declare attributes to initialize, call super __init__
+    # BUGBUG:        to assign values from template
+
+    def __init__(self, template=None):
+        attributes = ['origin', 'width', 'depth', 'height', 'facing']
+        attributes += ['exterior_wall_def', 'interior_wall_def']
+        super().__init__(attributes, template)
+
+
+class Story(Component):
+    ''' Class to represent a story in a structure '''
+
+    def __init__(self, story_definition):
+        # BUGBUG: Call the _copy_definition class and get rid of the local story_definition
+        # BUGBUG: Make sure all Component sub-classes call _copy_definition
+        # BUGBUG: Call __init__ on parent
+        # BUGBUG: Make sure all Component sub-classes call __init__ on parent
+        self.story_definition = story_definition
+        self.walls = []
+        self.floor = None  # Ground class
+
+    def add_wall(self, wall_definition):
+        ''' Creates a wall using a WallDefinition as a template, and adds it to the collection '''
+        # BUGBUG: Make sure all add_<component> methods set attributes from parent, update the
+        #       component definition instance, instantiate the component and add to an arrray
+        if wall_definition.origin is None:
+            if len(self.walls) == 0:
+                wall_definition.origin = self.story_definition.origin
+            else:
+                print(f"Getting origin from previous wall")
+
+        wall = Wall(wall_definition)
+        self.walls.append(wall)
+        return wall
+
+    def build_rectangle(self):
+        ''' Creates a story with 4 exterior walls of prescribed length '''
+        walls = []
+        wall_lengths = [self.width, self.depth, self.width, self.depth]
+
+        wall = self.exterior_wall_def
+
+        wall.windows.clear()
+        wall.doors.clear()
+        wall.set_length(wall_lengths[0])
+        wall.add_door()
+        walls.append(wall)
+
+        for index in range(2, 5):
+            wall = wall.clone()
+            wall.name = f"Wall{index} {id(wall)}"
+            wall.flip_origin()
+            wall.rotateRight()
+            wall.set_length(wall_lengths[index-1])
+            wall.add_window()
+            walls.append(wall)
+
+        self.walls = walls
+
+    def _draw_origin(self, material, material_subtype=1):
+        x, y, z = self.story_definition.origin
+        mc.setBlock(x, y, z, material, material_subtype)
+
+
+class StructureDefinition(ComponentDefinition):
+    ''' Class to define the attributes of a Structure object '''
+
+    def __init__(self, template=None):
+        # Copy attributes from the template
+        # BUGBUG: Make exterior and interior wall definitions consistent with Story
+        # BUGBUG: Make foundation an instance of a Floor class
+        attributes = ['origin', 'width', 'depth', 'story_height', 'facing']
+        attributes += ['exterior_wall_material', 'exterior_wall_subtype']
+        attributes += ['interior_wall_material', 'interior_wall_subtype']
+        attributes += ['foundation_material', 'foundation_subtype']
+        super().__init__(attributes, template)
+
+        # Default the origin to the space under the player
+        # BUGBUG: Document defaults set by other component definition classes
+        # BUGBUG: Is this a best practice?  If so, confirm other definition classes
+        if self.origin is None:
+            self.origin = mc.player.getPos() - Vec3(0, 1, 0)
+# BM_3
+
+
+class Structure(Component):
+    ''' Class to represent a Structure (e.g. a house) on a site '''
+
+    def __init__(self, structure_definition):
+        # BUGBUG: Fix to call _copy_definition and __init__ for parent
+        sd = structure_definition
+
+        self.structure_definition = sd
+        self.roof = None
+        self.stories = []
+        self.foundation = None
+
+    def add_foundation(self, material, material_subtype):
+        # BUGBUG: Make this consistent with add_wall and/or add_story
+        sd = self.structure_definition
+
+        # Create the foundation of the structure
+        foundation_def = FloorDefinition()
+        foundation_def.origin = sd.origin
+        foundation_def.width = sd.width
+        foundation_def.depth = sd.depth
+        foundation_def.height = 1
+        foundation_def.thickness = 2
+        foundation_def.xz_angle = sd.xz_angle
+        foundation_def.base_material = material
+        foundation_def.base_material_subtype = material_subtype
+
+        self.foundation = Floor(foundation_def)
+
+    def add_story(self, story_definition):
+        print("STRUCTURE: add_story")
+        if story_definition.origin is None:
+            story_definition.origin = self.structure_definition.origin + \
+                Vec3(0, 1, 0)
+        story = Story(story_definition)
+        self.stories.append(story)
+        return story
+
+
+class FloorDefinition(ComponentDefinition):
+    ''' Class to define the attributes of a Floor object '''
+
+    def __init__(self, template=None):
+        # Copy attributes from the template
+        attributes = ['origin', 'width', 'depth', 'height', 'thickness']
+        attributes += ['base_material', 'base_material_subtype']
+        super().__init__(attributes, template)
+
+        # Default the origin to the space under the player
+        if self.origin is None:
+            self.origin = mc.player.getPos() - Vec3(0, 1, 0)
+
+
+class Floor(Component):
+    ''' Base class to represent the horizontal plane for a floor, site, or foundation '''
+
+    def __init__(self, floor_definition):
+        self._copy_definition(floor_definition)
+
+        floor = Rectangle(floor_definition)
+        floor.tip()
+
+#        self.floor = floor
+
+    def _draw_origin(self, material):
+        origin_x, origin_y, origin_z = self.origin
+        mc.setBlock(origin_x, origin_y, origin_z, material)
+        print(f"Floor origin is at {origin_x},{origin_y},{origin_z}")
+
+    def clear(self, floor_material=None, floor_material_subtype=None):
+        if floor_material is None:
+            floor_material = self.base_material
+            floor_material_subtype = self.base_material_subtype
+
         x1, y1, z1 = self.origin
-        x2, y2, z2 = self.origin + Vec3(self.length-1, -self.depth+1, self.width-1)
-        
-        mc.setBlocks(x1, y1, z1, x2, y2, z2, ground_material)
-        mc.setBlocks(x1, y1+1, z1, x2, y1+self.height-1, z2, block.AIR.id)
+        x2, y2, z2 = self.origin + \
+            Vec3(self.depth-1, -self.thickness+1, self.width-1)
+
+        mc.setBlocks(x1, y1, z1, x2, y2, z2,
+                     floor_material, floor_material_subtype)
+
+        # Clear out the space above the area of the horizontal plane
+        if self.height > 1:
+            mc.setBlocks(x1, y1+1, z1, x2, y1+self.height-1, z2, block.AIR.id)
+
+
+class Site(Floor):
+    # BUGBUG: Review how a site_definition can be used here.  Is it a FloorDefinition?
+    def __init__(self, site_definition):
+        self.structures = []
+        super().__init__(site_definition)
+
+    def add_structure(self, structure_definition):
+        ''' Add a structure (e.g. house) to the site '''
+        # BUGBUG:  Make sure this is consistent with other Components
+        if structure_definition.origin is None:
+            structure_definition.origin = self.origin + \
+                Vec3(self.setback, 0, self.setback)
+        house = Structure(structure_definition)
+        self.structures.append(house)
+        return house
+
 
 def bump_player():
     ''' Offsets player position by 1 in all directions '''
@@ -332,57 +679,161 @@ def bump_player():
     mc.player.setPos(player_x+1, player_y+1, player_z+1)
 
 
+def test_rectangle_directions():
+    mc.postToChat("Testing rectangle directions")
+    mc.postToChat("Confirm 4 rectangles with red pointing North")
+
+    rectangle_basics = [
+        {"direction": Direction.South, "material": block.WOOL.id, "subtype": 11},
+        {"direction": Direction.North,
+         "material": block.WOOL.id, "subtype": 14},
+        {"direction": Direction.East,
+         "material": block.WOOL.id, "subtype": 11},
+        {"direction": Direction.West,
+         "material": block.WOOL.id, "subtype": 11},
+    ]
+    for _definition in rectangle_basics:
+        rectangle_definition = RectangleDefinition()
+        rectangle_definition.origin = Vec3(20, 0, 10)
+        rectangle_definition.length = 5
+        rectangle_definition.height = 3
+        rectangle_definition.xz_angle = _definition["direction"]
+        rec = Rectangle(rectangle_definition)
+        rec.draw(_definition["material"], _definition["subtype"])
+        rec._draw_origin()
+        print(rec)
+
+
+def test_tipped_rectangle():
+    rectangle_definition = RectangleDefinition()
+    rectangle_definition.origin = Vec3(20, 0, 11)
+    rectangle_definition.length = 5
+    rectangle_definition.height = 3
+    rectangle_definition.xz_angle = Direction.South
+
+    rec = Rectangle(rectangle_definition)
+    rec.tip()
+    rec.draw(block.STONE.id)
+    rec._draw_origin()
+    print(rec)
+
+
+def debug_clear_space():
+    mc.player.setPos(15, 0, 5)
+    mc.setBlocks(-100, -5, -100, 100, 0, 100, block.GRASS.id)
+    mc.setBlocks(-10, 0, -10, 30, 50, 30, block.AIR.id)
+
+
 def main():
     ''' Main function '''
-    mc.postToChat(f"Player is at {mc.player.getPos()}")
-    
-    # Define the parameters of the lot
-    lot_origin = Vec3(0, 0, 0)
-    lot_length = 30
-    lot_width = 20
-    lot_height = 40
-    lot_depth = 2
-    lot_setback = 5
-    lot_material = block.STONE.id
-    
-    # Define the parameters of the house
-    house_length = 5
-    house_width = 5
-    story_height = 3
-    
-    # Define parameters for the walls
-    wall_material = block.WOOD_PLANKS.id
-    wall_material_subtype = 1
-    corner_material = block.WOOD.id
-    corner_material_subtype = 0
+    debug_clear_space()
+    test_rectangle_directions()
+    halt
 
-    site = ConstructionSite(lot_length, lot_width, lot_height, lot_depth, lot_origin)
-    site.clear(lot_material)
-#    site._draw_origin(block.BEDROCK.id)
-    print(site)
-    
-    house_corner_stone = lot_origin + Vec3(lot_setback, 1, lot_setback)
-    
-    walls = []
-    wall = Wall(house_length, story_height, house_corner_stone, Cardinal.North)
-    wall.setDirection(Cardinal.South)
-    wall.name = "Wall1"
-    wall.set_wall_material(wall_material, wall_material_subtype)
-    wall.set_corner_material(corner_material, corner_material_subtype)
-    wall.add_door()
-    
-    walls.append(wall)
-    for index in range(2, 5):
-        wall = wall.clone()
-        wall.name = f"Wall{index}"
-        wall.flip_origin()
-        wall.rotateRight()
-        wall.add_window()
-        walls.append(wall)
-        
-    for wall in walls:
-        wall._draw(wall_material, wall_material_subtype)
-        wall._draw_origin()
+    # Build out the lot
+    site_def = FloorDefinition()
+    site_def.name = "LOT_DEFINITION"
+    site_def.origin = Vec3(0, 0, 0)
+    site_def.xz_angle = Direction.North
+    site_def.width = 20
+    site_def.height = 40
+    site_def.depth = 30
+    site_def.thickness = 3
+    site_def.setback = 5
+    site_def.base_material = block.GRASS.id
+    print(f"{site_def}")
+
+    lot = Site(site_def)
+    lot.clear()
+    lot._draw_origin(block.TNT.id)
+    print(lot)
+
+    # Build out the house foundation
+    # Define the parameters of the house
+    house_def = StructureDefinition()
+    house_def.name = "HOUSE_DEFINITION"
+    house_def.origin = None
+    house_def.width = 7
+    house_def.depth = 5
+    house_def.story_height = 3
+    house_def.exterior_wall_material = block.WOOD_PLANKS.id
+    house_def.exterior_wall_subtype = 1
+    house_def.exterior_corner_material = block.WOOD.id
+    house_def.exterior_corner_subtype = 1
+    house_def.interior_wall_material = block.SANDSTONE.id
+    house_def.interior_wall_subtype = 1
+    house_def.facing = Direction.East
+    house_def.xz_angle = Direction.South  # BUGBUG: Remove this
+    print(f"{house_def}")
+
+    house = lot.add_structure(house_def)
+    house.add_foundation(block.STONE.id, 1)
+    house.foundation.clear()
+    house.foundation._draw_origin(block.TNT.id)
+    print(house)
+
+    story_def = StoryDefinition()
+    # BUGBUG: Move assignment of these properties to the story class from the parent class
+    story_def.name = "STORY_DEFINITION"
+    story_def.facing = house_def.facing
+    story_def.width = house_def.width
+    story_def.height = house_def.story_height
+    story_def.origin = None
+    print(story_def)
+
+    first_floor = house.add_story(story_def)
+    print(first_floor)
+    first_floor._draw_origin(block.WOOL.id)
+
+    # Define parameters for the walls
+    wall_def = WallDefinition()
+    wall_def.name = "EXTERIOR_WALL_DEFINITION"
+    wall_def.length = house_def.width
+    wall_def.height = house_def.story_height
+    wall_def.wall_type = WallType.Exterior
+    wall_def.material = block.WOOD_PLANKS.id
+    wall_def.material_subtype = 1
+    wall_def.corner_material = block.WOOD.id
+    wall_def.corner_material_subtype = 0
+    wall_def.origin = None
+    wall_def.xz_angle = Direction.South
+    print(f"{wall_def}")
+    print(f"origin before add_wall {wall_def.origin}")
+    wall = first_floor.add_wall(wall_def)
+    wall._draw()
+    print(wall)
+
+    wall_def.xz_angle = Direction.East
+    wall = first_floor.add_wall(wall_def)
+    wall._draw()
+
+    wall_def.xz_angle = Direction.West
+    wall = first_floor.add_wall(wall_def)
+    wall._draw()
+
+    if False:
+        #    x,y,z = site_def.origin
+        #    mc.player.setPos(0,0,0)
+
+        story = house.add_story(story_def)
+        print(story)
+    #    story._draw(block.MOSS_STONE.id)
+
+        wall = story.add_wall(wall_def)
+        wall._draw(block.BRICK_BLOCK.id)
+
+        for wall in story.walls:
+            print(f"{wall}")
+            for window in wall.windows:
+                print(f"\t{window}")
+            for door in wall.doors:
+                print(f"\t{door}")
+
+            wall._draw(wall_material, wall_material_subtype)
+            wall._draw_origin()
+
+        # mc.setBlock(7.5,2,5,block.GRASS.id)
+
 
 if __name__ == '__main__':
     main()

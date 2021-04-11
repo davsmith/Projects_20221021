@@ -146,24 +146,21 @@ class Component():
 class RectangleDefinition(ComponentDefinition):
     ''' Defines the attributes for a rectangle '''
 
-    def __init__(self, template):
+    def __init__(self, template=None):
         attributes = ['length', 'height', 'origin', 'xz_angle', 'xy_angle']
         attributes += ['tipped']
         super().__init__(attributes, template)
+        
+        if self.tipped is None:
+            self.tipped = False
 
 
 class Rectangle(Component):
     ''' Definition of rectangular structure for MineCraft Pi '''
 
-    def __init__(self, length, height, origin, xz_angle):
+    def __init__(self, definition):
         # BUGBUG: Convert this to use a component definition to be consistent
-        self.name = ""
-        self.length = length
-        self.height = height
-        self.origin = origin
-        self.xz_angle = xz_angle
-        self.xy_angle = 0
-        self.tipped = False
+        super()._copy_definition(definition)
         self._calc_opposite_corners()
 
     def clone(self):
@@ -199,10 +196,9 @@ class Rectangle(Component):
         opp_y = self.height-1
         opp_z = round((self.length-1) * opp_cos, 1)
 
+        # The rectangle is always tipped in the positive direction
         # BUGBUG: This is cheating.  Use the spherical coordinates
         if self.tipped:
-            print(
-                f"Rectangle is tipped ({self.xz_angle}), sin={opp_sin}, cos={opp_cos}")
             if (opp_sin == 0) and (opp_cos == -1):  # 180 degrees
                 self.opposite = self.origin + Vec3(opp_y, opp_x, opp_z)
             elif (opp_sin == 0) and (opp_cos == 1):  # 0 degrees
@@ -287,7 +283,7 @@ class Rectangle(Component):
         self.tipped = True
         self._calc_opposite_corners()
 
-    def _draw(self, material, subtype=0):
+    def draw(self, material, subtype=0):
         '''
             Draws the rectangle in MineCraft space
             Material is specified as an integer or as a constant (e.g. block.GRASS.id)
@@ -295,8 +291,6 @@ class Rectangle(Component):
         '''
         x1, y1, z1 = self.origin
         x2, y2, z2 = self.opposite
-        print(
-            f"RECTANGLE._draw {x1} {y1} {z1} {x2} {y2} {z2} {material} {subtype}")
         mc.setBlocks(x1, y1, z1, x2, y2, z2, material, subtype)
 
     def _draw_origin(self, material=None, subtype=0):
@@ -308,42 +302,6 @@ class Rectangle(Component):
             subtype = 1
         x1, y1, z1 = self.origin
         mc.setBlock(x1, y1, z1, material, subtype)
-
-
-class Opening(Rectangle):
-    '''
-    A rectangle object to represent a door, window or other space in a wall
-    relative_x is distance relative to the origin of the parent wall (1 is left side)
-    relative_y is distance relative to the bottom of the wall (1 is bottom)
-    '''
-
-    # BUGBUG: Use the component parent methods
-    def __init__(self, parent_wall, relative_x, relative_y, width, height):
-        if not isinstance(parent_wall, Wall):
-            return None  # BUGBUG:  Should be an exception
-
-        self.parent_wall = parent_wall
-        self.relative_x = relative_x
-        self.relative_y = relative_y
-
-        origin = self.absolute_origin
-        xz_angle = parent_wall.xz_angle
-        super().__init__(width, height, origin, xz_angle)
-
-        self.material = block.AIR.id
-
-        self._calc_opposite_corners()
-
-    @property
-    def absolute_origin(self):
-        return self.parent_wall.along(self.relative_x) + Vec3(0, self.relative_y-1)
-
-    def _draw(self, material=None, subtype=0):
-        # BUGBUG: Remove the overridden function.  Rely on the parent function.
-        if material is None:
-            material = self.material
-            subtype = self.material_subtype
-        super()._draw(material, subtype)
 
 # BM_1
 
@@ -475,6 +433,51 @@ class Wall(Rectangle):
         new_wall.set_cornerparent_wall_material(
             self.corner_material, self.corner_material_subtype)
         return new_wall
+
+
+class OpeningDefinition(ComponentDefinition):
+    # BUGBUG: Should this inherit from a RectangleDefinition?
+    def __init__(self, template):
+        attributes = ["parent_wall", "relative_x", "relative_y", "width", "height"]
+        attributes += ["material", "subtype"]
+        super().init(attributes, template)
+        
+        if self.material is None:
+            self.material = block.AIR.id
+                    
+class Opening(Rectangle):
+    '''
+    A rectangle object to represent a door, window or other space in a wall
+    relative_x is distance relative to the origin of the parent wall (1 is left side)
+    relative_y is distance relative to the bottom of the wall (1 is bottom)
+    '''
+
+    # BUGBUG: Use the component parent methods
+    def __init__(self, definition):
+        super()._copy_definition(definition)
+        
+        if not isinstance(parent_wall, Wall):
+            return None  # BUGBUG:  Should be an exception
+
+        origin = self.absolute_origin
+        xz_angle = self.parent_wall.xz_angle
+        super().__init__(definition)
+
+        self.material = block.AIR.id
+
+        self._calc_opposite_corners()
+
+    @property
+    def absolute_origin(self):
+        return self.parent_wall.along(self.relative_x) + Vec3(0, self.relative_y-1)
+
+    def _draw(self, material=None, subtype=0):
+        # BUGBUG: Remove the overridden function.  Rely on the parent function.
+        if material is None:
+            material = self.material
+            subtype = self.material_subtype
+        super()._draw(material, subtype)
+
 
 
 class StoryDefinition(ComponentDefinition):
@@ -624,11 +627,8 @@ class Floor(Component):
 
     def __init__(self, floor_definition):
         self._copy_definition(floor_definition)
-        fd = floor_definition
-#        self.floor_definition = fd
-        fd.name = "FLOOR"
-        # BUGBUG: Call __init__ on the parent then tip on self
-        floor = Rectangle(self.depth, self.width, self.origin, self.xz_angle)
+
+        floor = Rectangle(floor_definition)
         floor.tip()
 
 #        self.floor = floor
@@ -678,9 +678,54 @@ def bump_player():
     mc.player.setPos(player_x+1, player_y+1, player_z+1)
 
 
+def test_rectangle_directions():
+    mc.postToChat("Testing rectangle directions")
+    mc.postToChat("Confirm 4 rectangles with red pointing North")
+
+    rectangle_basics = [
+                        {"direction":Direction.South, "material":block.WOOL.id, "subtype":11},
+                        {"direction":Direction.North, "material":block.WOOL.id, "subtype":14},
+                        {"direction":Direction.East, "material":block.WOOL.id, "subtype":11},
+                        {"direction":Direction.West, "material":block.WOOL.id, "subtype":11},
+                    ]
+    for _definition in rectangle_basics:
+        rectangle_definition = RectangleDefinition()
+        rectangle_definition.origin = Vec3(20,0,10)
+        rectangle_definition.length = 5
+        rectangle_definition.height = 3
+        rectangle_definition.xz_angle = _definition["direction"]     
+        rec = Rectangle(rectangle_definition)
+        rec.draw(_definition["material"], _definition["subtype"])
+        rec._draw_origin()
+        print(rec)
+        
+def test_tipped_rectangle():
+    rectangle_definition = RectangleDefinition()
+    rectangle_definition.origin = Vec3(20,0,11)
+    rectangle_definition.length = 5
+    rectangle_definition.height = 3
+    rectangle_definition.xz_angle = Direction.South
+    
+    rec = Rectangle(rectangle_definition)
+    rec.tip()
+    rec.draw(block.STONE.id)
+    rec._draw_origin()
+    print(rec)
+
+
+def debug_clear_space():
+    mc.player.setPos(15,0,5)
+    mc.setBlocks(-100,-5,-100,100,0,100,block.GRASS.id)
+    mc.setBlocks(-10,0,-10,30,50,30,block.AIR.id)
+    
+    
+
 def main():
     ''' Main function '''
-    mc.postToChat(f"Player is at {mc.player.getPos()}")
+    debug_clear_space()
+    test_rectangle_directions()
+    halt
+
 
     # Build out the lot
     site_def = FloorDefinition()

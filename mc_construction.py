@@ -149,11 +149,10 @@ class RectangleDefinition(ComponentDefinition):
 
     def __init__(self, template=None):
         attributes = ['length', 'height', 'origin', 'xz_angle', 'xy_angle']
-        attributes += ['tipped']
         super().__init__(attributes, template)
 
-        if self.tipped is None:
-            self.tipped = False
+        if self.xy_angle is None:
+            self.xy_angle = 0
 
 
 class Rectangle(Component):
@@ -163,6 +162,7 @@ class Rectangle(Component):
         # BUGBUG: Convert this to use a component definition to be consistent
         super()._copy_definition(definition)
         self._calc_opposite_corners()
+        print(f"REC_INIT: origin: {self.origin}, opposite: {self.opposite}")
 
     def _calc_opposite_corners(self):
         ''' Calculates the opposite corner on the rectange based on origin, length and angle.
@@ -175,35 +175,23 @@ class Rectangle(Component):
             phi = angle around the horizontal plane, xz_angle (0 = East?)
             r = the length of the radius (rectangle)
 
-            x = r * sin(theta) * cos(phi)
-            y = r * cos(theta)
-            z = r * sin(theta) * sin(phi)
+            x = r * sin(theta) * sin(phi)
+            y = r * cos(phi)
+            z = r * cos(theta) * sin(phi)
 
         '''
         theta = math.radians(self.xz_angle)
-        opp_sin = round(math.sin(theta))
-        opp_cos = round(math.cos(theta))
+        phi = math.radians(self.xy_angle)
+        
+        opp_x = round((self.length-1) * math.sin(theta) * math.sin(phi), 1)
+        opp_y = round((self.height-1) * math.cos(phi))
+        opp_z = round((self.length-1) * math.cos(theta) * math.sin(phi), 1)
+        print(f"REC_calc_opp: xz_angle:{self.xz_angle} xy_angle: {self.xy_angle}")
+        print(f"   r={self.length-1}, cos={math.cos(theta)}, sin={math.sin(phi)}")
 
-        print(
-            f"Calculating corners at xz_angle = {self.xz_angle} ({self.tipped})")
-
-        opp_x = round((self.length-1) * opp_sin, 1)
-        opp_y = self.height-1
-        opp_z = round((self.length-1) * opp_cos, 1)
-
-        # The rectangle is always tipped in the positive direction
-        # BUGBUG: This is cheating.  Use the spherical coordinates
-        if self.tipped:
-            if (opp_sin == 0) and (opp_cos == -1):  # 180 degrees
-                self.opposite = self.origin + Vec3(opp_y, opp_x, opp_z)
-            elif (opp_sin == 0) and (opp_cos == 1):  # 0 degrees
-                self.opposite = self.origin + Vec3(opp_y, opp_x, opp_z)
-            elif (opp_sin == 1) and (opp_cos == 0):  # 90 degrees
-                self.opposite = self.origin + Vec3(opp_x, opp_z, opp_y)
-            elif (opp_sin == -1) and (opp_cos == 0):  # 270 degrees
-                self.opposite = self.origin + Vec3(opp_x, opp_z, opp_y)
-        else:
-            self.opposite = self.origin + Vec3(opp_x, opp_y, opp_z)
+        opp = Vec3(opp_x, opp_y, opp_z)
+        self.opposite = self.origin + opp
+        print(f"REC_calc_opp: origin:{self.origin} offset: {opp}")
 
     def set_direction(self, direction):
         ''' Sets the direction of a rectangle (e.g. Direction.North) '''
@@ -275,7 +263,7 @@ class Rectangle(Component):
 
     def tip(self):
         ''' Tips a rectangle to the East or South horizontal plane '''
-        self.tipped = True
+        self.xy_angle = 90
         self._calc_opposite_corners()
 
     def draw(self, material, subtype=0):
@@ -300,12 +288,22 @@ class Rectangle(Component):
 
 
 class FloorDefinition(ComponentDefinition):
-    ''' Class to define the attributes of a Floor object '''
+    '''
+        Class to define the attributes of a Floor object
+        
+        A floor has:
+            width - The width of the lot (across the screen)
+            depth - The depth of the lot (into the screen)
+            thickness - Distance (into the ground)
+            origin - Front corner of the lot
+            xz_angle - Rotation of the lot (for direction)
+            material/submaterial
+    '''
 
     def __init__(self, template=None):
         # Copy attributes from the template
-        attributes = ['origin', 'width', 'depth', 'height', 'thickness']
-        attributes += ['base_material', 'base_material_subtype']
+        attributes = ['origin', 'width', 'depth', 'height', 'thickness', 'xz_angle']
+        attributes += ['base_material', 'base_material_subtype', 'tipped', 'length']
         super().__init__(attributes, template)
 
         # Default the origin to the space under the player
@@ -691,10 +689,10 @@ def test_rectangle_directions():
     mc.postToChat("Confirm 4 rectangles with red pointing North")
 
     rectangle_basics = [
-        {"direction": Direction.South, "material": block.WOOL.id, "subtype": TEST_RED},
+#        {"direction": Direction.South, "material": block.WOOL.id, "subtype": TEST_RED},
         {"direction": Direction.North, "material": block.WOOL.id, "subtype": TEST_BLUE},
-        {"direction": Direction.East,  "material": block.WOOL.id, "subtype": TEST_BLUE},
-        {"direction": Direction.West,  "material": block.WOOL.id, "subtype": TEST_BLUE},
+#        {"direction": Direction.East,  "material": block.WOOL.id, "subtype": TEST_BLUE},
+#        {"direction": Direction.West,  "material": block.WOOL.id, "subtype": TEST_BLUE},
     ]
     
     o_x = TEST_ORIGIN_X
@@ -862,14 +860,31 @@ def test_rectangle_math():
     along_x, along_y, along_z = rec_along.along(4)
     mc.setBlock(along_x, along_y, along_z, TEST_MATERIAL, TEST_YELLOW)
 
+def test_floor():
+    floor_def = FloorDefinition()
+    floor_def.origin = TEST_ORIGIN - Vec3(0,1,0)
+    floor_def.width =  10 # Width of the lot
+    floor_def.depth = 2 # Length of the lot
+    floor_def.height = 15 # Space above the lot
+    floor_def.length = 0 # Not used?
+    floor_def.thickness = 3 # Depth into the ground
+    floor_def.xz_angle = Direction.North
+    floor_def.base_material = TEST_MATERIAL
+    floor_def.base_material_subtype = TEST_BLUE
+    
+    ground = Floor(floor_def)
+    ground.clear()
+
+
 
 def main():
     ''' Main function '''
     debug_clear_space()
-#    test_rectangle_directions()
+    test_rectangle_directions()
 #    test_tipped_rectangles()
 #    test_rectangle_rotate()
-    test_rectangle_math()
+#    test_rectangle_math()
+#    test_floor()
     halt
 
     # Build out the lot

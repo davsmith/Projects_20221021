@@ -171,27 +171,39 @@ class Rectangle(Component):
             y = Altitude
             z = South/North
 
-            theta = angle between vertical and horizontal planes, yx_angle (0 = vertical)
+            theta = angle between vertical and horizontal planes, xy_angle (0 = vertical)
             phi = angle around the horizontal plane, xz_angle (0 = East?)
             r = the length of the radius (rectangle)
 
-            x = r * sin(theta) * sin(phi)
-            y = r * cos(phi)
-            z = r * cos(theta) * sin(phi)
+            x = r * sin(theta) * cos(phi)
+            y = r * cos(theta)
+            z = r * sin(theta) * sin(phi)
 
         '''
         theta = math.radians(self.xz_angle)
-        phi = math.radians(self.xy_angle)
-        
-        opp_x = round((self.length-1) * math.sin(theta) * math.sin(phi), 1)
-        opp_y = round((self.height-1) * math.cos(phi))
-        opp_z = round((self.length-1) * math.cos(theta) * math.sin(phi), 1)
-        print(f"REC_calc_opp: xz_angle:{self.xz_angle} xy_angle: {self.xy_angle}")
-        print(f"   r={self.length-1}, cos={math.cos(theta)}, sin={math.sin(phi)}")
+        opp_sin = round(math.sin(theta))
+        opp_cos = round(math.cos(theta))
 
-        opp = Vec3(opp_x, opp_y, opp_z)
-        self.opposite = self.origin + opp
-        print(f"REC_calc_opp: origin:{self.origin} offset: {opp}")
+        print(
+            f"Calculating corners at xz_angle = {self.xz_angle} ({self.tipped})")
+
+        opp_x = round((self.length-1) * opp_sin, 1)
+        opp_y = self.height-1
+        opp_z = round((self.length-1) * opp_cos, 1)
+
+        # The rectangle is always tipped in the positive direction
+        # BUGBUG: This is cheating.  Use the spherical coordinates
+        if self.tipped:
+            if (opp_sin == 0) and (opp_cos == -1):  # 180 degrees
+                self.opposite = self.origin + Vec3(opp_y, opp_x, opp_z)
+            elif (opp_sin == 0) and (opp_cos == 1):  # 0 degrees
+                self.opposite = self.origin + Vec3(opp_y, opp_x, opp_z)
+            elif (opp_sin == 1) and (opp_cos == 0):  # 90 degrees
+                self.opposite = self.origin + Vec3(opp_x, opp_z, opp_y)
+            elif (opp_sin == -1) and (opp_cos == 0):  # 270 degrees
+                self.opposite = self.origin + Vec3(opp_x, opp_z, opp_y)
+        else:
+            self.opposite = self.origin + Vec3(opp_x, opp_y, opp_z)
 
     def set_direction(self, direction):
         ''' Sets the direction of a rectangle (e.g. Direction.North) '''
@@ -290,7 +302,7 @@ class Rectangle(Component):
 class FloorDefinition(ComponentDefinition):
     '''
         Class to define the attributes of a Floor object
-        
+
         A floor has:
             width - The width of the lot (across the screen)
             depth - The depth of the lot (into the screen)
@@ -302,8 +314,10 @@ class FloorDefinition(ComponentDefinition):
 
     def __init__(self, template=None):
         # Copy attributes from the template
-        attributes = ['origin', 'width', 'depth', 'height', 'thickness', 'xz_angle']
-        attributes += ['base_material', 'base_material_subtype', 'tipped', 'length']
+        attributes = ['origin', 'width', 'depth',
+                      'height', 'thickness', 'xz_angle']
+        attributes += ['base_material',
+                       'base_material_subtype', 'tipped', 'length']
         super().__init__(attributes, template)
 
         # Default the origin to the space under the player
@@ -684,21 +698,22 @@ def debug_clear_space():
                  x2, y2, z2, block.AIR.id)
     mc.player.setPos(TEST_ORIGIN_X - 5, TEST_ORIGIN_Y, TEST_ORIGIN_Z - 5)
 
+
 def test_rectangle_directions():
     mc.postToChat("Testing rectangle directions")
     mc.postToChat("Confirm 4 rectangles with red pointing North")
 
     rectangle_basics = [
-#        {"direction": Direction.South, "material": block.WOOL.id, "subtype": TEST_RED},
+        #        {"direction": Direction.South, "material": block.WOOL.id, "subtype": TEST_RED},
         {"direction": Direction.North, "material": block.WOOL.id, "subtype": TEST_BLUE},
-#        {"direction": Direction.East,  "material": block.WOOL.id, "subtype": TEST_BLUE},
-#        {"direction": Direction.West,  "material": block.WOOL.id, "subtype": TEST_BLUE},
+        #        {"direction": Direction.East,  "material": block.WOOL.id, "subtype": TEST_BLUE},
+        #        {"direction": Direction.West,  "material": block.WOOL.id, "subtype": TEST_BLUE},
     ]
-    
+
     o_x = TEST_ORIGIN_X
     o_y = TEST_ORIGIN_Y
     o_z = TEST_ORIGIN_Z
-    
+
     for _definition in rectangle_basics:
         rectangle_definition = RectangleDefinition()
         rectangle_definition.origin = Vec3(o_x, o_y, o_z)
@@ -709,6 +724,7 @@ def test_rectangle_directions():
         rec.draw(_definition["material"], _definition["subtype"])
         rec._draw_origin()
         print(rec)
+
 
 def test_tipped_rectangles():
     mc.postToChat("Testing tipped rectangles")
@@ -737,10 +753,12 @@ def test_tipped_rectangles():
         rec_tipped.draw(_definition["material"], _definition["subtype"])
         rec_tipped._draw_origin()
         print(rec_tipped)
-        
+
         origin_z -= 10
 
-#bm_tests
+# bm_tests
+
+
 def test_rectangle_rotate():
     mc.postToChat("Testing rectangle rotate methods")
 
@@ -761,22 +779,22 @@ def test_rectangle_rotate():
     rectangle_definition.height = TEST_WALL_HEIGHT
     rectangle_definition.xz_angle = _definition["direction"]
     rec_left = Rectangle(rectangle_definition)
-    
-    origin_x -= 10
-    rectangle_definition.origin = Vec3(origin_x, origin_y, origin_z)
-    rec_right = Rectangle(rectangle_definition)    
 
     origin_x -= 10
     rectangle_definition.origin = Vec3(origin_x, origin_y, origin_z)
-    rec_flip = Rectangle(rectangle_definition)    
+    rec_right = Rectangle(rectangle_definition)
 
     origin_x -= 10
     rectangle_definition.origin = Vec3(origin_x, origin_y, origin_z)
-    rec_flip_origin = Rectangle(rectangle_definition)    
+    rec_flip = Rectangle(rectangle_definition)
+
+    origin_x -= 10
+    rectangle_definition.origin = Vec3(origin_x, origin_y, origin_z)
+    rec_flip_origin = Rectangle(rectangle_definition)
 
     rec_left.draw(TEST_MATERIAL, TEST_RED)
     rec_left._draw_origin()
-    
+
     rec_left.rotateLeft()
     rec_left.draw(TEST_MATERIAL, TEST_BLUE)
 
@@ -785,7 +803,7 @@ def test_rectangle_rotate():
 
     rec_right.draw(TEST_MATERIAL, TEST_RED)
     rec_right._draw_origin()
-    
+
     rec_right.rotateRight()
     rec_right.draw(TEST_MATERIAL, TEST_BLUE)
 
@@ -794,19 +812,20 @@ def test_rectangle_rotate():
 
     rec_flip.draw(TEST_MATERIAL, TEST_RED)
     rec_flip._draw_origin()
-    
+
     rec_flip.flip()
     rec_flip.draw(TEST_MATERIAL, TEST_BLUE)
     rec_flip._draw_origin()
-    
+
     rec_flip_origin.draw(TEST_MATERIAL, TEST_RED)
     rec_flip_origin._draw_origin()
 
     rec_flip_origin.flip_origin()
     rec_flip_origin.shift(-2)
-    
+
     rec_flip_origin.draw(TEST_MATERIAL, TEST_BLUE)
     rec_flip_origin._draw_origin()
+
 
 def test_rectangle_math():
     mc.postToChat("Testing rectangle math")
@@ -828,11 +847,11 @@ def test_rectangle_math():
     rectangle_definition.height = TEST_WALL_HEIGHT
     rectangle_definition.xz_angle = _definition["direction"]
     rec_mp = Rectangle(rectangle_definition)
-    
+
     origin_x -= 10
     rectangle_definition.origin = Vec3(origin_x, origin_y, origin_z)
     rec_along = Rectangle(rectangle_definition)
-    
+
     rec_mp.draw(TEST_MATERIAL, TEST_RED)
     mp_x, mp_y, mp_z = rec_mp.midpoint()
     mc.setBlock(mp_x, mp_y, mp_z, TEST_MATERIAL, TEST_YELLOW)
@@ -844,7 +863,7 @@ def test_rectangle_math():
     along_x, along_y, along_z = rec_along.along(4)
     mc.setBlock(along_x, along_y, along_z, TEST_MATERIAL, TEST_YELLOW)
 
-    rec_along.shift(0,0,-5)
+    rec_along.shift(0, 0, -5)
     rec_along.rotateRight()
     rec_along.draw(TEST_MATERIAL, TEST_RED)
     along_x, along_y, along_z = rec_along.along(2)
@@ -852,7 +871,7 @@ def test_rectangle_math():
     along_x, along_y, along_z = rec_along.along(4)
     mc.setBlock(along_x, along_y, along_z, TEST_MATERIAL, TEST_YELLOW)
 
-    rec_along.shift(0,0,-5)
+    rec_along.shift(0, 0, -5)
     rec_along.flip()
     rec_along.draw(TEST_MATERIAL, TEST_RED)
     along_x, along_y, along_z = rec_along.along(2)
@@ -860,21 +879,21 @@ def test_rectangle_math():
     along_x, along_y, along_z = rec_along.along(4)
     mc.setBlock(along_x, along_y, along_z, TEST_MATERIAL, TEST_YELLOW)
 
+
 def test_floor():
     floor_def = FloorDefinition()
-    floor_def.origin = TEST_ORIGIN - Vec3(0,1,0)
-    floor_def.width =  10 # Width of the lot
-    floor_def.depth = 2 # Length of the lot
-    floor_def.height = 15 # Space above the lot
-    floor_def.length = 0 # Not used?
-    floor_def.thickness = 3 # Depth into the ground
+    floor_def.origin = TEST_ORIGIN - Vec3(0, 1, 0)
+    floor_def.width = 10  # Width of the lot
+    floor_def.depth = 2  # Length of the lot
+    floor_def.height = 15  # Space above the lot
+    floor_def.length = 0  # Not used?
+    floor_def.thickness = 3  # Depth into the ground
     floor_def.xz_angle = Direction.North
     floor_def.base_material = TEST_MATERIAL
     floor_def.base_material_subtype = TEST_BLUE
-    
+
     ground = Floor(floor_def)
     ground.clear()
-
 
 
 def main():

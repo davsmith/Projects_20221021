@@ -13,6 +13,33 @@ from enum import IntEnum, unique
 from math import sin, cos, radians
 
 
+def compare_points(point1, point2):
+    ''' Compares two points in Minecraft space '''
+    direction = ""
+    elevation = ""
+
+    x1, y1, z1 = point1
+    x2, y2, z2 = point2
+    threshold = 1
+
+    if (y2-y1) > threshold:
+        elevation = "above"
+    elif (y2-y1) < -threshold:
+        elevation = "below"
+
+    if (z2-z1) > threshold:
+        direction = "South"
+    elif (z2-z1) < -threshold:
+        direction = "North"
+
+    if (x2-x1) > threshold:
+        direction += "East"
+    elif (x2-x1) < -threshold:
+        direction += "West"
+
+    return (elevation, direction)
+
+
 @unique
 class Direction(IntEnum):
     '''
@@ -28,6 +55,9 @@ class Direction(IntEnum):
 
 
 class MCVector:
+    """A 3D vector with coordinate system adapted to Minecraft
+    """
+
     def __init__(self, origin=(0, 0, 0), length=5, phi=90, theta=0):
         self.origin = origin
         self.length = length
@@ -70,24 +100,25 @@ class MCVector:
         x, y, z = self.end_point
         return(y, z, x)
 
-    def main():
-        """Main function which is run when the program is run standalone
-        """
-        print('Running stand alone')
-        v1 = MCVector(origin=(0, 0, 0), length=3, phi=90, theta=180)
-        v1.set_direction(Direction.West)
-        v1.set_slant(Direction.Up)
-        print(v1)
 
-        org_x, org_y, org_z = v1.origin
-        ep_x, ep_y, ep_z = v1.mc_end_point
+def main():
+    """Main function which is run when the program is run standalone
+    """
+    vec1 = MCVector(origin=(0, 0, 0), length=3,
+                    phi=90, theta=Direction.North)
+    print(vec1)
 
-        if MINECRAFT_EXISTS:
-            MC.player.setPos(0, 0, -5)
-            MC.setBlocks(-20, 0, -20, 20, 20, 20, 0)
-            MC.setBlock(org_x, org_y, org_z, 1)
-            MC.setBlock(org_x, org_y, org_z, 53, 2)
-            MC.setBlock(ep_x, ep_y, ep_z, 35, 14)
+    org_x, org_y, org_z = vec1.origin
+    ep_x, ep_y, ep_z = vec1.mc_end_point
+
+    print(compare_points(vec1.origin, vec1.mc_end_point))
+
+    if MINECRAFT_EXISTS:
+        MC.player.setPos(0, 0, -5)
+        MC.setBlocks(-20, 0, -20, 20, 20, 20, 0)
+        MC.setBlock(org_x, org_y, org_z, 1)
+        MC.setBlock(org_x, org_y, org_z, 53, 2)
+        MC.setBlock(ep_x, ep_y, ep_z, 35, 14)
 
 
 if __name__ == '__main__':

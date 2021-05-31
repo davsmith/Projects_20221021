@@ -10,7 +10,8 @@ except ModuleNotFoundError:
     MINECRAFT_EXISTS = False
 
 from enum import IntEnum, unique
-from math import sin, cos, radians
+from math import sin, cos, radians, sqrt
+from pprint import pprint
 
 
 def compare_points(point1, point2):
@@ -101,17 +102,51 @@ class MCVector:
         return(y, z, x)
 
 
+class MCRectangle(MCVector):
+    def __init__(self, origin=(0, 0, 0), length=5, height=3, phi=90, theta=0):
+        self.origin = origin
+        self.length = length
+        self.height = height
+        self.phi = phi
+        self.theta = theta
+        self.corners = []
+        super().__init__(origin, length, phi, theta)
+
+    def __repr__(self):
+        msg = f"<MCVector> origin:{self.origin}, "
+        msg += f"length:{self.length}, "
+        msg += f"phi:{self.phi}, "
+        msg += f"theta:{self.theta}, "
+        msg += f"mc endpoint:{self.mc_end_point} "
+        return msg
+
+    def calc_corners(self):
+        self.corners.clear()
+
+
 def main():
     """Main function which is run when the program is run standalone
     """
-    vec1 = MCVector(origin=(0, 0, 0), length=3,
-                    phi=90, theta=Direction.North)
-    print(vec1)
+    corners = []
+    origin = (0, 0, 0)
+    length = 10
+    height = 3
+    dir1 = Direction.East
 
-    org_x, org_y, org_z = vec1.origin
-    ep_x, ep_y, ep_z = vec1.mc_end_point
+    base_line = MCVector(origin, length, 90,
+                         theta=dir1).mc_end_point
+    vertical_line = MCVector(
+        origin, length, 0, theta=dir1).mc_end_point
+    opposite_corner = (base_line[0], height, base_line[2])
 
-    print(compare_points(vec1.origin, vec1.mc_end_point))
+    print(f"Opposite: {opposite_corner}")
+
+    corners.append(origin)
+    corners.append(MCVector(origin, length, 90,
+                            theta=Direction.North).mc_end_point)
+    pprint(corners)
+
+    # print(compare_points(vec1.origin, vec1.mc_end_point))
 
     if MINECRAFT_EXISTS:
         MC.player.setPos(0, 0, -5)

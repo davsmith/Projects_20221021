@@ -10,8 +10,9 @@ except ModuleNotFoundError:
     MINECRAFT_EXISTS = False
 
 from enum import IntEnum, unique
-from math import sin, cos, radians, sqrt
+from math import sin, cos, radians, sqrt, atan, degrees
 from pprint import pprint
+import numpy as NP
 
 
 def compare_points(point1, point2):
@@ -74,9 +75,11 @@ class MCVector:
         return msg
 
     def set_direction(self, direction):
+        ''' Sets the rotation of the vector in the x/z Minecraft plane (theta) '''
         self.theta = direction
 
     def set_slant(self, slant):
+        ''' Sets the rotation of the vector from vertical (phi) '''
         if slant == Direction.Flat:
             self.phi = 90
         elif slant == Direction.Up:
@@ -120,31 +123,31 @@ class MCRectangle(MCVector):
         msg += f"mc endpoint:{self.mc_end_point} "
         return msg
 
-    def calc_corners(self):
-        self.corners.clear()
+    def opposite(self):
+        '''Calculate the endpoint of the diagnol of the rectangle from the origin'''
+
+        # Create a vector from the origin to the diagnol corner of the rectangle
+        hypot = sqrt(pow(self.length, 2) + pow(self.height, 2))
+        slant = degrees(atan(self.length/self.height))
+        rotation = self.theta
+        diagnol = MCVector(origin=self.origin, length=hypot,
+                           phi=slant, theta=rotation)
+
+        return NP.add(diagnol.mc_end_point, self.origin)
 
 
 def main():
     """Main function which is run when the program is run standalone
     """
     corners = []
-    origin = (0, 0, 0)
-    length = 10
+    origin = (1, 1, 1)
+    length = 5
     height = 3
-    dir1 = Direction.East
+    dir1 = Direction.North
 
-    base_line = MCVector(origin, length, 90,
-                         theta=dir1).mc_end_point
-    vertical_line = MCVector(
-        origin, length, 0, theta=dir1).mc_end_point
-    opposite_corner = (base_line[0], height, base_line[2])
-
-    print(f"Opposite: {opposite_corner}")
-
-    corners.append(origin)
-    corners.append(MCVector(origin, length, 90,
-                            theta=Direction.North).mc_end_point)
-    pprint(corners)
+    rec1 = MCRectangle(origin=(0, 0, 0), length=5,
+                       height=3, phi=0, theta=Direction.West).opposite()
+    pprint(rec1)
 
     # print(compare_points(vec1.origin, vec1.mc_end_point))
 

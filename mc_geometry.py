@@ -128,26 +128,34 @@ class MCRectangle(MCVector):
 
         # Create a vector from the origin to the diagnol corner of the rectangle
         hypot = sqrt(pow(self.length, 2) + pow(self.height, 2))
-        slant = degrees(atan(self.length/self.height))
         rotation = self.theta
+        # if self.phi == Direction.Flat:
+        #     slant = 90
+        #     # rotation += degrees(atan(self.length/self.height))
+        # else:
+        slant = degrees(atan(self.length/self.height))
         diagnol = MCVector(origin=self.origin, length=hypot,
                            phi=slant, theta=rotation)
 
-        return NP.add(diagnol.mc_end_point, self.origin)
+        return tuple(NP.add(diagnol.mc_end_point, self.origin))
 
 
 def main():
     """Main function which is run when the program is run standalone
     """
     corners = []
-    origin = (1, 1, 1)
+    origin = (0, 0, 0)
     length = 5
     height = 3
-    dir1 = Direction.North
+    dir1 = Direction.South
 
     rec1 = MCRectangle(origin=(0, 0, 0), length=5,
-                       height=3, phi=0, theta=Direction.West).opposite()
+                       height=3, phi=0, theta=Direction.North).opposite()
     pprint(rec1)
+
+    rec2 = MCRectangle(origin=(0, 0, 0), length=5,
+                       height=3, phi=Direction.Flat, theta=Direction.South).opposite()
+    pprint(rec2)
 
     # print(compare_points(vec1.origin, vec1.mc_end_point))
 

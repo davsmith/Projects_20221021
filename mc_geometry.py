@@ -57,10 +57,9 @@ class Direction(IntEnum):
 
 
 class MCVector:
-    """A 3D vector with coordinate system adapted to Minecraft
-    """
+    """A 3D vector with coordinate system adapted to Minecraft (x=E/W, y=U/D, z=S/N)"""
 
-    def __init__(self, origin=(0, 0, 0), length=5, phi=90, theta=0):
+    def __init__(self, origin=(0, 0, 0), length=1, phi=90, theta=0):
         self.origin = origin
         self.length = length
         self.phi = phi
@@ -75,7 +74,10 @@ class MCVector:
         return msg
 
     def set_direction(self, direction):
-        ''' Sets the rotation of the vector in the x/z Minecraft plane (theta) '''
+        '''Sets the rotation of the vector in the x/z Minecraft plane (theta)
+            +x = East, -x = West
+            +y = Up, -y = Down
+            +z = South, -z = North'''
         self.theta = direction
 
     def set_slant(self, slant):
@@ -92,9 +94,9 @@ class MCVector:
         phi = self.phi
         theta = self.theta
 
-        x = r * round(sin(radians(phi) * cos(radians(theta))), 5)
-        y = r * round(sin(radians(phi) * sin(radians(theta))), 5)
-        z = r * round(cos(radians(phi)), 5)
+        x = r * sin(radians(phi)) * cos(radians(theta))
+        y = r * sin(radians(phi)) * sin(radians(theta))
+        z = r * cos(radians(phi))
 
         return (x, y, z)
 
@@ -106,6 +108,8 @@ class MCVector:
 
 
 class MCRectangle(MCVector):
+    ''' Manages coordinates of a 2D rectangle in MineCraft 3D space '''
+
     def __init__(self, origin=(0, 0, 0), length=5, height=3, phi=90, theta=0):
         self.origin = origin
         self.length = length
@@ -129,32 +133,28 @@ class MCRectangle(MCVector):
         # Create a vector from the origin to the diagnol corner of the rectangle
         hypot = sqrt(pow(self.length, 2) + pow(self.height, 2))
         rotation = self.theta
-        # if self.phi == Direction.Flat:
-        #     slant = 90
-        #     # rotation += degrees(atan(self.length/self.height))
-        # else:
-        slant = degrees(atan(self.length/self.height))
+        if self.phi == Direction.Flat:
+            slant = 90
+            rotation = degrees(atan(self.length/self.height))
+            # print(f"slant={slant}, rotation={rotation}")
+        else:
+            slant = degrees(atan(self.length/self.height))
         diagnol = MCVector(origin=self.origin, length=hypot,
                            phi=slant, theta=rotation)
 
+        print(diagnol)
         return tuple(NP.add(diagnol.mc_end_point, self.origin))
 
 
 def main():
     """Main function which is run when the program is run standalone
     """
-    corners = []
-    origin = (0, 0, 0)
-    length = 5
-    height = 3
-    dir1 = Direction.South
-
     rec1 = MCRectangle(origin=(0, 0, 0), length=5,
-                       height=3, phi=0, theta=Direction.North).opposite()
+                       height=3, phi=0, theta=Direction.East).opposite()
     pprint(rec1)
 
     rec2 = MCRectangle(origin=(0, 0, 0), length=5,
-                       height=3, phi=Direction.Flat, theta=Direction.South).opposite()
+                       height=3, phi=Direction.Flat, theta=Direction.East).opposite()
     pprint(rec2)
 
     # print(compare_points(vec1.origin, vec1.mc_end_point))

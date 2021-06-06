@@ -11,7 +11,6 @@ except ModuleNotFoundError:
 
 from enum import IntEnum, unique
 from math import sin, cos, radians, sqrt, atan, degrees
-from pprint import pprint
 import numpy as NP
 
 
@@ -107,14 +106,15 @@ class MCVector:
 class MCRectangle(MCVector):
     ''' Manages coordinates of a 2D rectangle in MineCraft 3D space '''
 
-    def __init__(self, origin=(0, 0, 0), length=5, height=3, phi=90, theta=0):
+    def __init__(self, origin=(0, 0, 0), length=5, height=3, theta=0):
         self.origin = origin
         self.length = length
         self.height = height
-        self.phi = phi
+        self.phi = Direction.Up
         self.theta = theta
         self.corners = []
-        super().__init__(origin, length, phi, theta)
+        self._tipped = False
+        super().__init__(origin, length, self.phi, theta)
 
     def __repr__(self):
         msg = f"<MCVector> origin:{self.origin}, "
@@ -133,7 +133,7 @@ class MCRectangle(MCVector):
         rotation = self.theta
         if self.phi == Direction.Flat:
             slant = 90
-            rotation = degrees(atan(self.length/self.height))
+            rotation = degrees(atan(self.length/self.height)) + self.theta
             # print(f"slant={slant}, rotation={rotation}")
         else:
             slant = degrees(atan(self.length/self.height))
@@ -142,20 +142,26 @@ class MCRectangle(MCVector):
 
         return diagnol.end_point
 
+    @property
+    def is_tipped(self):
+        '''Determines if the rectangle is vertical or flat'''
+        return self.phi == Direction.Flat
+
+    @is_tipped.setter
+    def is_tipped(self, tipped):
+        '''Set the rectangle to vertical or flat'''
+        if tipped:
+            self.phi = Direction.Flat
+        else:
+            self.phi = Direction.Up
+
 
 def main():
     """Main function which is run when the program is run standalone"""
-
     rec1 = MCRectangle(origin=(0, 0, 0), length=5,
-                       height=3, phi=0, theta=Direction.East).opposite
-    pprint(rec1)
-
-    rec2 = MCRectangle(origin=(0, 0, 0), length=5,
-                       height=3, phi=Direction.Flat, theta=Direction.East).opposite
-    pprint(rec2)
-
-    # print(compare_points(vec1.origin, vec1.mc_end_point))
-
+                       height=3, theta=Direction.West)
+    rec1.is_tipped = True
+    print(f"Flat rectangle: {rec1.opposite}")
     if MINECRAFT_EXISTS:
         MC.player.setPos(0, 0, -5)
         # MC.setBlocks(-20, 0, -20, 20, 20, 20, 0)

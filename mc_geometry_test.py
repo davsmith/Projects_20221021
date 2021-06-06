@@ -1,6 +1,6 @@
 """Tests for MineCraft geometry class with MCVector, MCRectangle, etc."""
 from pytest import approx
-import pytest
+# import pytest
 from mc_geometry import MCVector, MCRectangle, Direction
 
 
@@ -62,11 +62,25 @@ class TestMCRectangle:
     def test_rectangle_with_zero_origin_east(self):
         """Default case where the origin is 0, 0, 0"""
         rec1 = MCRectangle(origin=(0, 0, 0), length=5,
-                           height=3, phi=0, theta=Direction.East)
+                           height=3, theta=Direction.East)
         assert rec1.opposite == approx((5, 3, 0), abs=.1)
 
     def test_rectangle_with_nonzero_origin_east(self):
         """Default case where the origin is 0, 0, 0"""
         rec1 = MCRectangle(origin=(1, 1, 1), length=5,
-                           height=3, phi=0, theta=Direction.East)
+                           height=3, theta=Direction.East)
         assert rec1.opposite == approx((6, 4, 1), abs=.1)
+
+    def test_flat_rectangle_east(self):
+        """Default case where the origin is 0, 0, 0"""
+        rec1 = MCRectangle(origin=(0, 0, 0), length=5,
+                           height=3, theta=Direction.East)
+        rec1.is_tipped = True
+        assert rec1.opposite == approx((5, 0, 3), abs=.1)
+
+    def test_flat_rectangle_south(self):
+        """Default case where the origin is 0, 0, 0"""
+        rec1 = MCRectangle(origin=(0, 0, 0), length=5,
+                           height=3, theta=Direction.South)
+        rec1.is_tipped = True
+        assert rec1.opposite == approx((3, 0, 5), abs=.1)

@@ -160,14 +160,21 @@ def main():
     """Main function which is run when the program is run standalone"""
     rec1 = MCRectangle(origin=(0, 0, 0), length=5,
                        height=3, theta=Direction.West)
-    rec1.is_tipped = True
+    rec1.is_tipped = False
     print(f"Flat rectangle: {rec1.opposite}")
     if MINECRAFT_EXISTS:
-        MC.player.setPos(0, 0, -5)
-        # MC.setBlocks(-20, 0, -20, 20, 20, 20, 0)
-        # MC.setBlock(org_x, org_y, org_z, 1)
-        # MC.setBlock(org_x, org_y, org_z, 53, 2)
-        # MC.setBlock(ep_x, ep_y, ep_z, 35, 14)
+        MC.setBlocks(-50,0,-50,50,50,50,0)
+        MC.setBlocks(-50,-1,-50,50,-5,50,1)
+        MC.player.setPos(0, 1, 0)
+        print(f"Rec1: {rec1}")
+        x1, y1, z1 = rec1.origin
+        x2, y2, z2 = rec1.opposite
+#        x1, y1, z1 = (0,0,0)
+#        x2, y2, z2 = (5,3,0)
+        block_id = 2
+        MC.setBlocks(x1,y1,z1,x2,y2,z2,block_id)
+        MC.setBlock(x1,y1,z1,46)
+        print(f"Drawing from {x1},{y1},{z1} to {x2},{y2},{z2} in {block_id}")
 
 
 if __name__ == '__main__':

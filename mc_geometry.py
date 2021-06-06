@@ -127,6 +127,7 @@ class MCRectangle(MCVector):
         msg += f"mc endpoint:{self.mc_end_point} "
         return msg
 
+    @property
     def opposite(self):
         '''Calculate the endpoint of the diagnol of the rectangle from the origin'''
 
@@ -147,24 +148,24 @@ class MCRectangle(MCVector):
 
 
 def main():
-    """Main function which is run when the program is run standalone
-    """
+    """Main function which is run when the program is run standalone"""
+
     rec1 = MCRectangle(origin=(0, 0, 0), length=5,
-                       height=3, phi=0, theta=Direction.East).opposite()
+                       height=3, phi=0, theta=Direction.East).opposite
     pprint(rec1)
 
     rec2 = MCRectangle(origin=(0, 0, 0), length=5,
-                       height=3, phi=Direction.Flat, theta=Direction.East).opposite()
+                       height=3, phi=Direction.Flat, theta=Direction.East).opposite
     pprint(rec2)
 
     # print(compare_points(vec1.origin, vec1.mc_end_point))
 
     if MINECRAFT_EXISTS:
         MC.player.setPos(0, 0, -5)
-        MC.setBlocks(-20, 0, -20, 20, 20, 20, 0)
-        MC.setBlock(org_x, org_y, org_z, 1)
-        MC.setBlock(org_x, org_y, org_z, 53, 2)
-        MC.setBlock(ep_x, ep_y, ep_z, 35, 14)
+        # MC.setBlocks(-20, 0, -20, 20, 20, 20, 0)
+        # MC.setBlock(org_x, org_y, org_z, 1)
+        # MC.setBlock(org_x, org_y, org_z, 53, 2)
+        # MC.setBlock(ep_x, ep_y, ep_z, 35, 14)
 
 
 if __name__ == '__main__':

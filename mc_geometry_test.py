@@ -3,6 +3,7 @@ from pytest import approx
 from mc_geometry import MCVector, Direction
 
 
+@pytest.mark.ray
 def test_endpoint_flat_north() -> tuple:
     """Testing comparison of very close floating point numbers"""
     vec = MCVector(origin=(0, 0, 0), length=1, phi=Direction.Flat,
@@ -10,6 +11,7 @@ def test_endpoint_flat_north() -> tuple:
     assert vec.mc_end_point == approx((0, 0, -1), abs=.1)
 
 
+@pytest.mark.ray
 def test_endpoint_flat_south() -> tuple:
     """Testing comparison of very close floating point numbers"""
     vec = MCVector(origin=(0, 0, 0), length=1, phi=Direction.Flat,
@@ -18,6 +20,7 @@ def test_endpoint_flat_south() -> tuple:
     assert vec.mc_end_point == approx((0, 0, 1), abs=.1)
 
 
+@pytest.mark.ray
 def test_endpoint_flat_east() -> tuple:
     """Testing comparison of very close floating point numbers"""
     vec = MCVector(origin=(0, 0, 0), length=1, phi=Direction.Flat,
@@ -26,6 +29,7 @@ def test_endpoint_flat_east() -> tuple:
     assert vec.mc_end_point == approx((1, 0, 0), abs=.1)
 
 
+@pytest.mark.ray
 def test_endpoint_flat_west() -> tuple:
     """Testing comparison of very close floating point numbers"""
     vec = MCVector(origin=(0, 0, 0), length=1, phi=Direction.Flat,
@@ -34,6 +38,7 @@ def test_endpoint_flat_west() -> tuple:
     assert vec.mc_end_point == approx((-1, 0, 0), abs=.1)
 
 
+@pytest.mark.rectangle
 def test_endpoint_up_north() -> tuple:
     """Testing comparison of very close floating point numbers"""
     vec = MCVector(origin=(0, 0, 0), length=1, phi=Direction.Up,
@@ -42,6 +47,7 @@ def test_endpoint_up_north() -> tuple:
     assert vec.mc_end_point == approx((0, 1, 0), abs=.1)
 
 
+@pytest.mark.rectangle
 def test_endpoint_up_north_west() -> tuple:
     """Testing comparison of very close floating point numbers"""
     vec = MCVector(origin=(0, 0, 0), length=1, phi=45,

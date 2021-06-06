@@ -48,7 +48,7 @@ class TestMCVector:
         print(vec)
         assert vec.mc_end_point == approx((.5, .7071, .5), abs=.1)
 
-    @pytest.mark.skip
+    # @pytest.mark.skip
     def test_endpoint_non_zero_origin(self) -> tuple:
         """Testing comparison of very close floating point numbers"""
         vec = MCVector(origin=(1, 1, 1), length=1, phi=45,

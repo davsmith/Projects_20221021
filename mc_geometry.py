@@ -70,7 +70,7 @@ class MCVector:
         msg += f"length:{self.length}, "
         msg += f"phi:{self.phi}, "
         msg += f"theta:{self.theta}, "
-        msg += f"mc endpoint:{self.mc_end_point} "
+        msg += f"mc endpoint:{self.end_point} "
         return msg
 
     def set_direction(self, direction):
@@ -89,22 +89,19 @@ class MCVector:
 
     @property
     def end_point(self):
-        ''' Calculate x,y,z in conventional space '''
+        '''Calculate x,y,z in minecraft space
+            x is East/West
+            y is Up/Down
+            z is South/North'''
         r = self.length
         phi = self.phi
         theta = self.theta
 
-        x = r * sin(radians(phi)) * cos(radians(theta))
-        y = r * sin(radians(phi)) * sin(radians(theta))
-        z = r * cos(radians(phi))
+        z = r * sin(radians(phi)) * cos(radians(theta))
+        y = r * cos(radians(phi))
+        x = r * sin(radians(phi)) * sin(radians(theta))
 
-        return (x, y, z)
-
-    @property
-    def mc_end_point(self):
-        ''' Calculate the end point in MineCraft space '''
-        x, y, z = self.end_point
-        return NP.add((y, z, x), self.origin)
+        return NP.add((x, y, z), self.origin)
 
 
 class MCRectangle(MCVector):
@@ -124,7 +121,7 @@ class MCRectangle(MCVector):
         msg += f"length:{self.length}, "
         msg += f"phi:{self.phi}, "
         msg += f"theta:{self.theta}, "
-        msg += f"mc endpoint:{self.mc_end_point} "
+        msg += f"endpoint:{self.end_point} "
         return msg
 
     @property
@@ -143,8 +140,7 @@ class MCRectangle(MCVector):
         diagnol = MCVector(origin=self.origin, length=hypot,
                            phi=slant, theta=rotation)
 
-        print(diagnol)
-        return tuple(NP.add(diagnol.mc_end_point, self.origin))
+        return diagnol.end_point
 
 
 def main():

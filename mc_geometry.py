@@ -104,7 +104,7 @@ class MCVector:
     def mc_end_point(self):
         ''' Calculate the end point in MineCraft space '''
         x, y, z = self.end_point
-        return(y, z, x)
+        return NP.add((y, z, x), self.origin)
 
 
 class MCRectangle(MCVector):

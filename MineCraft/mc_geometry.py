@@ -155,26 +155,40 @@ class MCRectangle(MCVector):
         else:
             self.phi = Direction.Up
 
+class MCDebug():
+    def clearSpace(self):
+        MC.setBlocks(-50,0,-50,50,50,50,0)
+        MC.setBlocks(-50,-1,-50,50,-5,50,1)
+
+    def resetLot(self):
+        self.clearSpace()
+        MC.player.setPos(-5, 0, -5)
+        
+    def drawWall(self):
+        block_id = 2
+        MC.setBlocks(0,0,0,4,2,0,block_id)
+        MC.setBlocks(0,0,0,0,2,-4,block_id)
+        MC.setBlocks(0,2,-4,-4,2,0,block_id)
+        MC.setBlock(0,0,0,46,1)
+        
 
 def main():
     """Main function which is run when the program is run standalone"""
-    rec1 = MCRectangle(origin=(0, 0, 0), length=5,
-                       height=3, theta=Direction.West)
-    rec1.is_tipped = False
-    print(f"Flat rectangle: {rec1.opposite}")
+#    rec1 = MCRectangle(origin=(0, 0, 0), length=5,
+#                       height=3, theta=Direction.West)
+#    rec1.is_tipped = False
+#    print(f"Flat rectangle: {rec1.opposite}")
     if MINECRAFT_EXISTS:
-        MC.setBlocks(-50,0,-50,50,50,50,0)
-        MC.setBlocks(-50,-1,-50,50,-5,50,1)
-        MC.player.setPos(0, 1, 0)
-        print(f"Rec1: {rec1}")
-        x1, y1, z1 = rec1.origin
-        x2, y2, z2 = rec1.opposite
+        dbg = MCDebug()
+        dbg.resetLot()
+        dbg.drawWall()
+        
+#        print(f"Rec1: {rec1}")
+#        x1, y1, z1 = rec1.origin
+#        x2, y2, z2 = rec1.opposite
 #        x1, y1, z1 = (0,0,0)
 #        x2, y2, z2 = (5,3,0)
-        block_id = 2
-        MC.setBlocks(x1,y1,z1,x2,y2,z2,block_id)
-        MC.setBlock(x1,y1,z1,46)
-        print(f"Drawing from {x1},{y1},{z1} to {x2},{y2},{z2} in {block_id}")
+#        print(f"Drawing from {x1},{y1},{z1} to {x2},{y2},{z2} in {block_id}")
 
 
 if __name__ == '__main__':

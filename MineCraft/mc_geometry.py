@@ -2,7 +2,7 @@
 Spherical coordinate equations from https://keisan.casio.com/exec/system/1359534351
 '''
 try:
-    from mcpi.minecraft import Minecraft
+    from mcpi.minecraft import Minecraft  # pylint: disable=import-error
     MC = Minecraft.create()
     MINECRAFT_EXISTS = True
 except ModuleNotFoundError:
@@ -29,14 +29,14 @@ def compare_points(point1, point2):
         elevation = "below"
 
     if (z2-z1) > threshold:
-        direction = "South"
+        direction = "SOUTH"
     elif (z2-z1) < -threshold:
-        direction = "North"
+        direction = "NORTH"
 
     if (x2-x1) > threshold:
-        direction += "East"
+        direction += "EAST"
     elif (x2-x1) < -threshold:
-        direction += "West"
+        direction += "WEST"
 
     return (elevation, direction)
 
@@ -47,12 +47,12 @@ class Direction(IntEnum):
         Specifies the direction of an object with methods for rotation
         along different axes
     '''
-    East = 90
-    North = 180
-    South = 0
-    West = 270
-    Flat = -270
-    Up = -360
+    EAST = 90
+    NORTH = 180
+    SOUTH = 0
+    WEST = 270
+    FLAT = -270
+    UP = -360
 
 
 class MCVector:
@@ -74,24 +74,24 @@ class MCVector:
 
     def set_direction(self, direction):
         '''Sets the rotation of the vector in the x/z Minecraft plane (theta)
-            +x = East, -x = West
-            +y = Up, -y = Down
-            +z = South, -z = North'''
+            +x = EAST, -x = WEST
+            +y = UP, -y = Down
+            +z = SOUTH, -z = NORTH'''
         self.theta = direction
 
     def set_slant(self, slant):
         ''' Sets the rotation of the vector from vertical (phi) '''
-        if slant == Direction.Flat:
+        if slant == Direction.FLAT:
             self.phi = 90
-        elif slant == Direction.Up:
+        elif slant == Direction.UP:
             self.phi = 0
 
     @property
     def end_point(self):
         '''Calculate x,y,z in minecraft space
-            x is East/West
-            y is Up/Down
-            z is South/North'''
+            x is EAST/WEST
+            y is UP/Down
+            z is SOUTH/NORTH'''
         r = self.length
         phi = self.phi
         theta = self.theta
@@ -110,7 +110,7 @@ class MCRectangle(MCVector):
         self.origin = origin
         self.length = length
         self.height = height
-        self.phi = Direction.Up
+        self.phi = Direction.UP
         self.theta = theta
         self.corners = []
         self._tipped = False
@@ -131,7 +131,7 @@ class MCRectangle(MCVector):
         # Create a vector from the origin to the diagnol corner of the rectangle
         hypot = sqrt(pow(self.length, 2) + pow(self.height, 2))
         rotation = self.theta
-        if self.phi == Direction.Flat:
+        if self.phi == Direction.FLAT:
             slant = 90
             rotation = degrees(atan(self.length/self.height)) + self.theta
             # print(f"slant={slant}, rotation={rotation}")
@@ -145,44 +145,50 @@ class MCRectangle(MCVector):
     @property
     def is_tipped(self):
         '''Determines if the rectangle is vertical or flat'''
-        return self.phi == Direction.Flat
+        return self.phi == Direction.FLAT
 
     @is_tipped.setter
     def is_tipped(self, tipped):
         '''Set the rectangle to vertical or flat'''
         if tipped:
-            self.phi = Direction.Flat
+            self.phi = Direction.FLAT
         else:
-            self.phi = Direction.Up
+            self.phi = Direction.UP
+
 
 class MCDebug():
-    def clearSpace(self):
-        MC.setBlocks(-50,0,-50,50,50,50,0)
-        MC.setBlocks(-50,-1,-50,50,-5,50,1)
+    """Functions for setting up MineCraft environment on Raspberry Pi"""
 
-    def resetLot(self):
-        self.clearSpace()
+    def clear_space(self):
+        """Clears the air above and ground below a fixed space in MineCraft"""
+        MC.setBlocks(-50, 0, -50, 50, 50, 50, 0)
+        MC.setBlocks(-50, -1, -50, 50, -5, 50, 1)
+
+    def reset_lot(self):
+        """Clears out a fixed space and moves the player"""
+        self.clear_space()
         MC.player.setPos(-5, 0, -5)
-        
-    def drawWall(self):
+
+    def draw_wall(self):
+        """Draws a set of walls at hard coded coordinates"""
         block_id = 2
-        MC.setBlocks(0,0,0,4,2,0,block_id)
-        MC.setBlocks(0,0,0,0,2,-4,block_id)
-        MC.setBlocks(0,2,-4,-4,2,0,block_id)
-        MC.setBlock(0,0,0,46,1)
-        
+        MC.setBlocks(0, 0, 0, 4, 2, 0, block_id)
+        MC.setBlocks(0, 0, 0, 0, 2, -4, block_id)
+        MC.setBlocks(0, 2, -4, -4, 2, 0, block_id)
+        MC.setBlock(0, 0, 0, 46, 1)
+
 
 def main():
     """Main function which is run when the program is run standalone"""
 #    rec1 = MCRectangle(origin=(0, 0, 0), length=5,
-#                       height=3, theta=Direction.West)
+#                       height=3, theta=Direction.WEST)
 #    rec1.is_tipped = False
-#    print(f"Flat rectangle: {rec1.opposite}")
+#    print(f"FLAT rectangle: {rec1.opposite}")
     if MINECRAFT_EXISTS:
         dbg = MCDebug()
-        dbg.resetLot()
-        dbg.drawWall()
-        
+        dbg.reset_lot()
+        dbg.draw_wall()
+
 #        print(f"Rec1: {rec1}")
 #        x1, y1, z1 = rec1.origin
 #        x2, y2, z2 = rec1.opposite

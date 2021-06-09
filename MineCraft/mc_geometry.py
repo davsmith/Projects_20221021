@@ -171,10 +171,11 @@ class MCDebug():
 
     def draw_wall(self):
         """Draws a set of walls at hard coded coordinates"""
-        block_id = 2
-        MC.setBlocks(0, 0, 0, 4, 2, 0, block_id)
-        MC.setBlocks(0, 0, 0, 0, 2, -4, block_id)
-        MC.setBlocks(0, 2, -4, -4, 2, 0, block_id)
+        block_id = 35
+        MC.setBlocks(0, 0, 0, 4, 2, 0, block_id, 11)    # Blue
+        MC.setBlocks(0, 0, 0, 0, 2, 4, block_id, 13)    # Green
+        MC.setBlocks(0, 0, 4, 4, 2, 4, block_id, 4)     # Yellow
+        MC.setBlocks(4, 0, 0, 4, 2, 4, block_id, 2)     # Magenta
         MC.setBlock(0, 0, 0, 46, 1)
 
 

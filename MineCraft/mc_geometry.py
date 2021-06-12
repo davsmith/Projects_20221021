@@ -114,22 +114,45 @@ class MCRectangle(MCVector):
         self.height = height
         self.phi = Direction.UP
         self.theta = theta
-        self.corners = []
         self._tipped = False
         self.material = 35          # Wool
         self.material_subtype = 14  # Red
         self.debug = True
         super().__init__(origin, length, self.phi, theta)
 
+    def copy(self):
+        new_rect = MCRectangle(self.origin, self.length, self.height, self.theta)
+        new_rect.phi = self.phi
+        new_rect.material = self.material
+        new_rect.material_subtype = self.material_subtype
+        return new_rect
+    
     def __repr__(self):
         x, y, z = self.opposite
         msg = f"<MCRectangle> origin:{self.origin}, "
         msg += f"length:{self.length}, "
         msg += f"phi:{self.phi}, "
         msg += f"theta:{self.theta}, "
-        msg += f"opposite:{round(x,2)}, {round(y,2)}, {round(z,2)}"
+        msg += f"opposite:{self.opposite}, "
+        msg += f"is_tipped:{self.is_tipped}"
         return msg
     
+    def rotate_left(self):
+        self.theta += 90
+    
+    def rotate_right(self):
+        self.theta -= 90
+
+    def flip_origin(self):
+        origin_x, _, origin_z = self.opposite
+        _, origin_y, _ = self.origin
+        self.origin = (origin_x, origin_y, origin_z)
+        self.theta += 180
+        
+    def shift(self, x, y, z):
+        origin_x, origin_y, origin_z = self.origin
+        self.origin = (origin_x + x, origin_y + y, origin_z + z)
+
     def draw(self):
         x1, y1, z1 = self.origin
         x2, y2, z2 = self.opposite
@@ -175,6 +198,13 @@ class MCRectangle(MCVector):
             self.phi = Direction.UP
 
 
+class lot(MCRectangle):
+    '''The plot of land on which to build a structure'''
+    def __init__(self, origin, length, width, direction=Direction.NORTH):
+        ''' A lot has an origin, length, width, and direction'''
+        super().__init__(origin, length, width, direction)
+        self.is_tipped = True
+
 class MCDebug():
     """Functions for setting up MineCraft environment on Raspberry Pi"""
     @staticmethod
@@ -199,86 +229,132 @@ class MCDebug():
             MC.setBlocks(0, 0, 4, 4, 2, 4, block_id, 4)     # Yellow
             MC.setBlocks(4, 0, 0, 4, 2, 4, block_id, 2)     # Magenta
             MC.setBlock(0, 0, 0, 46, 1)
+            
+    @staticmethod
+    def draw_vertical_rectangles():
+        origin = (0, 0, 0)
 
+        # Vertical rectangles
+        rec1 = MCRectangle(origin=origin, length=5,
+                           height=3, theta=Direction.EAST)
+        rec1.material_subtype = 11 # Blue
+        rec1.draw()
+
+        rec2 = MCRectangle(origin=origin, length=5,
+                           height=3, theta=Direction.WEST)
+        rec2.material_subtype = 3 # Light Blue
+        rec2.draw()
+
+        rec3 = MCRectangle(origin=origin, length=5,
+                           height=3, theta=Direction.SOUTH)
+        rec3.material_subtype = 14 # Red
+        rec3.draw()
+
+        rec4 = MCRectangle(origin=origin, length=5,
+                           height=3, theta=Direction.NORTH)
+        rec4.material_subtype = 6 # Pink
+        rec4.draw()
+        
+    @staticmethod
+    def draw_flat_rectangles():
+        origin = (0, 0, 10)
+        rec1 = MCRectangle(origin=origin, length=5,
+                           height=3, theta=Direction.EAST)
+        rec1.material_subtype = 11 # Blue
+        rec1.is_tipped = True
+        rec1.draw()
+        rec1.is_tipped = False
+        rec1.draw()
+
+        rec2 = MCRectangle(origin=origin, length=5,
+                           height=3, theta=Direction.WEST)
+        rec2.material_subtype = 3 # Light Blue
+        rec2.is_tipped = True
+        rec2.draw()
+        rec2.is_tipped = False
+        rec2.draw()
+
+        rec3 = MCRectangle(origin=origin, length=5,
+                           height=3, theta=Direction.SOUTH)
+        rec3.material_subtype = 14 # Red
+        rec3.is_tipped = True
+        rec3.draw()
+        rec3.is_tipped = False
+        rec3.draw()
+
+        rec4 = MCRectangle(origin=origin, length=5,
+                           height=3, theta=Direction.NORTH)
+        rec4.material_subtype = 6 # Pink
+        rec4.is_tipped = True
+        rec4.draw()
+        rec4.is_tipped = False
+        rec4.draw()
+        
+    @staticmethod
+    def draw_rotated_rectangles():
+        origin = (0, 0, 0)
+
+        # Vertical rectangles
+        rec1 = MCRectangle(origin=origin, length=5,
+                           height=3, theta=Direction.EAST)
+        rec1.material_subtype = 11 # Blue
+        rec1.draw()
+
+        rec1.material_subtype = 3 # Light Blue
+        rec1.rotate_right()
+        rec1.draw()
+
+        rec1.material_subtype = 14 # Red
+        rec1.rotate_right()
+        rec1.draw()
+
+        rec1.material_subtype = 6 # Pink
+        rec1.rotate_right()
+        rec1.draw()
+
+    def draw_copied_rectangles():
+        origin = (0, 0, 0)
+        rec1 = MCRectangle(origin=origin, length=5,
+                           height=3, theta=Direction.EAST)
+        rec1.material_subtype = 11 # Blue
+        rec1.draw()
+        
+        rec2 = rec1.copy()
+        rec2.origin = (0,0,5)
+#        rec2.rotate_left()
+        rec2.material_subtype = 14
+        rec2.draw()
+        
+        rec1.draw()
+        rec1.draw()
+                       
+    def draw_flip_origin():
+        origin = (0, 0, 0)
+        rec1 = MCRectangle(origin=origin, length=5,
+                           height=3, theta=Direction.EAST)
+        rec1.material_subtype = 11 # Blue
+        rec1.draw()
+        
+        rec2 = rec1.copy()
+        rec2.material_subtype = 14
+        rec2.shift(0,0,5)
+        rec2.flip_origin()
+        rec2.draw()
 
 def main():
     """Main function which is run when the program is run standalone"""
 
-    cross_origin = (0, 0, 0)
-    flat_origin = (0, 0, 10)
-    
     MCDebug.clear_space()
 #    MCDebug.draw_walls()
-
-    # Vertical rectangles
-    rec1 = MCRectangle(origin=cross_origin, length=5,
-                       height=3, theta=Direction.EAST)
-    rec1.material_subtype = 11 # Blue
-    rec1.draw()
-
-    rec2 = MCRectangle(origin=cross_origin, length=5,
-                       height=3, theta=Direction.WEST)
-    rec2.material_subtype = 3 # Light Blue
-    rec2.draw()
-
-    rec3 = MCRectangle(origin=cross_origin, length=5,
-                       height=3, theta=Direction.SOUTH)
-    rec3.material_subtype = 14 # Red
-    rec3.draw()
-
-    rec4 = MCRectangle(origin=cross_origin, length=5,
-                       height=3, theta=Direction.NORTH)
-    rec4.material_subtype = 6 # Pink
-    rec4.draw()
-
-    # Flat rectangles
-    rec1 = MCRectangle(origin=flat_origin, length=5,
-                       height=3, theta=Direction.EAST)
-    rec1.material_subtype = 11 # Blue
-    rec1.is_tipped = True
-    rec1.draw()
-    rec1.is_tipped = False
-    rec1.draw()
-
-    rec2 = MCRectangle(origin=flat_origin, length=5,
-                       height=3, theta=Direction.WEST)
-    rec2.material_subtype = 3 # Light Blue
-    rec2.is_tipped = True
-    rec2.draw()
-    rec2.is_tipped = False
-    rec2.draw()
-
-    rec3 = MCRectangle(origin=flat_origin, length=5,
-                       height=3, theta=Direction.SOUTH)
-    rec3.material_subtype = 14 # Red
-    rec3.is_tipped = True
-    rec3.draw()
-    rec3.is_tipped = False
-    rec3.draw()
-
-    rec4 = MCRectangle(origin=flat_origin, length=5,
-                       height=3, theta=Direction.NORTH)
-    rec4.material_subtype = 6 # Pink
-    rec4.is_tipped = True
-    rec4.draw()
-    rec4.is_tipped = False
-    rec4.draw()
+#    MCDebug.draw_vertical_rectangles()
+#    MCDebug.draw_flat_rectangles()
+#    MCDebug.draw_rotated_rectangles()
+#    MCDebug.draw_copied_rectangles()
+    MCDebug.draw_flip_origin()
+#    job_site = lot((0,-1,0), 40, 10, Direction.NORTH)
+#    print(job_site)
+#    job_site.draw()
     
-    
-
-
-
-#    rec3 = MCRectangle(origin=(0, 0, 0), length=5,
-#                       height=3, theta=Direction.SOUTH)
-
-#    rec4 = MCRectangle(origin=(0, 0, 0), length=5,
-#                       height=3, theta=Direction.NORTH)
-
-
-#    print(rec1)
-#    print(f"FLAT rectangle: {rec1.opposite}")
-#        dbg.reset_lot()
-#        dbg.draw_wall()
 
 
 

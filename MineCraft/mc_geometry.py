@@ -117,11 +117,12 @@ class MCRectangle(MCVector):
         super().__init__(origin, length, self.phi, theta)
 
     def __repr__(self):
-        msg = f"<MCVector> origin:{self.origin}, "
+        x, y, z = self.opposite
+        msg = f"<MCRectangle> origin:{self.origin}, "
         msg += f"length:{self.length}, "
         msg += f"phi:{self.phi}, "
         msg += f"theta:{self.theta}, "
-        msg += f"endpoint:{self.end_point} "
+        msg += f"opposite:{round(x,2)}, {round(y,2)}, {round(z,2)}"
         return msg
 
     @property
@@ -129,14 +130,15 @@ class MCRectangle(MCVector):
         '''Calculate the endpoint of the diagnol of the rectangle from the origin'''
 
         # Create a vector from the origin to the diagnol corner of the rectangle
-        hypot = sqrt(pow(self.length, 2) + pow(self.height, 2))
+        hypot = sqrt(pow((self.length-1), 2) + pow((self.height-1), 2))
         rotation = self.theta
         if self.phi == Direction.FLAT:
             slant = 90
-            rotation = degrees(atan(self.length/self.height)) + self.theta
+            rotation = degrees(
+                atan((self.length-1)/(self.height-1))) + self.theta
             # print(f"slant={slant}, rotation={rotation}")
         else:
-            slant = degrees(atan(self.length/self.height))
+            slant = degrees(atan((self.length-1)/(self.height-1)))
         diagnol = MCVector(origin=self.origin, length=hypot,
                            phi=slant, theta=rotation)
 
@@ -181,8 +183,9 @@ class MCDebug():
 
 def main():
     """Main function which is run when the program is run standalone"""
-#    rec1 = MCRectangle(origin=(0, 0, 0), length=5,
-#                       height=3, theta=Direction.WEST)
+    rec1 = MCRectangle(origin=(0, 0, 0), length=5,
+                       height=3, theta=Direction.NORTH)
+    print(rec1)
 #    rec1.is_tipped = False
 #    print(f"FLAT rectangle: {rec1.opposite}")
     if MINECRAFT_EXISTS:

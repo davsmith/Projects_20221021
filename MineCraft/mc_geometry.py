@@ -227,14 +227,38 @@ class lot(MCRectangle):
         self.is_tipped = True
         self.material = block.DIRT.id
         self.height = 50
-        self.depth = 50
+        self.depth = 5
         
     def clear(self):
         origin_x, origin_y, origin_z = self.origin
         opp_x, opp_y, opp_z = self.opposite
-        MC.setBlocks()
         
+        # Clear out the space above the lot
+        x1 = origin_x
+        y1 = origin_y
+        z1 = origin_z
+        x2 = opp_x
+        y2 = origin_y + self.height
+        z2 = opp_z
+        MC.setBlocks(x1, y1, z1, x2, y2, z2, block.AIR.id)
         
+        # Create a flat rectangle for the lot itself
+        x1 = origin_x
+        y1 = origin_y
+        z1 = origin_z
+        x2 = opp_x
+        y2 = opp_y
+        z2 = opp_z
+        MC.setBlocks(x1, y1, z1, x2, y2, z2, block.DIRT.id)
+        
+        # Set the material for the ground beneath the lot
+        x1 = origin_x
+        y1 = origin_y - 1
+        z1 = origin_z
+        x2 = opp_x
+        y2 = origin_y - self.depth
+        z2 = opp_z
+        MC.setBlocks(x1, y1, z1, x2, y2, z2, block.BEDROCK.id)
 
 class MCDebug():
     """Functions for setting up MineCraft environment on Raspberry Pi"""
@@ -247,7 +271,7 @@ class MCDebug():
     @staticmethod
     def reset_lot():
         """Clears out a fixed space and moves the player"""
-        self.clear_space()
+        MCDebug.clear_space()
         MC.player.setPos(-5, 0, -5)
 
     @staticmethod
@@ -360,7 +384,8 @@ class MCDebug():
         rec1.draw()
         rec1.draw()
                        
-    #bm1        
+    #bm1
+    @staticmethod        
     def draw_flip_origin():
         origin = (0, 0, 0)
         rec1 = MCRectangle(origin=origin, length=5,
@@ -375,6 +400,7 @@ class MCDebug():
 #        rec2.rotate_right()
         rec2.draw()
         
+    @staticmethod
     def draw_outline():
         origin = (0, 0, 0)
 
@@ -389,18 +415,23 @@ class MCDebug():
             rec.rotate_left()
             rec.draw()
 
+    @staticmethod
+    def draw_lot():
+        site = lot((0,-1,0), 20, 30, Direction.NORTH)
+        site.clear()
 
 
 def main():
     """Main function which is run when the program is run standalone"""
-    MCDebug.clear_space()
+    MCDebug.reset_lot()
 #    MCDebug.draw_walls()
 #    MCDebug.draw_vertical_rectangles()
 #    MCDebug.draw_flat_rectangles()
 #    MCDebug.draw_rotated_rectangles()
 #    MCDebug.draw_copied_rectangles()
 #    MCDebug.draw_flip_origin()
-    MCDebug.draw_outline()
+#    MCDebug.draw_outline()
+    MCDebug.draw_lot()
 #    job_site = lot((0,-1,0), 40, 10, Direction.NORTH)
 #    print(job_site)
 #    job_site.draw()

@@ -3,10 +3,11 @@ Spherical coordinate equations from https://keisan.casio.com/exec/system/1359534
 '''
 try:
     from mcpi.minecraft import Minecraft  # pylint: disable=import-error
+    from mcpi import block
     MC = Minecraft.create()
     MINECRAFT_EXISTS = True
 except ModuleNotFoundError:
-    print("*** Could not find Minecraft module ***")
+    print("*** Could not find Minecraft package ***")
     MINECRAFT_EXISTS = False
 
 from enum import IntEnum, unique
@@ -96,6 +97,7 @@ class MCVector:
         phi = self.phi
         theta = self.theta
 
+        # Python floating point precision is unruly, so round to 2 digits
         z = round(r * sin(radians(phi)) * cos(radians(theta)), 2)
         y = round(r * cos(radians(phi)), 2)
         x = round(r * sin(radians(phi)) * sin(radians(theta)), 2)
@@ -145,6 +147,8 @@ class MCRectangle(MCVector):
         # Create a vector from the origin to the diagnol corner of the rectangle
         hypot = sqrt(pow((self.length-1), 2) + pow((self.height-1), 2))
         rotation = self.theta
+        
+        # Special case a flat rectangle to appear as tipped
         if self.phi == Direction.FLAT:
             slant = 90
             rotation = degrees(
@@ -259,6 +263,8 @@ def main():
     rec4.draw()
     rec4.is_tipped = False
     rec4.draw()
+    
+    
 
 
 

@@ -191,11 +191,13 @@ def main():
     if MINECRAFT_EXISTS:
         dbg = MCDebug()
         dbg.reset_lot()
-        dbg.draw_wall()
+#        dbg.draw_wall()
 
 #        print(f"Rec1: {rec1}")
-#        x1, y1, z1 = rec1.origin
-#        x2, y2, z2 = rec1.opposite
+        x1, y1, z1 = rec1.origin
+        x2, y2, z2 = rec1.opposite
+        MC.setBlocks(x1, y1, z1, x2, y2, z2, 35, 14)
+        MC.setBlock(x1, y1, z1, 46)
 #        x1, y1, z1 = (0,0,0)
 #        x2, y2, z2 = (5,3,0)
 #        print(f"Drawing from {x1},{y1},{z1} to {x2},{y2},{z2} in {block_id}")

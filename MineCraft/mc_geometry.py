@@ -96,9 +96,9 @@ class MCVector:
         phi = self.phi
         theta = self.theta
 
-        z = r * sin(radians(phi)) * cos(radians(theta))
-        y = r * cos(radians(phi))
-        x = r * sin(radians(phi)) * sin(radians(theta))
+        z = round(r * sin(radians(phi)) * cos(radians(theta)), 2)
+        y = round(r * cos(radians(phi)), 2)
+        x = round(r * sin(radians(phi)) * sin(radians(theta)), 2)
 
         return NP.add((x, y, z), self.origin)
 
@@ -114,6 +114,9 @@ class MCRectangle(MCVector):
         self.theta = theta
         self.corners = []
         self._tipped = False
+        self.material = 35          # Wool
+        self.material_subtype = 14  # Red
+        self.debug = True
         super().__init__(origin, length, self.phi, theta)
 
     def __repr__(self):
@@ -124,6 +127,16 @@ class MCRectangle(MCVector):
         msg += f"theta:{self.theta}, "
         msg += f"opposite:{round(x,2)}, {round(y,2)}, {round(z,2)}"
         return msg
+    
+    def draw(self):
+        x1, y1, z1 = self.origin
+        x2, y2, z2 = self.opposite
+        print(f"x1:{x1}, y1:{y1}, z1:{z1}, x2:{x2}, y2:{y2}, z2:{z2}")
+        if MINECRAFT_EXISTS:
+            MC.setBlocks(x1, y1, z1, x2, y2, z2, self.material, self.material_subtype)
+            if self.debug:
+                MC.setBlock(x1, y1, z1, 46, 1)
+        
 
     @property
     def opposite(self):
@@ -135,7 +148,7 @@ class MCRectangle(MCVector):
         if self.phi == Direction.FLAT:
             slant = 90
             rotation = degrees(
-                atan((self.length-1)/(self.height-1))) + self.theta
+                atan((self.height-1)/(self.length-1))) + self.theta
             # print(f"slant={slant}, rotation={rotation}")
         else:
             slant = degrees(atan((self.length-1)/(self.height-1)))
@@ -160,47 +173,107 @@ class MCRectangle(MCVector):
 
 class MCDebug():
     """Functions for setting up MineCraft environment on Raspberry Pi"""
-
-    def clear_space(self):
+    @staticmethod
+    def clear_space():
         """Clears the air above and ground below a fixed space in MineCraft"""
         MC.setBlocks(-50, 0, -50, 50, 50, 50, 0)
         MC.setBlocks(-50, -1, -50, 50, -5, 50, 1)
 
-    def reset_lot(self):
+    @staticmethod
+    def reset_lot():
         """Clears out a fixed space and moves the player"""
         self.clear_space()
         MC.player.setPos(-5, 0, -5)
 
-    def draw_wall(self):
-        """Draws a set of walls at hard coded coordinates"""
-        block_id = 35
-        MC.setBlocks(0, 0, 0, 4, 2, 0, block_id, 11)    # Blue
-        MC.setBlocks(0, 0, 0, 0, 2, 4, block_id, 13)    # Green
-        MC.setBlocks(0, 0, 4, 4, 2, 4, block_id, 4)     # Yellow
-        MC.setBlocks(4, 0, 0, 4, 2, 4, block_id, 2)     # Magenta
-        MC.setBlock(0, 0, 0, 46, 1)
+    @staticmethod
+    def draw_walls():
+        if MINECRAFT_EXISTS:
+            """Draws a set of walls at hard coded coordinates"""
+            block_id = 35
+            MC.setBlocks(0, 0, 0, 4, 2, 0, block_id, 11)    # Blue
+            MC.setBlocks(0, 0, 0, 0, 2, 4, block_id, 13)    # Green
+            MC.setBlocks(0, 0, 4, 4, 2, 4, block_id, 4)     # Yellow
+            MC.setBlocks(4, 0, 0, 4, 2, 4, block_id, 2)     # Magenta
+            MC.setBlock(0, 0, 0, 46, 1)
 
 
 def main():
     """Main function which is run when the program is run standalone"""
-    rec1 = MCRectangle(origin=(0, 0, 0), length=5,
+
+    cross_origin = (0, 0, 0)
+    flat_origin = (0, 0, 10)
+    
+    MCDebug.clear_space()
+#    MCDebug.draw_walls()
+
+    # Vertical rectangles
+    rec1 = MCRectangle(origin=cross_origin, length=5,
+                       height=3, theta=Direction.EAST)
+    rec1.material_subtype = 11 # Blue
+    rec1.draw()
+
+    rec2 = MCRectangle(origin=cross_origin, length=5,
+                       height=3, theta=Direction.WEST)
+    rec2.material_subtype = 3 # Light Blue
+    rec2.draw()
+
+    rec3 = MCRectangle(origin=cross_origin, length=5,
+                       height=3, theta=Direction.SOUTH)
+    rec3.material_subtype = 14 # Red
+    rec3.draw()
+
+    rec4 = MCRectangle(origin=cross_origin, length=5,
                        height=3, theta=Direction.NORTH)
-    print(rec1)
-#    rec1.is_tipped = False
+    rec4.material_subtype = 6 # Pink
+    rec4.draw()
+
+    # Flat rectangles
+    rec1 = MCRectangle(origin=flat_origin, length=5,
+                       height=3, theta=Direction.EAST)
+    rec1.material_subtype = 11 # Blue
+    rec1.is_tipped = True
+    rec1.draw()
+    rec1.is_tipped = False
+    rec1.draw()
+
+    rec2 = MCRectangle(origin=flat_origin, length=5,
+                       height=3, theta=Direction.WEST)
+    rec2.material_subtype = 3 # Light Blue
+    rec2.is_tipped = True
+    rec2.draw()
+    rec2.is_tipped = False
+    rec2.draw()
+
+    rec3 = MCRectangle(origin=flat_origin, length=5,
+                       height=3, theta=Direction.SOUTH)
+    rec3.material_subtype = 14 # Red
+    rec3.is_tipped = True
+    rec3.draw()
+    rec3.is_tipped = False
+    rec3.draw()
+
+    rec4 = MCRectangle(origin=flat_origin, length=5,
+                       height=3, theta=Direction.NORTH)
+    rec4.material_subtype = 6 # Pink
+    rec4.is_tipped = True
+    rec4.draw()
+    rec4.is_tipped = False
+    rec4.draw()
+
+
+
+#    rec3 = MCRectangle(origin=(0, 0, 0), length=5,
+#                       height=3, theta=Direction.SOUTH)
+
+#    rec4 = MCRectangle(origin=(0, 0, 0), length=5,
+#                       height=3, theta=Direction.NORTH)
+
+
+#    print(rec1)
 #    print(f"FLAT rectangle: {rec1.opposite}")
-    if MINECRAFT_EXISTS:
-        dbg = MCDebug()
-        dbg.reset_lot()
+#        dbg.reset_lot()
 #        dbg.draw_wall()
 
-#        print(f"Rec1: {rec1}")
-        x1, y1, z1 = rec1.origin
-        x2, y2, z2 = rec1.opposite
-        MC.setBlocks(x1, y1, z1, x2, y2, z2, 35, 14)
-        MC.setBlock(x1, y1, z1, 46)
-#        x1, y1, z1 = (0,0,0)
-#        x2, y2, z2 = (5,3,0)
-#        print(f"Drawing from {x1},{y1},{z1} to {x2},{y2},{z2} in {block_id}")
 
 
 if __name__ == '__main__':

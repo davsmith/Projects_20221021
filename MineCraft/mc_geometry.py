@@ -113,7 +113,7 @@ class MCVector(MCComponent):
         return map(lambda x, y: x + y, (x, y, z), self.origin)
 #        return NP.add((x, y, z), self.origin)
 
-
+#bmRectangle
 class MCRectangle(MCVector):
     ''' Manages coordinates of a 2D rectangle in MineCraft 3D space '''
 
@@ -218,13 +218,23 @@ class MCRectangle(MCVector):
         else:
             self.phi = Direction.UP
 
-
+#bmLot
 class lot(MCRectangle):
     '''The plot of land on which to build a structure'''
     def __init__(self, origin, length, width, direction=Direction.NORTH):
         ''' A lot has an origin, length, width, and direction'''
         super().__init__(origin, length, width, direction)
         self.is_tipped = True
+        self.material = block.DIRT.id
+        self.height = 50
+        self.depth = 50
+        
+    def clear(self):
+        origin_x, origin_y, origin_z = self.origin
+        opp_x, opp_y, opp_z = self.opposite
+        MC.setBlocks()
+        
+        
 
 class MCDebug():
     """Functions for setting up MineCraft environment on Raspberry Pi"""

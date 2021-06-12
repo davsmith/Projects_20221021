@@ -12,7 +12,6 @@ except ModuleNotFoundError:
 
 from enum import IntEnum, unique
 from math import sin, cos, radians, sqrt, atan, degrees
-import numpy as NP
 
 
 def compare_points(point1, point2):
@@ -55,16 +54,25 @@ class Direction(IntEnum):
     FLAT = -270
     UP = -360
 
+class MCComponent:
+    def __init__(self, name, origin):
+        self.name = name
+        self.origin = origin
+        
+    def _repr__(self):
+        msg = f"<MCComponent> origin:{self.origin}, "
+        msg += f"name: {self.name}"
 
-class MCVector:
+
+class MCVector(MCComponent):
     """A 3D vector with coordinate system adapted to Minecraft (x=E/W, y=U/D, z=S/N)"""
 
     def __init__(self, origin=(0, 0, 0), length=1, phi=90, theta=0):
-        self.origin = origin
+        super().__init__("MCVector", origin)
         self.length = length
         self.phi = phi
         self.theta = theta
-
+        
     def __repr__(self):
         msg = f"<MCVector> origin:{self.origin}, "
         msg += f"length:{self.length}, "
@@ -102,7 +110,8 @@ class MCVector:
         y = round(r * cos(radians(phi)), 2)
         x = round(r * sin(radians(phi)) * sin(radians(theta)), 2)
 
-        return NP.add((x, y, z), self.origin)
+        return map(lambda x, y: x + y, (x, y, z), self.origin)
+#        return NP.add((x, y, z), self.origin)
 
 
 class MCRectangle(MCVector):
@@ -115,20 +124,22 @@ class MCRectangle(MCVector):
         self.phi = Direction.UP
         self.theta = theta
         self._tipped = False
-        self.material = 35          # Wool
-        self.material_subtype = 14  # Red
+        self.material = block.WOOL.id    # Wool - 35
+        self.material_subtype = 14       # Red
         self.debug = True
         super().__init__(origin, length, self.phi, theta)
 
-    def copy(self):
+    def copy(self, extend=False):
         new_rect = MCRectangle(self.origin, self.length, self.height, self.theta)
         new_rect.phi = self.phi
         new_rect.material = self.material
         new_rect.material_subtype = self.material_subtype
+        if extend:
+            new_rect.flip_origin()
+        
         return new_rect
     
     def __repr__(self):
-        x, y, z = self.opposite
         msg = f"<MCRectangle> origin:{self.origin}, "
         msg += f"length:{self.length}, "
         msg += f"phi:{self.phi}, "
@@ -147,7 +158,7 @@ class MCRectangle(MCVector):
         origin_x, _, origin_z = self.opposite
         _, origin_y, _ = self.origin
         self.origin = (origin_x, origin_y, origin_z)
-        self.theta += 180
+#        self.theta += 180
         
     def shift(self, x, y, z):
         origin_x, origin_y, origin_z = self.origin
@@ -183,6 +194,16 @@ class MCRectangle(MCVector):
                            phi=slant, theta=rotation)
 
         return diagnol.end_point
+    
+    @staticmethod
+    def _normalize_angle(angle):
+        normalized_angle = angle
+        while normalized_angle <= 0:
+            normalized_angle += 360
+        while normalized_angle >= 360:
+            normalized_angle -= 360
+        return normalized_angle
+        
 
     @property
     def is_tipped(self):
@@ -289,7 +310,7 @@ class MCDebug():
         rec4.draw()
         rec4.is_tipped = False
         rec4.draw()
-        
+
     @staticmethod
     def draw_rotated_rectangles():
         origin = (0, 0, 0)
@@ -312,6 +333,7 @@ class MCDebug():
         rec1.rotate_right()
         rec1.draw()
 
+    @staticmethod
     def draw_copied_rectangles():
         origin = (0, 0, 0)
         rec1 = MCRectangle(origin=origin, length=5,
@@ -328,29 +350,47 @@ class MCDebug():
         rec1.draw()
         rec1.draw()
                        
+    #bm1        
     def draw_flip_origin():
         origin = (0, 0, 0)
         rec1 = MCRectangle(origin=origin, length=5,
-                           height=3, theta=Direction.EAST)
+                           height=3, theta=Direction.WEST)
         rec1.material_subtype = 11 # Blue
         rec1.draw()
         
-        rec2 = rec1.copy()
+        rec2 = rec1.copy(extend=True)
         rec2.material_subtype = 14
-        rec2.shift(0,0,5)
-        rec2.flip_origin()
+#        rec2.shift(0,0,5)
+#        rec2.flip_origin()
+#        rec2.rotate_right()
         rec2.draw()
+        
+    def draw_outline():
+        origin = (0, 0, 0)
+
+        rec = MCRectangle(origin=origin, length=5,
+                           height=3, theta=Direction.WEST)
+        rec.material_subtype = 11 # Blue
+        rec.draw()
+        
+        for i in range(3):
+            rec = rec.copy(extend=True)
+            rec.material_subtype = i
+            rec.rotate_left()
+            rec.draw()
+
+
 
 def main():
     """Main function which is run when the program is run standalone"""
-
     MCDebug.clear_space()
 #    MCDebug.draw_walls()
 #    MCDebug.draw_vertical_rectangles()
 #    MCDebug.draw_flat_rectangles()
 #    MCDebug.draw_rotated_rectangles()
 #    MCDebug.draw_copied_rectangles()
-    MCDebug.draw_flip_origin()
+#    MCDebug.draw_flip_origin()
+    MCDebug.draw_outline()
 #    job_site = lot((0,-1,0), 40, 10, Direction.NORTH)
 #    print(job_site)
 #    job_site.draw()

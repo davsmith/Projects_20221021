@@ -68,11 +68,13 @@ class MCComponent:
         x, y, z = self.origin
         MC.setBlock(x, y, z, material, subtype)
 
-
+#bmVector
 class MCVector(MCComponent):
     """A 3D vector with coordinate system adapted to Minecraft (x=E/W, y=U/D, z=S/N)"""
 
     def __init__(self, origin=(0, 0, 0), length=1, phi=90, theta=0):
+        print(f"TT: Vector received o={origin}, len={length}, phi={phi}, theta={theta}")
+        print(f"TT: Calling Vector name=MCVector, o={origin} (stored len={length}, phi={phi}, theta={theta}")
         super().__init__("MCVector", origin)
         self.length = length
         self.phi = phi
@@ -131,6 +133,7 @@ class MCRectangle(MCVector):
         self.material = block.WOOL.id    # Wool - 35
         self.material_subtype = 14       # Red
         self.debug = True
+        print(f"TT: Calling MCRectangle super with o={origin}, len={length}, phi={self.phi}, theta={theta}, (unused height:{self.height})")
         super().__init__(origin, length, self.phi, theta)
 
     def copy(self, extend=False):
@@ -185,6 +188,8 @@ class MCRectangle(MCVector):
     def opposite(self):
         """Calculate the endpoint of the diagnol of the rectangle from the origin"""
 
+        print(f"TT: Calculating opposite with len={self.length}, h={self.height}")
+
         # Create a vector from the origin to the diagnol corner of the rectangle
         hypot = sqrt(pow((self.length-1), 2) + pow((self.height-1), 2))
         rotation = self.theta
@@ -231,11 +236,12 @@ class lot(MCRectangle):
     """The plot of land on which to build a structure"""
     def __init__(self, origin, length, width, direction=Direction.NORTH):
         """A lot has an origin, length, width, and direction"""
+        print(f"TT: Calling rectangle super() with o={origin}, len={length}, w={width}, d={direction}")
         super().__init__(origin, length, width, direction)
         self.is_tipped = True
         self.material = block.GRASS.id
-        self.height = 50
-        self.depth = 5
+        self.height = width
+        self.thickness = 5
         
     def clear(self):
         """Clears the space above and below the lot,
@@ -260,7 +266,7 @@ class lot(MCRectangle):
         y1 = origin_y - 1
         z1 = origin_z
         x2 = opp_x
-        y2 = origin_y - self.depth
+        y2 = origin_y - self.thickness
         z2 = opp_z
         MC.setBlocks(x1, y1, z1, x2, y2, z2, block.BEDROCK.id)
 
@@ -435,16 +441,13 @@ def main():
     """Main function which is run when the program is run standalone"""
     MCDebug.reset_lot()
 #    MCDebug.draw_walls()
-    MCDebug.draw_vertical_rectangles()
+#    MCDebug.draw_vertical_rectangles()
 #    MCDebug.draw_flat_rectangles()
 #    MCDebug.draw_rotated_rectangles()
 #    MCDebug.draw_copied_rectangles()
 #    MCDebug.draw_flip_origin()
 #    MCDebug.draw_outline()
-#    MCDebug.draw_lot()
-#    job_site = lot((0,-1,0), 40, 10, Direction.NORTH)
-#    print(job_site)
-#    job_site.draw()
+    MCDebug.draw_lot()
     
 
 

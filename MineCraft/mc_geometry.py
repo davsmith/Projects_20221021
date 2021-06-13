@@ -231,11 +231,29 @@ class MCRectangle(MCVector):
         else:
             self.phi = Direction.UP
 
+#bmWall
+class Wall(MCRectangle):
+    """A vertically standing wall"""
+    def __init__(self, origin, width, height, direction=Direction.NORTH):
+        """A wall has an origin a width, a height, and a direction"""
+        super().__init__(origin, width, height, direction)
+        self.is_tipped = False
+        self.material = block.WOOD.id
+
+
 #bmLot
 class Lot(MCRectangle):
-    """The plot of land on which to build a structure"""
+    """The plot of land on which to build a structure
+
+        The direction of the lot indicates the direction
+        of the property line along the front of the lot,
+        so a direction of North indicates an East facing lot
+        
+        The 'across' parameter indicates the width of the lot.
+        The 'depth' parameter indicates how far back the lot goes."""
+
     def __init__(self, origin, depth, across, direction=Direction.NORTH):
-        """A lot has an origin, length, depth, and direction"""
+        """A lot has an origin, across, depth, and direction"""
         print(f"TT: Calling rectangle super() with o={origin}, across={across}, depth={depth}, d={direction}")
         super().__init__(origin, across, depth, direction)
         self.is_tipped = True
@@ -430,16 +448,33 @@ class MCDebug():
 
     @staticmethod
     def draw_lot():
-        site = Lot(origin=(0,-1,0), depth=5, across=10, direction=Direction.NORTH)
+        site = Lot(origin=(0,-1,0), across=20, depth=50, direction=Direction.NORTH)
         site.name = "Job site"
         print(site)
-        site.material = block.DIRT.id
+        site.material = block.GRASS.id
         site.clear()
+        
+    @staticmethod
+    def draw_real_walls():
+        wall1 = Wall((-5,0,-2), width=5, height=3, direction=Direction.NORTH)
+        wall1.material = block.WOOD_PLANKS.id
+        wall2 = wall1.copy(extend=True)
+        wall2.rotate_left()
+        wall3 = wall2.copy(extend=True)
+        wall3.rotate_left()
+        wall4 = wall3.copy(extend=True)
+        wall4.rotate_left()
+        wall1.draw()
+        wall2.draw()
+        wall3.draw()
+        wall4.draw()
+
 
 
 def main():
     """Main function which is run when the program is run standalone"""
-    MCDebug.reset_lot()
+#    MCDebug.reset_lot()
+    MCDebug.clear_space()
 #    MCDebug.draw_walls()
 #    MCDebug.draw_vertical_rectangles()
 #    MCDebug.draw_flat_rectangles()
@@ -448,6 +483,7 @@ def main():
 #    MCDebug.draw_flip_origin()
 #    MCDebug.draw_outline()
     MCDebug.draw_lot()
+    MCDebug.draw_real_walls()
     
 
 

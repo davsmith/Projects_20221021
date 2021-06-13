@@ -232,15 +232,15 @@ class MCRectangle(MCVector):
             self.phi = Direction.UP
 
 #bmLot
-class lot(MCRectangle):
+class Lot(MCRectangle):
     """The plot of land on which to build a structure"""
-    def __init__(self, origin, length, width, direction=Direction.NORTH):
-        """A lot has an origin, length, width, and direction"""
-        print(f"TT: Calling rectangle super() with o={origin}, len={length}, w={width}, d={direction}")
-        super().__init__(origin, length, width, direction)
+    def __init__(self, origin, depth, across, direction=Direction.NORTH):
+        """A lot has an origin, length, depth, and direction"""
+        print(f"TT: Calling rectangle super() with o={origin}, across={across}, depth={depth}, d={direction}")
+        super().__init__(origin, across, depth, direction)
         self.is_tipped = True
         self.material = block.GRASS.id
-        self.height = width
+#        self.height = depth
         self.thickness = 5
         
     def clear(self):
@@ -430,10 +430,10 @@ class MCDebug():
 
     @staticmethod
     def draw_lot():
-        site = lot(origin=(0,-1,0), width=5, length=10, direction=Direction.NORTH)
+        site = Lot(origin=(0,-1,0), depth=5, across=10, direction=Direction.NORTH)
         site.name = "Job site"
         print(site)
-        site.material = block.GRASS.id
+        site.material = block.DIRT.id
         site.clear()
 
 

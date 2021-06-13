@@ -73,8 +73,6 @@ class MCVector(MCComponent):
     """A 3D vector with coordinate system adapted to Minecraft (x=E/W, y=U/D, z=S/N)"""
 
     def __init__(self, origin=(0, 0, 0), length=1, phi=90, theta=0):
-        print(f"TT: Vector received o={origin}, len={length}, phi={phi}, theta={theta}")
-        print(f"TT: Calling Vector name=MCVector, o={origin} (stored len={length}, phi={phi}, theta={theta}")
         super().__init__("MCVector", origin)
         self.length = length
         self.phi = phi
@@ -133,7 +131,6 @@ class MCRectangle(MCVector):
         self.material = block.WOOL.id    # Wool - 35
         self.material_subtype = 14       # Red
         self.debug = True
-        print(f"TT: Calling MCRectangle super with o={origin}, len={length}, phi={self.phi}, theta={theta}, (unused height:{self.height})")
         super().__init__(origin, length, self.phi, theta)
 
     def copy(self, extend=False):
@@ -195,7 +192,6 @@ class MCRectangle(MCVector):
     @property
     def opposite(self):
         """Calculate the endpoint of the diagnol of the rectangle from the origin"""            
-        print(f"TT: Calculating opposite with len={self.length}, h={self.height}")
         return self._calc_opposite_corner()
     
     def _calc_opposite_corner(self, length=None, height=None):
@@ -273,11 +269,9 @@ class Lot(MCRectangle):
 
     def __init__(self, origin, depth, across, direction=Direction.NORTH):
         """A lot has an origin, across, depth, and direction"""
-        print(f"TT: Calling rectangle super() with o={origin}, across={across}, depth={depth}, d={direction}")
         super().__init__(origin, across, depth, direction)
         self.is_tipped = True
         self.material = block.GRASS.id
-#        self.height = depth
         self.thickness = 5
         
     def clear(self):

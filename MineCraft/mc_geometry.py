@@ -115,7 +115,7 @@ class MCVector(MCComponent):
         y = round(r * cos(radians(phi)), 2)
         x = round(r * sin(radians(phi)) * sin(radians(theta)), 2)
 
-        return map(lambda x, y: x + y, (x, y, z), self.origin)
+        return tuple(map(lambda x, y: x + y, (x, y, z), self.origin))
 
 #bmRectangle
 class MCRectangle(MCVector):
@@ -315,6 +315,8 @@ class MCDebug():
         rec4.material_subtype = 6 # Pink
         rec4.draw()
         
+        print(rec4)
+        
     @staticmethod
     def draw_flat_rectangles():
         origin = (0, 0, 10)
@@ -433,13 +435,13 @@ def main():
     """Main function which is run when the program is run standalone"""
     MCDebug.reset_lot()
 #    MCDebug.draw_walls()
-#    MCDebug.draw_vertical_rectangles()
+    MCDebug.draw_vertical_rectangles()
 #    MCDebug.draw_flat_rectangles()
 #    MCDebug.draw_rotated_rectangles()
 #    MCDebug.draw_copied_rectangles()
 #    MCDebug.draw_flip_origin()
 #    MCDebug.draw_outline()
-    MCDebug.draw_lot()
+#    MCDebug.draw_lot()
 #    job_site = lot((0,-1,0), 40, 10, Direction.NORTH)
 #    print(job_site)
 #    job_site.draw()

@@ -137,6 +137,8 @@ class MCRectangle(MCVector):
         super().__init__(origin, length, self.phi, theta)
 
     def copy(self, extend=False):
+        """Makes a limited copy of the existing object
+        BUGBUG:  Try using the copy module (https://www.programiz.com/python-programming/shallow-deep-copy)"""
         new_rect = MCRectangle(self.origin, self.length, self.height, self.theta)
         new_rect.phi = self.phi
         new_rect.material = self.material
@@ -145,6 +147,11 @@ class MCRectangle(MCVector):
             new_rect.flip_origin()
        
         return new_rect
+    
+    def along(self, distance):
+        """Returns the coordinate of the block <distance> along
+        along the bottom of the rectangle (0 is the origin)"""
+        print(f"TT: Origin:{self.origin} Along:")
     
     def __repr__(self):
         msg = f"<MCRectangle {self.name}> origin:{self.origin}, "
@@ -469,6 +476,13 @@ class MCDebug():
         wall3.draw()
         wall4.draw()
 
+    @staticmethod
+    def test_along_method():
+        wall1 = Wall((-5,0,-2), width=5, height=3, direction=Direction.EAST)
+        wall1.draw()
+        wall1.name = "Test Along"
+        print(wall1)
+        coord = wall1.along(0)
 
 
 def main():
@@ -483,7 +497,8 @@ def main():
 #    MCDebug.draw_flip_origin()
 #    MCDebug.draw_outline()
     MCDebug.draw_lot()
-    MCDebug.draw_real_walls()
+#    MCDebug.draw_real_walls()
+    MCDebug.test_along_method()
     
 
 

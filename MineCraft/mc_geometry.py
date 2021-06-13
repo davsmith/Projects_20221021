@@ -11,7 +11,7 @@ except ModuleNotFoundError:
     MINECRAFT_EXISTS = False
 
 from enum import IntEnum, unique
-from math import sin, cos, radians, sqrt, atan, degrees
+from math import sin, cos, radians, sqrt, atan, degrees, floor
 
 
 def compare_points(point1, point2):
@@ -148,12 +148,11 @@ class MCRectangle(MCVector):
        
         return new_rect
     
-    def along(self, horizontal=0, vertical=None):
+    def along(self, horizontal=0, vertical=0):
         """Returns the coordinate of the block <distance> along
         along the bottom of the rectangle (0 is the origin)"""
         
-        coordinate = self._calc_opposite_corner(horizontal, vertical)
-        return coordinate
+        return self._calc_opposite_corner(floor(horizontal), floor(vertical))
     
     def __repr__(self):
         msg = f"<MCRectangle {self.name}> origin:{self.origin}, "
@@ -499,11 +498,11 @@ class MCDebug():
         wall2.draw()
         wall2.name = "Test Along North"
         
-        x1, y1, z1 = wall1.along(2,0)
+        x1, y1, z1 = wall1.along(2)
         print(f"x1={x1}, y1={y1}, z1={z1}")
         MC.setBlock(x1, y1, z1, block.WOOL.id)
 
-        x2, y2, z2 = wall2.along(2.0, 1)
+        x2, y2, z2 = wall2.along(2.5, 1.5)
         print(f"x2={x2}, y2={y2}, z2={z2}")
         MC.setBlock(x2, y2, z2, block.WOOL.id)
 

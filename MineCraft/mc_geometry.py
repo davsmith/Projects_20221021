@@ -148,10 +148,12 @@ class MCRectangle(MCVector):
        
         return new_rect
     
-    def along(self, distance):
+    def along(self, horizontal=0, vertical=None):
         """Returns the coordinate of the block <distance> along
         along the bottom of the rectangle (0 is the origin)"""
-        print(f"TT: Origin:{self.origin} Along:")
+        
+        coordinate = self._calc_opposite_corner(horizontal, vertical)
+        return coordinate
     
     def __repr__(self):
         msg = f"<MCRectangle {self.name}> origin:{self.origin}, "
@@ -193,26 +195,37 @@ class MCRectangle(MCVector):
         
     @property
     def opposite(self):
-        """Calculate the endpoint of the diagnol of the rectangle from the origin"""
-
+        """Calculate the endpoint of the diagnol of the rectangle from the origin"""            
         print(f"TT: Calculating opposite with len={self.length}, h={self.height}")
+        return self._calc_opposite_corner()
+    
+    def _calc_opposite_corner(self, length=None, height=None):
+        if length is None:
+            length = self.length - 1
+            
+        if height is None:
+            height = self.height - 1
 
         # Create a vector from the origin to the diagnol corner of the rectangle
-        hypot = sqrt(pow((self.length-1), 2) + pow((self.height-1), 2))
+        hypot = sqrt(pow(length, 2) + pow(height, 2))
         rotation = self.theta
         
         # Special case a flat rectangle to appear as tipped
         if self.phi == Direction.FLAT:
             slant = 90
             rotation = degrees(
-                atan((self.height-1)/(self.length-1))) + self.theta
+                atan(height/length)) + self.theta
         else:
-            slant = degrees(atan((self.length-1)/(self.height-1)))
+            if height == 0:
+                slant = 90
+            else:
+                slant = degrees(atan(length/height))
 
         diagnol = MCVector(origin=self.origin, length=hypot,
                            phi=slant, theta=rotation)
 
         return diagnol.end_point
+
     
     @staticmethod
     def _normalize_angle(angle):
@@ -480,9 +493,20 @@ class MCDebug():
     def test_along_method():
         wall1 = Wall((-5,0,-2), width=5, height=3, direction=Direction.EAST)
         wall1.draw()
-        wall1.name = "Test Along"
-        print(wall1)
-        coord = wall1.along(0)
+        wall1.name = "Test Along East"
+        
+        wall2 = Wall((-5,0,-2), width=5, height=3, direction=Direction.NORTH)
+        wall2.draw()
+        wall2.name = "Test Along North"
+        
+        x1, y1, z1 = wall1.along(2,0)
+        print(f"x1={x1}, y1={y1}, z1={z1}")
+        MC.setBlock(x1, y1, z1, block.WOOL.id)
+
+        x2, y2, z2 = wall2.along(2.0, 1)
+        print(f"x2={x2}, y2={y2}, z2={z2}")
+        MC.setBlock(x2, y2, z2, block.WOOL.id)
+
 
 
 def main():
@@ -496,7 +520,7 @@ def main():
 #    MCDebug.draw_copied_rectangles()
 #    MCDebug.draw_flip_origin()
 #    MCDebug.draw_outline()
-    MCDebug.draw_lot()
+#    MCDebug.draw_lot()
 #    MCDebug.draw_real_walls()
     MCDebug.test_along_method()
     

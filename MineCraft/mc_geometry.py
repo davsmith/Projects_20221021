@@ -58,10 +58,15 @@ class MCComponent:
     def __init__(self, name, origin):
         self.name = name
         self.origin = origin
+        self.debug = True
         
     def _repr__(self):
-        msg = f"<MCComponent> origin:{self.origin}, "
-        msg += f"name: {self.name}"
+        msg = f"<MCComponent: {self.name}> "
+        msg += f"origin:{self.origin}, "
+        
+    def _draw_origin(self, material=block.TNT.id, subtype=0):
+        x, y, z = self.origin
+        MC.setBlock(x, y, z, material, subtype)
 
 
 class MCVector(MCComponent):
@@ -74,22 +79,22 @@ class MCVector(MCComponent):
         self.theta = theta
         
     def __repr__(self):
-        msg = f"<MCVector> origin:{self.origin}, "
+        msg = f"<MCVector: {self.name}> origin:{self.origin}, "
         msg += f"length:{self.length}, "
         msg += f"phi:{self.phi}, "
         msg += f"theta:{self.theta}, "
-        msg += f"mc endpoint:{self.end_point} "
+        msg += f"endpoint:{self.end_point} "
         return msg
 
     def set_direction(self, direction):
-        '''Sets the rotation of the vector in the x/z Minecraft plane (theta)
+        """Sets the rotation of the vector in the x/z Minecraft plane (theta)
             +x = EAST, -x = WEST
             +y = UP, -y = Down
-            +z = SOUTH, -z = NORTH'''
+            +z = SOUTH, -z = NORTH"""
         self.theta = direction
 
     def set_slant(self, slant):
-        ''' Sets the rotation of the vector from vertical (phi) '''
+        """Sets the rotation of the vector from vertical (phi)"""
         if slant == Direction.FLAT:
             self.phi = 90
         elif slant == Direction.UP:
@@ -97,10 +102,10 @@ class MCVector(MCComponent):
 
     @property
     def end_point(self):
-        '''Calculate x,y,z in minecraft space
+        """Calculate x,y,z in minecraft space
             x is EAST/WEST
             y is UP/Down
-            z is SOUTH/NORTH'''
+            z is SOUTH/NORTH"""
         r = self.length
         phi = self.phi
         theta = self.theta
@@ -111,11 +116,10 @@ class MCVector(MCComponent):
         x = round(r * sin(radians(phi)) * sin(radians(theta)), 2)
 
         return map(lambda x, y: x + y, (x, y, z), self.origin)
-#        return NP.add((x, y, z), self.origin)
 
 #bmRectangle
 class MCRectangle(MCVector):
-    ''' Manages coordinates of a 2D rectangle in MineCraft 3D space '''
+    """Manages coordinates of a 2D rectangle in MineCraft 3D space"""
 
     def __init__(self, origin=(0, 0, 0), length=5, height=3, theta=0):
         self.origin = origin
@@ -136,11 +140,11 @@ class MCRectangle(MCVector):
         new_rect.material_subtype = self.material_subtype
         if extend:
             new_rect.flip_origin()
-        
+       
         return new_rect
     
     def __repr__(self):
-        msg = f"<MCRectangle> origin:{self.origin}, "
+        msg = f"<MCRectangle {self.name}> origin:{self.origin}, "
         msg += f"length:{self.length}, "
         msg += f"phi:{self.phi}, "
         msg += f"theta:{self.theta}, "
@@ -149,18 +153,21 @@ class MCRectangle(MCVector):
         return msg
     
     def rotate_left(self):
+        """Rotates a rectangle 90 degrees counter-clockwise"""
         self.theta += 90
     
     def rotate_right(self):
+        """Rotates a rectangle 90 degrees clockwise"""
         self.theta -= 90
 
     def flip_origin(self):
+        """Swaps the origin to the opposite corner at the bottom"""
         origin_x, _, origin_z = self.opposite
         _, origin_y, _ = self.origin
         self.origin = (origin_x, origin_y, origin_z)
-#        self.theta += 180
         
     def shift(self, x, y, z):
+        """Shifts the rectangle by an offset in each direction"""
         origin_x, origin_y, origin_z = self.origin
         self.origin = (origin_x + x, origin_y + y, origin_z + z)
 
@@ -170,13 +177,13 @@ class MCRectangle(MCVector):
         print(f"x1:{x1}, y1:{y1}, z1:{z1}, x2:{x2}, y2:{y2}, z2:{z2}")
         if MINECRAFT_EXISTS:
             MC.setBlocks(x1, y1, z1, x2, y2, z2, self.material, self.material_subtype)
+            print(f"Drawing the rectangle")
             if self.debug:
-                MC.setBlock(x1, y1, z1, 46, 1)
+                self._draw_origin()
         
-
     @property
     def opposite(self):
-        '''Calculate the endpoint of the diagnol of the rectangle from the origin'''
+        """Calculate the endpoint of the diagnol of the rectangle from the origin"""
 
         # Create a vector from the origin to the diagnol corner of the rectangle
         hypot = sqrt(pow((self.length-1), 2) + pow((self.height-1), 2))
@@ -187,9 +194,9 @@ class MCRectangle(MCVector):
             slant = 90
             rotation = degrees(
                 atan((self.height-1)/(self.length-1))) + self.theta
-            # print(f"slant={slant}, rotation={rotation}")
         else:
             slant = degrees(atan((self.length-1)/(self.height-1)))
+
         diagnol = MCVector(origin=self.origin, length=hypot,
                            phi=slant, theta=rotation)
 
@@ -197,8 +204,9 @@ class MCRectangle(MCVector):
     
     @staticmethod
     def _normalize_angle(angle):
+        """Make the specified angle fit to 0-360 degrees"""
         normalized_angle = angle
-        while normalized_angle <= 0:
+        while normalized_angle < 0:
             normalized_angle += 360
         while normalized_angle >= 360:
             normalized_angle -= 360
@@ -220,16 +228,18 @@ class MCRectangle(MCVector):
 
 #bmLot
 class lot(MCRectangle):
-    '''The plot of land on which to build a structure'''
+    """The plot of land on which to build a structure"""
     def __init__(self, origin, length, width, direction=Direction.NORTH):
-        ''' A lot has an origin, length, width, and direction'''
+        """A lot has an origin, length, width, and direction"""
         super().__init__(origin, length, width, direction)
         self.is_tipped = True
-        self.material = block.DIRT.id
+        self.material = block.GRASS.id
         self.height = 50
         self.depth = 5
         
     def clear(self):
+        """Clears the space above and below the lot,
+            and redraws the lot in the specified material"""
         origin_x, origin_y, origin_z = self.origin
         opp_x, opp_y, opp_z = self.opposite
         
@@ -243,13 +253,7 @@ class lot(MCRectangle):
         MC.setBlocks(x1, y1, z1, x2, y2, z2, block.AIR.id)
         
         # Create a flat rectangle for the lot itself
-        x1 = origin_x
-        y1 = origin_y
-        z1 = origin_z
-        x2 = opp_x
-        y2 = opp_y
-        z2 = opp_z
-        MC.setBlocks(x1, y1, z1, x2, y2, z2, block.DIRT.id)
+        self.draw()
         
         # Set the material for the ground beneath the lot
         x1 = origin_x
@@ -259,6 +263,7 @@ class lot(MCRectangle):
         y2 = origin_y - self.depth
         z2 = opp_z
         MC.setBlocks(x1, y1, z1, x2, y2, z2, block.BEDROCK.id)
+
 
 class MCDebug():
     """Functions for setting up MineCraft environment on Raspberry Pi"""
@@ -417,7 +422,10 @@ class MCDebug():
 
     @staticmethod
     def draw_lot():
-        site = lot((0,-1,0), 20, 30, Direction.NORTH)
+        site = lot(origin=(0,-1,0), width=5, length=10, direction=Direction.NORTH)
+        site.name = "Job site"
+        print(site)
+        site.material = block.GRASS.id
         site.clear()
 
 

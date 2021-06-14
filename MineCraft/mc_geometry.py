@@ -114,6 +114,8 @@ class MCRectangle(MCVector):
         self._tipped = False
         self.material = block.WOOL.id    # Wool - 35
         self.material_subtype = 14       # Red
+        self.corner_material = None
+        self.corner_subtype = None
         self.debug = True
         super().__init__(origin, length, self.phi, theta)
 
@@ -126,6 +128,9 @@ class MCRectangle(MCVector):
         new_rect.phi = self.phi
         new_rect.material = self.material
         new_rect.material_subtype = self.material_subtype
+        new_rect.corner_material = self.corner_material
+        new_rect.corner_subtype = self.corner_subtype
+
         if extend:
             new_rect.flip_origin()
 
@@ -143,6 +148,9 @@ class MCRectangle(MCVector):
         msg += f"phi:{self.phi}, "
         msg += f"theta:{self.theta}, "
         msg += f"opposite:{self.opposite}, "
+        msg += f"is_tipped:{self.is_tipped}, "
+        msg += f"material:{self.material}, {self.material_subtype}, "
+        msg += f"corner:{self.corner_material}, {self.corner_subtype}, "
         msg += f"is_tipped:{self.is_tipped}"
         return msg
 
@@ -172,6 +180,7 @@ class MCRectangle(MCVector):
         x2, y2, z2 = self.opposite
         print(f"x1:{x1}, y1:{y1}, z1:{z1}, x2:{x2}, y2:{y2}, z2:{z2}")
         if MINECRAFT_EXISTS:
+            print("TT: Drawing in Minecraft!")
             MC.setBlocks(x1, y1, z1, x2, y2, z2,
                          self.material, self.material_subtype)
             if self.debug:
@@ -232,9 +241,8 @@ class MCRectangle(MCVector):
         else:
             self.phi = Direction.UP
 
+
 # bmWall
-
-
 class Wall(MCRectangle):
     """A vertically standing wall"""
 
@@ -244,12 +252,48 @@ class Wall(MCRectangle):
         self.is_tipped = False
         self.material = block.WOOD.id
         self.material_subtype = 0
-        self.corner_material = block.WOOD.id
-        self.corner_subtype = 0
+        self.corner_material = None
+        self.corner_subtype = None
         
     def draw(self):
-        pass
+        super().draw()
+        if self.corner_material:
+            print(f"TT: Drawing corners {self.corner_material}, {self.corner_subtype}")
+            x1, y1, z1 = self.origin
+            _,y2,_ = self.opposite
+            MC.setBlocks(x1, y1, z1, x1, y2, z1, self.corner_material, self.corner_subtype)
 
+            x1, y1, z1 = self.opposite
+            _,y2,_ = self.origin
+            MC.setBlocks(x1, y1, z1, x1, y2, z1, self.corner_material, self.corner_subtype)
+
+    #bmSetMaterials
+    def set_materials(self, main, corners=None):
+        """ Sets the materials of the wall with optional different material
+            for the wall corners.
+            The main and corners arguments can be tuples or any other
+            indexable type."""
+#        print(type.mro(type((0,0))))
+
+        if hasattr(main, '__iter__'):
+            self.material = main[0]
+            self.material_subtype = main[1]
+        else:
+            self.material = main
+            self.material_subtype = 0
+
+        if not corners is None:
+            if hasattr(corners, '__iter__'):
+                self.corner_material = corners[0]
+                self.corner_subtype = corners[1]
+            else:
+                self.corner_material = corners
+                self.corner_subtype = 0
+        else:
+            print("TT: Corners not specified")
+
+
+        print(hasattr(123, '__iter__'))
 
 # bmLot
 class Lot(MCRectangle):
@@ -476,17 +520,25 @@ class MCDebug():
         """ Draws 4 walls using the Wall class.
         The result should be 4 walls in a square """
         wall1 = Wall((-5, 0, -2), width=5, height=3, direction=Direction.NORTH)
-        wall1.material = block.WOOD_PLANKS.id
+        wall1.set_materials(block.WOOD_PLANKS.id, block.TNT.id)
         wall2 = wall1.copy(extend=True)
         wall2.rotate_left()
-        wall3 = wall2.copy(extend=True)
-        wall3.rotate_left()
-        wall4 = wall3.copy(extend=True)
-        wall4.rotate_left()
+#        wall3 = wall2.copy(extend=True)
+#        wall3.rotate_left()
+#        wall4 = wall3.copy(extend=True)
+#        wall4.rotate_left()
+        print(f"Wall1 - {wall1}")
+        print(f"Wall2 - {wall2}")
         wall1.draw()
         wall2.draw()
-        wall3.draw()
-        wall4.draw()
+#        wall3.draw()
+#        wall4.draw()
+        
+    @staticmethod
+    def test_corners():
+        wall1 = Wall((-5, 0, -2), width=5, height=3, direction=Direction.NORTH)
+        wall1.set_materials(block.WOOD.id, block.WOOL.id)
+        wall1.draw()
 
     @staticmethod
     def test_along_method():
@@ -514,11 +566,10 @@ class MCDebug():
     def test_wall_on_lot():
         site = Lot(origin=(0,-1,0), across=20, depth=50, direction=Direction.NORTH)
         site.name = "Job site"
-        print(site)
         site.material = block.GRASS.id
         site.clear()
-        x,y,z = site.along(4,1)
-        MC.setBlock(x, y+1, z, block.WOOL.id)
+#        x,y,z = site.along(4,1)
+#        MC.setBlock(x, y+1, z, block.WOOL.id)
         
 
 
@@ -534,9 +585,10 @@ def main():
 #    MCDebug.draw_flip_origin()
 #    MCDebug.draw_outline()
 #    MCDebug.draw_lot()
-#    MCDebug.draw_real_walls()
+    MCDebug.test_walls()
 #    MCDebug.test_along_method()
-    MCDebug.test_wall_on_lot()   
+#    MCDebug.test_wall_on_lot()
+#    MCDebug.test_corners()
 
 if __name__ == '__main__':
     main()

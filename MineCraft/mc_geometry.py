@@ -2,7 +2,8 @@
 Spherical coordinate equations from https://keisan.casio.com/exec/system/1359534351
 '''
 try:
-    from mcpi.minecraft import Minecraft  # pylint: disable=import-error
+    # pylint: disable=import-error
+    from mcpi.minecraft import Minecraft
     from mcpi import block
     MC = Minecraft.create()
     MINECRAFT_EXISTS = True
@@ -12,33 +13,6 @@ except ModuleNotFoundError:
 
 from enum import IntEnum, unique
 from math import sin, cos, radians, sqrt, atan, degrees, floor
-
-
-def compare_points(point1, point2):
-    ''' Compares two points in Minecraft space '''
-    direction = ""
-    elevation = ""
-
-    x1, y1, z1 = point1
-    x2, y2, z2 = point2
-    threshold = 1
-
-    if (y2-y1) > threshold:
-        elevation = "above"
-    elif (y2-y1) < -threshold:
-        elevation = "below"
-
-    if (z2-z1) > threshold:
-        direction = "SOUTH"
-    elif (z2-z1) < -threshold:
-        direction = "NORTH"
-
-    if (x2-x1) > threshold:
-        direction += "EAST"
-    elif (x2-x1) < -threshold:
-        direction += "WEST"
-
-    return (elevation, direction)
 
 
 @unique
@@ -54,21 +28,30 @@ class Direction(IntEnum):
     FLAT = -270
     UP = -360
 
+
+# bmComponent
 class MCComponent:
+    """Base class for all MineCraft components.
+    It provides a few properties common to all components, and debug info"""
+
     def __init__(self, name, origin):
+        """Set the name and origin for the object
+        The origin is a tuple consisting of x, y, and z"""
         self.name = name
         self.origin = origin
         self.debug = True
-        
+
     def _repr__(self):
+        """Returns a string used with print <object>"""
         msg = f"<MCComponent: {self.name}> "
         msg += f"origin:{self.origin}, "
-        
+
     def _draw_origin(self, material=block.TNT.id, subtype=0):
         x, y, z = self.origin
         MC.setBlock(x, y, z, material, subtype)
 
-#bmVector
+
+# bmVector
 class MCVector(MCComponent):
     """A 3D vector with coordinate system adapted to Minecraft (x=E/W, y=U/D, z=S/N)"""
 
@@ -77,7 +60,7 @@ class MCVector(MCComponent):
         self.length = length
         self.phi = phi
         self.theta = theta
-        
+
     def __repr__(self):
         msg = f"<MCVector: {self.name}> origin:{self.origin}, "
         msg += f"length:{self.length}, "
@@ -117,7 +100,8 @@ class MCVector(MCComponent):
 
         return tuple(map(lambda x, y: x + y, (x, y, z), self.origin))
 
-#bmRectangle
+
+# bmRectangle
 class MCRectangle(MCVector):
     """Manages coordinates of a 2D rectangle in MineCraft 3D space"""
 
@@ -135,22 +119,24 @@ class MCRectangle(MCVector):
 
     def copy(self, extend=False):
         """Makes a limited copy of the existing object
-        BUGBUG:  Try using the copy module (https://www.programiz.com/python-programming/shallow-deep-copy)"""
-        new_rect = MCRectangle(self.origin, self.length, self.height, self.theta)
+        BUGBUG:  Try using the copy module
+        (https://www.programiz.com/python-programming/shallow-deep-copy)"""
+        new_rect = MCRectangle(self.origin, self.length,
+                               self.height, self.theta)
         new_rect.phi = self.phi
         new_rect.material = self.material
         new_rect.material_subtype = self.material_subtype
         if extend:
             new_rect.flip_origin()
-       
+
         return new_rect
-    
+
     def along(self, horizontal=0, vertical=0):
         """Returns the coordinate of the block <distance> along
         along the bottom of the rectangle (0 is the origin)"""
-        
+
         return self._calc_opposite_corner(floor(horizontal), floor(vertical))
-    
+
     def __repr__(self):
         msg = f"<MCRectangle {self.name}> origin:{self.origin}, "
         msg += f"length:{self.length}, "
@@ -159,11 +145,11 @@ class MCRectangle(MCVector):
         msg += f"opposite:{self.opposite}, "
         msg += f"is_tipped:{self.is_tipped}"
         return msg
-    
+
     def rotate_left(self):
         """Rotates a rectangle 90 degrees counter-clockwise"""
         self.theta += 90
-    
+
     def rotate_right(self):
         """Rotates a rectangle 90 degrees clockwise"""
         self.theta -= 90
@@ -173,38 +159,40 @@ class MCRectangle(MCVector):
         origin_x, _, origin_z = self.opposite
         _, origin_y, _ = self.origin
         self.origin = (origin_x, origin_y, origin_z)
-        
+
     def shift(self, x, y, z):
         """Shifts the rectangle by an offset in each direction"""
         origin_x, origin_y, origin_z = self.origin
         self.origin = (origin_x + x, origin_y + y, origin_z + z)
 
     def draw(self):
+        """Draws the rectangle based on the origin and opposite
+        properties, with the material specified in the material property"""
         x1, y1, z1 = self.origin
         x2, y2, z2 = self.opposite
         print(f"x1:{x1}, y1:{y1}, z1:{z1}, x2:{x2}, y2:{y2}, z2:{z2}")
         if MINECRAFT_EXISTS:
-            MC.setBlocks(x1, y1, z1, x2, y2, z2, self.material, self.material_subtype)
-            print(f"Drawing the rectangle")
+            MC.setBlocks(x1, y1, z1, x2, y2, z2,
+                         self.material, self.material_subtype)
             if self.debug:
                 self._draw_origin()
-        
+
     @property
     def opposite(self):
-        """Calculate the endpoint of the diagnol of the rectangle from the origin"""            
+        """Calculate the endpoint of the diagnol of the rectangle from the origin"""
         return self._calc_opposite_corner()
-    
+
     def _calc_opposite_corner(self, length=None, height=None):
         if length is None:
             length = self.length - 1
-            
+
         if height is None:
             height = self.height - 1
 
         # Create a vector from the origin to the diagnol corner of the rectangle
         hypot = sqrt(pow(length, 2) + pow(height, 2))
         rotation = self.theta
-        
+
         # Special case a flat rectangle to appear as tipped
         if self.phi == Direction.FLAT:
             slant = 90
@@ -221,7 +209,6 @@ class MCRectangle(MCVector):
 
         return diagnol.end_point
 
-    
     @staticmethod
     def _normalize_angle(angle):
         """Make the specified angle fit to 0-360 degrees"""
@@ -231,7 +218,6 @@ class MCRectangle(MCVector):
         while normalized_angle >= 360:
             normalized_angle -= 360
         return normalized_angle
-        
 
     @property
     def is_tipped(self):
@@ -246,9 +232,12 @@ class MCRectangle(MCVector):
         else:
             self.phi = Direction.UP
 
-#bmWall
+# bmWall
+
+
 class Wall(MCRectangle):
     """A vertically standing wall"""
+
     def __init__(self, origin, width, height, direction=Direction.NORTH):
         """A wall has an origin a width, a height, and a direction"""
         super().__init__(origin, width, height, direction)
@@ -262,14 +251,14 @@ class Wall(MCRectangle):
         pass
 
 
-#bmLot
+# bmLot
 class Lot(MCRectangle):
     """The plot of land on which to build a structure
 
         The direction of the lot indicates the direction
         of the property line along the front of the lot,
         so a direction of North indicates an East facing lot
-        
+
         The 'across' parameter indicates the width of the lot.
         The 'depth' parameter indicates how far back the lot goes."""
 
@@ -279,13 +268,13 @@ class Lot(MCRectangle):
         self.is_tipped = True
         self.material = block.GRASS.id
         self.thickness = 5
-        
+
     def clear(self):
         """Clears the space above and below the lot,
             and redraws the lot in the specified material"""
         origin_x, origin_y, origin_z = self.origin
-        opp_x, opp_y, opp_z = self.opposite
-        
+        opp_x, _, opp_z = self.opposite
+
         # Clear out the space above the lot
         x1 = origin_x
         y1 = origin_y
@@ -294,10 +283,10 @@ class Lot(MCRectangle):
         y2 = origin_y + self.height
         z2 = opp_z
         MC.setBlocks(x1, y1, z1, x2, y2, z2, block.AIR.id)
-        
+
         # Create a flat rectangle for the lot itself
         self.draw()
-        
+
         # Set the material for the ground beneath the lot
         x1 = origin_x
         y1 = origin_y - 1
@@ -324,48 +313,49 @@ class MCDebug():
 
     @staticmethod
     def draw_walls():
+        """Draws a set of walls at hard coded coordinates"""
         if MINECRAFT_EXISTS:
-            """Draws a set of walls at hard coded coordinates"""
             block_id = 35
             MC.setBlocks(0, 0, 0, 4, 2, 0, block_id, 11)    # Blue
             MC.setBlocks(0, 0, 0, 0, 2, 4, block_id, 13)    # Green
             MC.setBlocks(0, 0, 4, 4, 2, 4, block_id, 4)     # Yellow
             MC.setBlocks(4, 0, 0, 4, 2, 4, block_id, 2)     # Magenta
             MC.setBlock(0, 0, 0, 46, 1)
-            
+
     @staticmethod
-    def draw_vertical_rectangles():
+    def test_draw_vertical_rectangles():
+        """Creates and draws rectangles in a + pattern"""
         origin = (0, 0, 0)
 
         # Vertical rectangles
         rec1 = MCRectangle(origin=origin, length=5,
                            height=3, theta=Direction.EAST)
-        rec1.material_subtype = 11 # Blue
+        rec1.material_subtype = 11  # Blue
         rec1.draw()
 
         rec2 = MCRectangle(origin=origin, length=5,
                            height=3, theta=Direction.WEST)
-        rec2.material_subtype = 3 # Light Blue
+        rec2.material_subtype = 3  # Light Blue
         rec2.draw()
 
         rec3 = MCRectangle(origin=origin, length=5,
                            height=3, theta=Direction.SOUTH)
-        rec3.material_subtype = 14 # Red
+        rec3.material_subtype = 14  # Red
         rec3.draw()
 
         rec4 = MCRectangle(origin=origin, length=5,
                            height=3, theta=Direction.NORTH)
-        rec4.material_subtype = 6 # Pink
+        rec4.material_subtype = 6  # Pink
         rec4.draw()
-        
-        print(rec4)
-        
+
     @staticmethod
     def draw_flat_rectangles():
+        """Creates and draws rectangles and their 'tipped' equivalent
+        The rectangles should be 4 'L' shaped structures in a + pattern"""
         origin = (0, 0, 10)
         rec1 = MCRectangle(origin=origin, length=5,
                            height=3, theta=Direction.EAST)
-        rec1.material_subtype = 11 # Blue
+        rec1.material_subtype = 11  # Blue
         rec1.is_tipped = True
         rec1.draw()
         rec1.is_tipped = False
@@ -373,7 +363,7 @@ class MCDebug():
 
         rec2 = MCRectangle(origin=origin, length=5,
                            height=3, theta=Direction.WEST)
-        rec2.material_subtype = 3 # Light Blue
+        rec2.material_subtype = 3  # Light Blue
         rec2.is_tipped = True
         rec2.draw()
         rec2.is_tipped = False
@@ -381,7 +371,7 @@ class MCDebug():
 
         rec3 = MCRectangle(origin=origin, length=5,
                            height=3, theta=Direction.SOUTH)
-        rec3.material_subtype = 14 # Red
+        rec3.material_subtype = 14  # Red
         rec3.is_tipped = True
         rec3.draw()
         rec3.is_tipped = False
@@ -389,7 +379,7 @@ class MCDebug():
 
         rec4 = MCRectangle(origin=origin, length=5,
                            height=3, theta=Direction.NORTH)
-        rec4.material_subtype = 6 # Pink
+        rec4.material_subtype = 6  # Pink
         rec4.is_tipped = True
         rec4.draw()
         rec4.is_tipped = False
@@ -397,68 +387,74 @@ class MCDebug():
 
     @staticmethod
     def draw_rotated_rectangles():
+        """ Exercises the rotate functionality on the Rectangle class
+        The result should be 4 walls in a + pattern"""
         origin = (0, 0, 0)
 
         # Vertical rectangles
         rec1 = MCRectangle(origin=origin, length=5,
                            height=3, theta=Direction.EAST)
-        rec1.material_subtype = 11 # Blue
+        rec1.material_subtype = 11  # Blue
         rec1.draw()
 
-        rec1.material_subtype = 3 # Light Blue
+        rec1.material_subtype = 3  # Light Blue
         rec1.rotate_right()
         rec1.draw()
 
-        rec1.material_subtype = 14 # Red
+        rec1.material_subtype = 14  # Red
         rec1.rotate_right()
         rec1.draw()
 
-        rec1.material_subtype = 6 # Pink
+        rec1.material_subtype = 6  # Pink
         rec1.rotate_right()
         rec1.draw()
 
     @staticmethod
     def draw_copied_rectangles():
+        """Creates a rectangle and copies it to a second rectangle
+        Result is two rectangles, the second offset the first by 5 spaces"""
+
         origin = (0, 0, 0)
         rec1 = MCRectangle(origin=origin, length=5,
                            height=3, theta=Direction.EAST)
-        rec1.material_subtype = 11 # Blue
+        rec1.material_subtype = 11  # Blue
         rec1.draw()
-        
+
         rec2 = rec1.copy()
-        rec2.origin = (0,0,5)
+        rec2.origin = (0, 0, 5)
 #        rec2.rotate_left()
         rec2.material_subtype = 14
         rec2.draw()
-        
+
         rec1.draw()
         rec1.draw()
-                       
-    #bm1
-    @staticmethod        
+
+    # bm1
+    @staticmethod
     def draw_flip_origin():
+        """ Draws a rectangle, then flips it around so that the origin is
+        at the opposite side of the rectangle"""
         origin = (0, 0, 0)
         rec1 = MCRectangle(origin=origin, length=5,
                            height=3, theta=Direction.WEST)
-        rec1.material_subtype = 11 # Blue
+        rec1.material_subtype = 11  # Blue
         rec1.draw()
-        
+
         rec2 = rec1.copy(extend=True)
         rec2.material_subtype = 14
-#        rec2.shift(0,0,5)
-#        rec2.flip_origin()
-#        rec2.rotate_right()
         rec2.draw()
-        
+
     @staticmethod
     def draw_outline():
+        """Draws a square shaped structure from 4 walls draw by making
+        3 copies of the original wall, and rotating them left"""
         origin = (0, 0, 0)
 
         rec = MCRectangle(origin=origin, length=5,
-                           height=3, theta=Direction.WEST)
-        rec.material_subtype = 11 # Blue
+                          height=3, theta=Direction.WEST)
+        rec.material_subtype = 11  # Blue
         rec.draw()
-        
+
         for i in range(3):
             rec = rec.copy(extend=True)
             rec.material_subtype = i
@@ -467,15 +463,19 @@ class MCDebug():
 
     @staticmethod
     def draw_lot():
-        site = Lot(origin=(0,-1,0), across=20, depth=50, direction=Direction.NORTH)
+        """ Tests the creation of a job site by clearing a space to build on """
+        site = Lot(origin=(0, -1, 0), across=20,
+                   depth=50, direction=Direction.NORTH)
         site.name = "Job site"
         print(site)
         site.material = block.GRASS.id
         site.clear()
-        
+
     @staticmethod
-    def draw_real_walls():
-        wall1 = Wall((-5,0,-2), width=5, height=3, direction=Direction.NORTH)
+    def test_walls():
+        """ Draws 4 walls using the Wall class.
+        The result should be 4 walls in a square """
+        wall1 = Wall((-5, 0, -2), width=5, height=3, direction=Direction.NORTH)
         wall1.material = block.WOOD_PLANKS.id
         wall2 = wall1.copy(extend=True)
         wall2.rotate_left()
@@ -490,14 +490,18 @@ class MCDebug():
 
     @staticmethod
     def test_along_method():
-        wall1 = Wall((-5,0,-2), width=5, height=3, direction=Direction.EAST)
+        """ Tests the Rectangle.along method which returns the coordinate of
+        a block along a wall horizontally, vertically or both.
+        A successful test will result in two perpendicular walls each with
+        a block of wool somewhere along the line."""
+        wall1 = Wall((-5, 0, -2), width=5, height=3, direction=Direction.EAST)
         wall1.draw()
         wall1.name = "Test Along East"
-        
-        wall2 = Wall((-5,0,-2), width=5, height=3, direction=Direction.NORTH)
+
+        wall2 = Wall((-5, 0, -2), width=5, height=3, direction=Direction.NORTH)
         wall2.draw()
         wall2.name = "Test Along North"
-        
+
         x1, y1, z1 = wall1.along(2)
         print(f"x1={x1}, y1={y1}, z1={z1}")
         MC.setBlock(x1, y1, z1, block.WOOL.id)
@@ -515,7 +519,6 @@ class MCDebug():
         site.clear()
 
 
-
 def main():
     """Main function which is run when the program is run standalone"""
 #    MCDebug.reset_lot()
@@ -531,8 +534,6 @@ def main():
 #    MCDebug.draw_real_walls()
 #    MCDebug.test_along_method()
     MCDebug.test_wall_on_lot()   
-
-
 
 if __name__ == '__main__':
     main()

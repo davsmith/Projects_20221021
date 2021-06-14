@@ -254,6 +254,12 @@ class Wall(MCRectangle):
         super().__init__(origin, width, height, direction)
         self.is_tipped = False
         self.material = block.WOOD.id
+        self.material_subtype = 0
+        self.corner_material = block.WOOD.id
+        self.corner_subtype = 0
+        
+    def draw(self):
+        pass
 
 
 #bmLot
@@ -499,6 +505,14 @@ class MCDebug():
         x2, y2, z2 = wall2.along(2.5, 1.5)
         print(f"x2={x2}, y2={y2}, z2={z2}")
         MC.setBlock(x2, y2, z2, block.WOOL.id)
+        
+    @staticmethod
+    def test_wall_on_lot():
+        site = Lot(origin=(0,-1,0), across=20, depth=50, direction=Direction.NORTH)
+        site.name = "Job site"
+        print(site)
+        site.material = block.GRASS.id
+        site.clear()
 
 
 
@@ -515,8 +529,8 @@ def main():
 #    MCDebug.draw_outline()
 #    MCDebug.draw_lot()
 #    MCDebug.draw_real_walls()
-    MCDebug.test_along_method()
-    
+#    MCDebug.test_along_method()
+    MCDebug.test_wall_on_lot()   
 
 
 

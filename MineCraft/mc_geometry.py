@@ -517,6 +517,9 @@ class MCDebug():
         print(site)
         site.material = block.GRASS.id
         site.clear()
+        x,y,z = site.along(4,1)
+        MC.setBlock(x, y+1, z, block.WOOL.id)
+        
 
 
 def main():

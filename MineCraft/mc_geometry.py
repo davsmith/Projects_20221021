@@ -11,8 +11,10 @@ except ModuleNotFoundError:
     print("*** Could not find Minecraft package ***")
     MINECRAFT_EXISTS = False
 
+
 from enum import IntEnum, unique
 from math import sin, cos, radians, sqrt, atan, degrees, floor
+import materials
 
 
 @unique
@@ -46,9 +48,10 @@ class MCComponent:
         msg = f"<MCComponent: {self.name}> "
         msg += f"origin:{self.origin}, "
 
-    def _draw_origin(self, material=block.TNT.id, subtype=0):
+    def _draw_origin(self, material=materials.TNT, subtype=0):
         x, y, z = self.origin
-        MC.setBlock(x, y, z, material, subtype)
+        if MINECRAFT_EXISTS:
+            MC.setBlock(x, y, z, material, subtype)
 
 
 # bmVector
@@ -180,7 +183,6 @@ class MCRectangle(MCVector):
         x2, y2, z2 = self.opposite
         print(f"x1:{x1}, y1:{y1}, z1:{z1}, x2:{x2}, y2:{y2}, z2:{z2}")
         if MINECRAFT_EXISTS:
-            print("TT: Drawing in Minecraft!")
             MC.setBlocks(x1, y1, z1, x2, y2, z2,
                          self.material, self.material_subtype)
             if self.debug:
@@ -254,20 +256,21 @@ class Wall(MCRectangle):
         self.material_subtype = 0
         self.corner_material = None
         self.corner_subtype = None
-        
+
     def draw(self):
         super().draw()
         if self.corner_material:
-            print(f"TT: Drawing corners {self.corner_material}, {self.corner_subtype}")
             x1, y1, z1 = self.origin
-            _,y2,_ = self.opposite
-            MC.setBlocks(x1, y1, z1, x1, y2, z1, self.corner_material, self.corner_subtype)
+            _, y2, _ = self.opposite
+            MC.setBlocks(x1, y1, z1, x1, y2, z1,
+                         self.corner_material, self.corner_subtype)
 
             x1, y1, z1 = self.opposite
-            _,y2,_ = self.origin
-            MC.setBlocks(x1, y1, z1, x1, y2, z1, self.corner_material, self.corner_subtype)
+            _, y2, _ = self.origin
+            MC.setBlocks(x1, y1, z1, x1, y2, z1,
+                         self.corner_material, self.corner_subtype)
 
-    #bmSetMaterials
+    # bmSetMaterials
     def set_materials(self, main, corners=None):
         """ Sets the materials of the wall with optional different material
             for the wall corners.
@@ -292,10 +295,11 @@ class Wall(MCRectangle):
         else:
             print("TT: Corners not specified")
 
-
         print(hasattr(123, '__iter__'))
 
 # bmLot
+
+
 class Lot(MCRectangle):
     """The plot of land on which to build a structure
 
@@ -343,6 +347,14 @@ class Lot(MCRectangle):
 
 class MCDebug():
     """Functions for setting up MineCraft environment on Raspberry Pi"""
+    logLevel = 9
+
+    @staticmethod
+    def dbg_print(msg, level=5):
+        """ Prints a string based on the debug level set at the global scope """
+        if MCDebug.logLevel >= level:
+            print(">>> " + msg)
+
     @staticmethod
     def clear_space():
         """Clears the air above and ground below a fixed space in MineCraft"""
@@ -533,9 +545,10 @@ class MCDebug():
         wall2.draw()
 #        wall3.draw()
 #        wall4.draw()
-        
+
     @staticmethod
     def test_corners():
+        """ Draws walls with different corners for the main wall and corners """
         wall1 = Wall((-5, 0, -2), width=5, height=3, direction=Direction.NORTH)
         wall1.set_materials(block.WOOD.id, block.WOOL.id)
         wall1.draw()
@@ -561,22 +574,24 @@ class MCDebug():
         x2, y2, z2 = wall2.along(2.5, 1.5)
         print(f"x2={x2}, y2={y2}, z2={z2}")
         MC.setBlock(x2, y2, z2, block.WOOL.id)
-        
+
     @staticmethod
     def test_wall_on_lot():
-        site = Lot(origin=(0,-1,0), across=20, depth=50, direction=Direction.NORTH)
+        """ Sets the origin of a wall based on an offset from the lot corner """
+        site = Lot(origin=(0, -1, 0), across=20,
+                   depth=50, direction=Direction.NORTH)
         site.name = "Job site"
         site.material = block.GRASS.id
         site.clear()
 #        x,y,z = site.along(4,1)
 #        MC.setBlock(x, y+1, z, block.WOOL.id)
-        
 
 
 def main():
     """Main function which is run when the program is run standalone"""
+    MCDebug.dbg_print("Testing the debug print", 10)
 #    MCDebug.reset_lot()
-    MCDebug.clear_space()
+#    MCDebug.clear_space()
 #    MCDebug.draw_walls()
 #    MCDebug.draw_vertical_rectangles()
 #    MCDebug.draw_flat_rectangles()
@@ -585,10 +600,11 @@ def main():
 #    MCDebug.draw_flip_origin()
 #    MCDebug.draw_outline()
 #    MCDebug.draw_lot()
-    MCDebug.test_walls()
+    # MCDebug.test_walls()
 #    MCDebug.test_along_method()
 #    MCDebug.test_wall_on_lot()
 #    MCDebug.test_corners()
+
 
 if __name__ == '__main__':
     main()

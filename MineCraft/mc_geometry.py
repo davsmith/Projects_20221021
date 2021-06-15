@@ -130,6 +130,18 @@ class MCRectangle(MCVector):
         self.debug = True
         super().__init__(origin, length, self.phi, theta)
 
+    def __repr__(self):
+        msg = f"<MCRectangle {self.name}> origin:{self.origin}, "
+        msg += f"length:{self.length}, "
+        msg += f"height:{self.height}, "
+        msg += f"phi:{self.phi}, "
+        msg += f"theta:{self.theta}, "
+        msg += f"material:({self.material}, {self.material_subtype}), "
+        msg += f"corner:({self.corner_material}, {self.corner_subtype}), "
+        msg += f"opposite:{self.opposite}, "
+        msg += f"is_tipped:{self.is_tipped}"
+        return msg
+
     def copy(self, extend=False):
         """Makes a limited copy of the existing object
         BUGBUG:  Try using the copy module
@@ -153,17 +165,10 @@ class MCRectangle(MCVector):
 
         return self._calc_opposite_corner(floor(horizontal), floor(vertical))
 
-    def __repr__(self):
-        msg = f"<MCRectangle {self.name}> origin:{self.origin}, "
-        msg += f"length:{self.length}, "
-        msg += f"phi:{self.phi}, "
-        msg += f"theta:{self.theta}, "
-        msg += f"opposite:{self.opposite}, "
-        msg += f"is_tipped:{self.is_tipped}, "
-        msg += f"material:{self.material}, {self.material_subtype}, "
-        msg += f"corner:{self.corner_material}, {self.corner_subtype}, "
-        msg += f"is_tipped:{self.is_tipped}"
-        return msg
+    def shift(self, x, y, z):
+        """Shifts the rectangle by an offset in each direction"""
+        origin_x, origin_y, origin_z = self.origin
+        self.origin = (origin_x + x, origin_y + y, origin_z + z)
 
     def rotate_left(self):
         """Rotates a rectangle 90 degrees counter-clockwise"""
@@ -179,17 +184,16 @@ class MCRectangle(MCVector):
         _, origin_y, _ = self.origin
         self.origin = (origin_x, origin_y, origin_z)
 
-    def shift(self, x, y, z):
-        """Shifts the rectangle by an offset in each direction"""
-        origin_x, origin_y, origin_z = self.origin
-        self.origin = (origin_x + x, origin_y + y, origin_z + z)
-
     def draw(self):
         """Draws the rectangle based on the origin and opposite
         properties, with the material specified in the material property"""
         x1, y1, z1 = self.origin
         x2, y2, z2 = self.opposite
-        print(f"x1:{x1}, y1:{y1}, z1:{z1}, x2:{x2}, y2:{y2}, z2:{z2}")
+
+        msg = f"Drawing rectangle from ({x1},{y1},{z1}) to ({x2},{y2},{z2} "
+        msg += "in material {self.material} subtype {self.material_subtype}"
+        dbg_print(msg, 9)
+
         if MINECRAFT_EXISTS:
             MC.setBlocks(x1, y1, z1, x2, y2, z2,
                          self.material, self.material_subtype)
@@ -268,22 +272,36 @@ class Wall(MCRectangle):
     def draw(self):
         super().draw()
         if self.corner_material:
-            x1, y1, z1 = self.origin
-            _, y2, _ = self.opposite
-            MC.setBlocks(x1, y1, z1, x1, y2, z1,
-                         self.corner_material, self.corner_subtype)
+            corner1_x1, corner1_y1, corner1_z1 = self.origin
+            _, corner1_y2, _ = self.opposite
 
-            x1, y1, z1 = self.opposite
-            _, y2, _ = self.origin
-            MC.setBlocks(x1, y1, z1, x1, y2, z1,
-                         self.corner_material, self.corner_subtype)
+            corner2_x1, corner2_y1, corner2_z1 = self.opposite
+            _, corner2_y2, _ = self.origin
+
+            dbg_print(f"Drawing corners for {self.name}", 5)
+            msg = f"Corner 1: {corner1_x1}, {corner1_y1}, {corner1_z1} "
+            msg += f"to {corner1_x1}, {corner1_y2}, {corner1_z1} "
+            msg += f"in material {self.corner_material}, subtype {self.corner_subtype}"
+            dbg_print(msg)
+
+            msg = f"Corner 2: {corner2_x1}, {corner2_y1}, {corner2_z1} "
+            msg += f"to {corner2_x1}, {corner2_y2}, {corner2_z1} "
+            msg += f"in material {self.corner_material}, subtype {self.corner_subtype}"
+
+            if MINECRAFT_EXISTS:
+                MC.setBlocks(corner1_x1, corner1_y1, corner1_z1,
+                             corner1_x1, corner1_y2, corner1_z1,
+                             self.corner_material, self.corner_subtype)
+
+                MC.setBlocks(corner2_x1, corner2_y1, corner2_z1,
+                             corner2_x1, corner2_y2, corner2_z1,
+                             self.corner_material, self.corner_subtype)
 
     # bmSetMaterials
     def set_materials(self, body, corners=None):
         """ Sets the materials of the wall with optional different material
             for the wall corners.
-            The main and corners arguments can be tuples or any other
-            indexable type."""
+            The body and corner arguments can be numbers or indexable types (e.g. tuples)."""
 #        print(type.mro(type((0,0))))
 
         if hasattr(main, '__iter__'):
@@ -302,8 +320,6 @@ class Wall(MCRectangle):
                 self.corner_subtype = 0
         else:
             dbg_print("Corners not specified", 9)
-
-        print(hasattr(123, '__iter__'))
 
 # bmLot
 

@@ -128,8 +128,6 @@ class MCRectangle(MCVector):
         self._tipped = False
         self.material = block.WOOL.id    # Wool - 35
         self.material_subtype = 14       # Red
-#        self.corner_material = None
-#        self.corner_subtype = None
         self.debug = True
         super().__init__(origin, length, self.phi, theta)
 
@@ -140,7 +138,6 @@ class MCRectangle(MCVector):
         msg += f"phi:{self.phi}, "
         msg += f"theta:{self.theta}, "
         msg += f"material:({self.material}, {self.material_subtype}), "
-        msg += f"corner:({self.corner_material}, {self.corner_subtype}), "
         msg += f"opposite:{self.opposite}, "
         msg += f"is_tipped:{self.is_tipped}"
         return msg
@@ -187,8 +184,8 @@ class MCRectangle(MCVector):
         x1, y1, z1 = self.origin
         x2, y2, z2 = self.opposite
 
-        msg = f"Drawing rectangle from ({x1},{y1},{z1}) to ({x2},{y2},{z2} "
-        msg += "in material {self.material} subtype {self.material_subtype}"
+        msg = f"Drawing rectangle from ({x1},{y1},{z1}) to ({x2},{y2},{z2}) "
+        msg += f"in material {self.material} subtype {self.material_subtype}"
         dbg_print(msg, 9)
 
         if MINECRAFT_EXISTS:
@@ -266,18 +263,23 @@ class Wall(MCRectangle):
         self.material_subtype = 0
         self.corner_material = None
         self.corner_subtype = None
+        self.windows = []
+        self.doors = []
         
-#    def copy(self, extend=False):
-        """Makes a copy of the existing object"""
-#        dbg_print(f"Copying {self.name} of type {type(self)}", 9)
-#        new_wall = copy.deepcopy(self)
-
-#        if extend:
-#            new_wall.flip_origin()
-
-#        return new_wall
-
-
+    def add_window(self, offset_x, offset_y, width, height):
+        if offset_x is None:
+            offset_x = (self.length - width) / 2
+        if offset_y is None:
+            offset_y = (self.height - height) / 2
+            
+        origin = self.along(offset_x, offset_y)
+        new_window = MCRectangle(origin, width, height, self.theta)
+        new_window.material = block.AIR.id
+        new_window.debug = False
+        new_window.name = "Window"
+        print(new_window)
+        self.windows.append(new_window)
+        
     def draw(self):
         super().draw()
         if self.corner_material:
@@ -306,13 +308,17 @@ class Wall(MCRectangle):
                 MC.setBlocks(corner2_x1, corner2_y1, corner2_z1,
                              corner2_x1, corner2_y2, corner2_z1,
                              self.corner_material, self.corner_subtype)
+                
+                for window in self.windows:
+                    dbg_print(f"Drawing a window of {window.material}", 9)
+                    window.draw()
 
     # bmSetMaterials
     def set_materials(self, body, corners=None):
         """ Sets the materials of the wall with optional different material
             for the wall corners.
             The body and corner arguments can be numbers or indexable types (e.g. tuples)."""
-#        print(type.mro(type((0,0))))
+#        BUGBUG: Document this --> print(type.mro(type((0,0))))
 
         if hasattr(main, '__iter__'):
             self.material = body[0]
@@ -328,8 +334,6 @@ class Wall(MCRectangle):
             else:
                 self.corner_material = corners
                 self.corner_subtype = 0
-        else:
-            dbg_print("Corners not specified", 9)
 
 # bmLot
 
@@ -577,7 +581,8 @@ class MCDebug():
     def test_corners():
         """ Draws walls with different corners for the main wall and corners """
         wall1 = Wall((-5, 0, -2), width=5, height=3, direction=Direction.NORTH)
-        wall1.set_materials(block.WOOD.id, block.WOOL.id)
+        print(wall1)
+#        wall1.set_materials(block.WOOD.id, block.WOOL.id)
         wall1.draw()
         
         wall2 = wall1.copy(extend=True)
@@ -631,6 +636,20 @@ class MCDebug():
 #        x,y,z = site.along(4,1)
 #        MC.setBlock(x, y+1, z, block.WOOL.id)
 
+    def test_windows():
+        wall_width = 5
+        wall_height = 3
+        wall1 = Wall((-5, 0, -2), width=wall_width, height=wall_height, direction=Direction.NORTH)
+        wall1.set_materials(block.WOOD_PLANKS.id, block.WOOD.id)
+        wall1.add_window(None, None, 1, 1)
+        print(f"Windows in Wall 1: {len(wall1.windows)}")
+        wall1.draw()
+        
+        wall2 = wall1.copy(extend=True)
+        print(f"Windows in Wall 2: {len(wall2.windows)}")
+        wall2.rotate_left()
+        wall2.draw()
+
 
 def main():
     """Main function which is run when the program is run standalone"""
@@ -649,7 +668,8 @@ def main():
 #    MCDebug.test_walls()
 #    MCDebug.test_along_method()
 #    MCDebug.test_wall_on_lot()
-    MCDebug.test_corners()
+#    MCDebug.test_corners()
+    MCDebug.test_windows()
 
 
 if __name__ == '__main__':

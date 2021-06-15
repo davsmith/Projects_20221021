@@ -1,20 +1,28 @@
 ''' Equations and classes for geometry in minecraft world
 Spherical coordinate equations from https://keisan.casio.com/exec/system/1359534351
 '''
+
+LOG_LEVEL = 9
+
+
+def dbg_print(msg, level=5):
+    """ Prints a string based on the debug level set at the global scope """
+    if LOG_LEVEL >= level:
+        print(">>> " + msg)
+
+
 try:
+    import materials
+    from math import sin, cos, radians, sqrt, atan, degrees, floor
+    from enum import IntEnum, unique
     # pylint: disable=import-error
     from mcpi.minecraft import Minecraft
     from mcpi import block
     MC = Minecraft.create()
     MINECRAFT_EXISTS = True
 except ModuleNotFoundError:
-    print("*** Could not find Minecraft package ***")
+    dbg_print("Couldn't find MineCraft module", 3)
     MINECRAFT_EXISTS = False
-
-
-from enum import IntEnum, unique
-from math import sin, cos, radians, sqrt, atan, degrees, floor
-import materials
 
 
 @unique
@@ -271,7 +279,7 @@ class Wall(MCRectangle):
                          self.corner_material, self.corner_subtype)
 
     # bmSetMaterials
-    def set_materials(self, main, corners=None):
+    def set_materials(self, body, corners=None):
         """ Sets the materials of the wall with optional different material
             for the wall corners.
             The main and corners arguments can be tuples or any other
@@ -279,10 +287,10 @@ class Wall(MCRectangle):
 #        print(type.mro(type((0,0))))
 
         if hasattr(main, '__iter__'):
-            self.material = main[0]
-            self.material_subtype = main[1]
+            self.material = body[0]
+            self.material_subtype = body[1]
         else:
-            self.material = main
+            self.material = body
             self.material_subtype = 0
 
         if not corners is None:
@@ -293,7 +301,7 @@ class Wall(MCRectangle):
                 self.corner_material = corners
                 self.corner_subtype = 0
         else:
-            print("TT: Corners not specified")
+            dbg_print("Corners not specified", 9)
 
         print(hasattr(123, '__iter__'))
 
@@ -347,13 +355,6 @@ class Lot(MCRectangle):
 
 class MCDebug():
     """Functions for setting up MineCraft environment on Raspberry Pi"""
-    logLevel = 9
-
-    @staticmethod
-    def dbg_print(msg, level=5):
-        """ Prints a string based on the debug level set at the global scope """
-        if MCDebug.logLevel >= level:
-            print(">>> " + msg)
 
     @staticmethod
     def clear_space():
@@ -589,7 +590,7 @@ class MCDebug():
 
 def main():
     """Main function which is run when the program is run standalone"""
-    MCDebug.dbg_print("Testing the debug print", 10)
+    dbg_print("Testing the debug print", 10)
 #    MCDebug.reset_lot()
 #    MCDebug.clear_space()
 #    MCDebug.draw_walls()

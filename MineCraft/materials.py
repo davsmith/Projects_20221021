@@ -1,3 +1,4 @@
+""" Constants for material types and wool colors """
 AIR = 0
 STONE = 1
 GRASS = 2

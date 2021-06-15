@@ -2,6 +2,10 @@
 Spherical coordinate equations from https://keisan.casio.com/exec/system/1359534351
 '''
 
+from enum import IntEnum, unique
+from math import sin, cos, radians, sqrt, atan, degrees, floor
+import materials
+import copy
 LOG_LEVEL = 9
 
 
@@ -11,15 +15,10 @@ def dbg_print(msg, level=5):
         print(">>> " + msg)
 
 
-import copy
-import materials
-from math import sin, cos, radians, sqrt, atan, degrees, floor
-from enum import IntEnum, unique
-
 try:
     # pylint: disable=import-error
     from mcpi.minecraft import Minecraft
-    from mcpi import block
+    from mcpi import materials
     MC = Minecraft.create()
     MINECRAFT_EXISTS = True
 except ModuleNotFoundError:
@@ -126,7 +125,7 @@ class MCRectangle(MCVector):
         self.phi = Direction.UP
         self.theta = theta
         self._tipped = False
-        self.material = block.WOOL.id    # Wool - 35
+        self.material = materials.WOOL    # Wool - 35
         self.material_subtype = 14       # Red
         self.debug = True
         super().__init__(origin, length, self.phi, theta)
@@ -144,17 +143,17 @@ class MCRectangle(MCVector):
 
     def copy(self, extend=False):
         """Makes a copy of the existing object"""
-        
+
         dbg_print(f"Copying {self.name} of type {type(self)}", 9)
         new_rect = copy.deepcopy(self)
-        
+
         if extend:
             new_rect.flip_origin()
 
         return new_rect
 
     def along(self, horizontal=0, vertical=0):
-        """Returns the coordinate of the block <distance> along
+        """Returns the coordinate of the materials <distance> along
         along the bottom of the rectangle (0 is the origin)"""
 
         return self._calc_opposite_corner(floor(horizontal), floor(vertical))
@@ -259,27 +258,27 @@ class Wall(MCRectangle):
         super().__init__(origin, width, height, direction)
         self.name = "Wall"
         self.is_tipped = False
-        self.material = block.WOOD.id
+        self.material = materials.WOOD
         self.material_subtype = 0
         self.corner_material = None
         self.corner_subtype = None
         self.windows = []
         self.doors = []
-        
-    def add_window(self, offset_x, offset_y, width, height):
+
+    def add_window(self, offset_x, offset_y, width, height, material=materials.AIR):
         if offset_x is None:
             offset_x = (self.length - width) / 2
         if offset_y is None:
             offset_y = (self.height - height) / 2
-            
+
         origin = self.along(offset_x, offset_y)
         new_window = MCRectangle(origin, width, height, self.theta)
-        new_window.material = block.AIR.id
+        new_window.material = materials.AIR
         new_window.debug = False
         new_window.name = "Window"
         print(new_window)
         self.windows.append(new_window)
-        
+
     def draw(self):
         super().draw()
         if self.corner_material:
@@ -308,7 +307,7 @@ class Wall(MCRectangle):
                 MC.setBlocks(corner2_x1, corner2_y1, corner2_z1,
                              corner2_x1, corner2_y2, corner2_z1,
                              self.corner_material, self.corner_subtype)
-                
+
                 for window in self.windows:
                     dbg_print(f"Drawing a window of {window.material}", 9)
                     window.draw()
@@ -352,7 +351,7 @@ class Lot(MCRectangle):
         """A lot has an origin, across, depth, and direction"""
         super().__init__(origin, across, depth, direction)
         self.is_tipped = True
-        self.material = block.GRASS.id
+        self.material = materials.GRASS
         self.thickness = 5
 
     def clear(self):
@@ -368,7 +367,7 @@ class Lot(MCRectangle):
         x2 = opp_x
         y2 = origin_y + self.height
         z2 = opp_z
-        MC.setBlocks(x1, y1, z1, x2, y2, z2, block.AIR.id)
+        MC.setBlocks(x1, y1, z1, x2, y2, z2, materials.AIR)
 
         # Create a flat rectangle for the lot itself
         self.draw()
@@ -380,7 +379,7 @@ class Lot(MCRectangle):
         x2 = opp_x
         y2 = origin_y - self.thickness
         z2 = opp_z
-        MC.setBlocks(x1, y1, z1, x2, y2, z2, block.BEDROCK.id)
+        MC.setBlocks(x1, y1, z1, x2, y2, z2, materials.BEDROCK)
 
 
 class MCDebug():
@@ -388,15 +387,17 @@ class MCDebug():
 
     @staticmethod
     def clear_space():
-        """Clears the air above and ground below a fixed space in MineCraft"""
-        MC.setBlocks(-50, 0, -50, 50, 50, 50, 0)
-        MC.setBlocks(-50, -1, -50, 50, -5, 50, 1)
+        if (MINECRAFT_EXISTS):
+            """Clears the air above and ground below a fixed space in MineCraft"""
+            MC.setBlocks(-50, 0, -50, 50, 50, 50, 0)
+            MC.setBlocks(-50, -1, -50, 50, -5, 50, 1)
 
     @staticmethod
     def reset_lot():
         """Clears out a fixed space and moves the player"""
-        MCDebug.clear_space()
-        MC.player.setPos(-5, 0, -5)
+        if (MINECRAFT_EXISTS):
+            MCDebug.clear_space()
+            MC.player.setPos(-5, 0, -5)
 
     @staticmethod
     def draw_walls():
@@ -555,7 +556,7 @@ class MCDebug():
                    depth=50, direction=Direction.NORTH)
         site.name = "Job site"
         print(site)
-        site.material = block.GRASS.id
+        site.material = materials.GRASS
         site.clear()
 
     @staticmethod
@@ -563,7 +564,7 @@ class MCDebug():
         """ Draws 4 walls using the Wall class.
         The result should be 4 walls in a square """
         wall1 = Wall((-5, 0, -2), width=5, height=3, direction=Direction.NORTH)
-        wall1.set_materials(block.WOOD_PLANKS.id, block.TNT.id)
+        wall1.set_materials(materials.WOOD_PLANKS, materials.TNT)
         wall2 = wall1.copy(extend=True)
         wall2.rotate_left()
 #        wall3 = wall2.copy(extend=True)
@@ -582,33 +583,32 @@ class MCDebug():
         """ Draws walls with different corners for the main wall and corners """
         wall1 = Wall((-5, 0, -2), width=5, height=3, direction=Direction.NORTH)
         print(wall1)
-#        wall1.set_materials(block.WOOD.id, block.WOOL.id)
+#        wall1.set_materials(materials.WOOD, materials.WOOL)
         wall1.draw()
-        
+
         wall2 = wall1.copy(extend=True)
-        wall2.shift(5,0,0)
-        wall2.set_materials(block.WOOL.id, block.WOOD.id)
+        wall2.shift(5, 0, 0)
+        wall2.set_materials(materials.WOOL, materials.WOOD)
         wall2.draw()
 
         wall3 = wall2.copy(extend=True)
-        wall3.shift(8,0,0)
+        wall3.shift(8, 0, 0)
         wall3.rotate_left()
-        wall3.set_materials(block.WOOL.id, (block.TNT.id, 1.7))
+        wall3.set_materials(materials.WOOL, (materials.TNT, 1.7))
         wall3.draw()
 
         wall4 = wall3.copy(extend=True)
-        wall4.shift(8,0,0)
+        wall4.shift(8, 0, 0)
         wall4.rotate_left()
-        wall4.set_materials((block.WOOL.id, 5), (block.TNT.id, 1.0))
+        wall4.set_materials((materials.WOOL, 5), (materials.TNT, 1.0))
         wall4.draw()
-
 
     @staticmethod
     def test_along_method():
         """ Tests the Rectangle.along method which returns the coordinate of
-        a block along a wall horizontally, vertically or both.
+        a materials along a wall horizontally, vertically or both.
         A successful test will result in two perpendicular walls each with
-        a block of wool somewhere along the line."""
+        a materials of wool somewhere along the line."""
         wall1 = Wall((-5, 0, -2), width=5, height=3, direction=Direction.EAST)
         wall1.draw()
         wall1.name = "Test Along East"
@@ -619,11 +619,11 @@ class MCDebug():
 
         x1, y1, z1 = wall1.along(2)
         print(f"x1={x1}, y1={y1}, z1={z1}")
-        MC.setBlock(x1, y1, z1, block.WOOL.id)
+        MC.setBlock(x1, y1, z1, materials.WOOL)
 
         x2, y2, z2 = wall2.along(2.5, 1.5)
         print(f"x2={x2}, y2={y2}, z2={z2}")
-        MC.setBlock(x2, y2, z2, block.WOOL.id)
+        MC.setBlock(x2, y2, z2, materials.WOOL)
 
     @staticmethod
     def test_wall_on_lot():
@@ -631,20 +631,21 @@ class MCDebug():
         site = Lot(origin=(0, -1, 0), across=20,
                    depth=50, direction=Direction.NORTH)
         site.name = "Job site"
-        site.material = block.GRASS.id
+        site.material = materials.GRASS
         site.clear()
 #        x,y,z = site.along(4,1)
-#        MC.setBlock(x, y+1, z, block.WOOL.id)
+#        MC.setBlock(x, y+1, z, materials.WOOL)
 
     def test_windows():
         wall_width = 5
         wall_height = 3
-        wall1 = Wall((-5, 0, -2), width=wall_width, height=wall_height, direction=Direction.NORTH)
-        wall1.set_materials(block.WOOD_PLANKS.id, block.WOOD.id)
+        wall1 = Wall((-5, 0, -2), width=wall_width,
+                     height=wall_height, direction=Direction.NORTH)
+        wall1.set_materials(materials.WOOD_PLANKS, materials.WOOD)
         wall1.add_window(None, None, 1, 1)
         print(f"Windows in Wall 1: {len(wall1.windows)}")
         wall1.draw()
-        
+
         wall2 = wall1.copy(extend=True)
         print(f"Windows in Wall 2: {len(wall2.windows)}")
         wall2.rotate_left()

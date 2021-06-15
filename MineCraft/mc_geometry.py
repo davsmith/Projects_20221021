@@ -11,10 +11,12 @@ def dbg_print(msg, level=5):
         print(">>> " + msg)
 
 
+import copy
+import materials
+from math import sin, cos, radians, sqrt, atan, degrees, floor
+from enum import IntEnum, unique
+
 try:
-    import materials
-    from math import sin, cos, radians, sqrt, atan, degrees, floor
-    from enum import IntEnum, unique
     # pylint: disable=import-error
     from mcpi.minecraft import Minecraft
     from mcpi import block
@@ -117,6 +119,7 @@ class MCRectangle(MCVector):
     """Manages coordinates of a 2D rectangle in MineCraft 3D space"""
 
     def __init__(self, origin=(0, 0, 0), length=5, height=3, theta=0):
+        self.name = "Rectangle"
         self.origin = origin
         self.length = length
         self.height = height
@@ -125,8 +128,8 @@ class MCRectangle(MCVector):
         self._tipped = False
         self.material = block.WOOL.id    # Wool - 35
         self.material_subtype = 14       # Red
-        self.corner_material = None
-        self.corner_subtype = None
+#        self.corner_material = None
+#        self.corner_subtype = None
         self.debug = True
         super().__init__(origin, length, self.phi, theta)
 
@@ -143,17 +146,11 @@ class MCRectangle(MCVector):
         return msg
 
     def copy(self, extend=False):
-        """Makes a limited copy of the existing object
-        BUGBUG:  Try using the copy module
-        (https://www.programiz.com/python-programming/shallow-deep-copy)"""
-        new_rect = MCRectangle(self.origin, self.length,
-                               self.height, self.theta)
-        new_rect.phi = self.phi
-        new_rect.material = self.material
-        new_rect.material_subtype = self.material_subtype
-        new_rect.corner_material = self.corner_material
-        new_rect.corner_subtype = self.corner_subtype
-
+        """Makes a copy of the existing object"""
+        
+        dbg_print(f"Copying {self.name} of type {type(self)}", 9)
+        new_rect = copy.deepcopy(self)
+        
         if extend:
             new_rect.flip_origin()
 
@@ -263,11 +260,23 @@ class Wall(MCRectangle):
     def __init__(self, origin, width, height, direction=Direction.NORTH):
         """A wall has an origin a width, a height, and a direction"""
         super().__init__(origin, width, height, direction)
+        self.name = "Wall"
         self.is_tipped = False
         self.material = block.WOOD.id
         self.material_subtype = 0
         self.corner_material = None
         self.corner_subtype = None
+        
+#    def copy(self, extend=False):
+        """Makes a copy of the existing object"""
+#        dbg_print(f"Copying {self.name} of type {type(self)}", 9)
+#        new_wall = copy.deepcopy(self)
+
+#        if extend:
+#            new_wall.flip_origin()
+
+#        return new_wall
+
 
     def draw(self):
         super().draw()
@@ -282,11 +291,12 @@ class Wall(MCRectangle):
             msg = f"Corner 1: {corner1_x1}, {corner1_y1}, {corner1_z1} "
             msg += f"to {corner1_x1}, {corner1_y2}, {corner1_z1} "
             msg += f"in material {self.corner_material}, subtype {self.corner_subtype}"
-            dbg_print(msg)
+            dbg_print(msg, 9)
 
             msg = f"Corner 2: {corner2_x1}, {corner2_y1}, {corner2_z1} "
             msg += f"to {corner2_x1}, {corner2_y2}, {corner2_z1} "
             msg += f"in material {self.corner_material}, subtype {self.corner_subtype}"
+            dbg_print(msg, 9)
 
             if MINECRAFT_EXISTS:
                 MC.setBlocks(corner1_x1, corner1_y1, corner1_z1,
@@ -569,6 +579,24 @@ class MCDebug():
         wall1 = Wall((-5, 0, -2), width=5, height=3, direction=Direction.NORTH)
         wall1.set_materials(block.WOOD.id, block.WOOL.id)
         wall1.draw()
+        
+        wall2 = wall1.copy(extend=True)
+        wall2.shift(5,0,0)
+        wall2.set_materials(block.WOOL.id, block.WOOD.id)
+        wall2.draw()
+
+        wall3 = wall2.copy(extend=True)
+        wall3.shift(8,0,0)
+        wall3.rotate_left()
+        wall3.set_materials(block.WOOL.id, (block.TNT.id, 1.7))
+        wall3.draw()
+
+        wall4 = wall3.copy(extend=True)
+        wall4.shift(8,0,0)
+        wall4.rotate_left()
+        wall4.set_materials((block.WOOL.id, 5), (block.TNT.id, 1.0))
+        wall4.draw()
+
 
     @staticmethod
     def test_along_method():
@@ -606,9 +634,10 @@ class MCDebug():
 
 def main():
     """Main function which is run when the program is run standalone"""
-    dbg_print("Testing the debug print", 10)
+    dbg_print("Testing the debug print", 5)
+#    MC.postToChat("Hello")
 #    MCDebug.reset_lot()
-#    MCDebug.clear_space()
+    MCDebug.clear_space()
 #    MCDebug.draw_walls()
 #    MCDebug.draw_vertical_rectangles()
 #    MCDebug.draw_flat_rectangles()
@@ -617,10 +646,10 @@ def main():
 #    MCDebug.draw_flip_origin()
 #    MCDebug.draw_outline()
 #    MCDebug.draw_lot()
-    # MCDebug.test_walls()
+#    MCDebug.test_walls()
 #    MCDebug.test_along_method()
 #    MCDebug.test_wall_on_lot()
-#    MCDebug.test_corners()
+    MCDebug.test_corners()
 
 
 if __name__ == '__main__':

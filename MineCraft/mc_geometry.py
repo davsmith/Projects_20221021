@@ -350,29 +350,11 @@ class Wall(MCRectangle):
                     
                     new_opening = MCRectangle(origin, width, height, theta)
                     new_opening.material = material
+                    new_opening.material_subtype = material_subtype
                     new_opening.debug = False
                     new_opening.name = "Opening"
                     print(new_opening)
                     new_opening.draw()
-
-#                dbg_print(f"Checking for doors", 9)
-#                for door_def in self.door_defs:
-#                    dbg_print(f"Drawing a door of {door_def['material']}", 9)
-#                    self._calc_absolute_location(door_def)
-#                    origin = door_def["origin"]
-#                    width = door_def["width"]
-#                    height = door_def["height"]
-#                    theta = door_def["theta"]
-#                    material = door_def["material"]
-#                    material_subtype = door_def["material_subtype"]
-                    
-#                    new_door = MCRectangle(origin, width, height, theta)
-#                    new_door.material = material
-#                    new_door.debug = False
-#                    new_door.name = "Door"
-#                    print(new_door)
-#                    new_door.draw()
-
 
     # bmSetMaterials
     def set_materials(self, body, corners=None):
@@ -698,13 +680,15 @@ class MCDebug():
 #        x,y,z = site.along(4,1)
 #        MC.setBlock(x, y+1, z, materials.WOOL)
 
-    def test_windows():
+    def test_openings():
         wall_width = 5
         wall_height = 3
-        wall1 = Wall((-5, 0, -2), width=wall_width,
+        origin = (-5, 0, -2)
+
+        wall1 = Wall(origin=origin, width=wall_width,
                      height=wall_height, direction=Direction.NORTH)
-        wall1.set_materials(materials.WOOD_PLANKS, materials.WOOD)
-        wall1.add_window()
+        wall1.set_materials((block.WOOD_PLANKS.id,0), (block.WOOD.id,0))
+        wall1.add_window(None, 1, 1, block.AIR.id)
         wall1.draw()
 
         wall2 = wall1.copy(extend=True)
@@ -718,9 +702,8 @@ class MCDebug():
         wall4 = wall3.copy(extend=True)
         wall4.rotate_left()
         wall4.clear_openings()
-        wall4.add_door(None, 1, 2)
+        wall4.add_door(None, 1, 2, block.AIR.id, 0)
         wall4.draw()
-
 
 
 def main():
@@ -741,7 +724,7 @@ def main():
 #    MCDebug.test_along_method()
 #    MCDebug.test_wall_on_lot()
 #    MCDebug.test_corners()
-    MCDebug.test_windows()
+    MCDebug.test_openings()
 
 
 if __name__ == '__main__':

@@ -18,7 +18,7 @@ def dbg_print(msg, level=5):
 try:
     # pylint: disable=import-error
     from mcpi.minecraft import Minecraft
-    from mcpi import materials
+    from mcpi import block
     MC = Minecraft.create()
     MINECRAFT_EXISTS = True
 except ModuleNotFoundError:
@@ -262,22 +262,54 @@ class Wall(MCRectangle):
         self.material_subtype = 0
         self.corner_material = None
         self.corner_subtype = None
-        self.windows = []
-        self.doors = []
+        self.window_defs = []
+        self.door_defs = []
 
-    def add_window(self, offset_x, offset_y, width, height, material=materials.AIR):
+#bmWindow
+    def add_window(self, offset, width=1, height=1, material=materials.AIR, material_subtype=0):    
+        window_def = {"offset":offset, "width":width, "height":height,
+                      "theta":self.theta, "material":material, "material_subtype":material_subtype}
+
+        if offset is None:
+            offset = (None, None)
+
+        offset_x, offset_y = offset
         if offset_x is None:
             offset_x = (self.length - width) / 2
         if offset_y is None:
             offset_y = (self.height - height) / 2
+            
+        window_def["offset"] = (offset_x, offset_y)
 
-        origin = self.along(offset_x, offset_y)
-        new_window = MCRectangle(origin, width, height, self.theta)
-        new_window.material = materials.AIR
-        new_window.debug = False
-        new_window.name = "Window"
-        print(new_window)
-        self.windows.append(new_window)
+        self._calculate_window_location(window_def)
+        self.window_defs.append(window_def)
+
+    def add_door(self, offset=None, width=1, height=2, material=materials.AIR, material_subtype=0):    
+        door_def = {"offset":offset, "width":width, "height":height,
+                      "theta":self.theta, "material":material, "material_subtype":material_subtype}
+
+        if offset is None:
+            offset = (None, None)
+
+        offset_x, offset_y = offset
+        if offset_x is None:
+            offset_x = (self.length - width) / 2
+        if offset_y is None:
+            offset_y = 0
+
+        door_def["offset"] = (offset_x, offset_y)
+
+        self._calculate_window_location(door_def)
+        self.door_defs.append(door_def)
+
+    def _calculate_window_location(self, window_def):
+        width = window_def["width"]
+        height = window_def["height"]
+        offset_x, offset_y = window_def["offset"]
+        
+        window_def["theta"] = self.theta
+        window_def["origin"] = self.along(offset_x, offset_y)
+        return
 
     def draw(self):
         super().draw()
@@ -308,9 +340,41 @@ class Wall(MCRectangle):
                              corner2_x1, corner2_y2, corner2_z1,
                              self.corner_material, self.corner_subtype)
 
-                for window in self.windows:
-                    dbg_print(f"Drawing a window of {window.material}", 9)
-                    window.draw()
+                for window_def in self.window_defs:
+                    dbg_print(f"Drawing a window of {window_def['material']}", 9)
+                    self._calculate_window_location(window_def)
+                    origin = window_def["origin"]
+                    width = window_def["width"]
+                    height = window_def["height"]
+                    theta = window_def["theta"]
+                    material = window_def["material"]
+                    material_subtype = window_def["material_subtype"]
+                    
+                    new_window = MCRectangle(origin, width, height, theta)
+                    new_window.material = material
+                    new_window.debug = False
+                    new_window.name = "Window"
+                    print(new_window)
+                    new_window.draw()
+
+                dbg_print(f"Checking for doors", 9)
+                for door_def in self.door_defs:
+                    dbg_print(f"Drawing a door of {door_def['material']}", 9)
+                    self._calculate_window_location(door_def)
+                    origin = door_def["origin"]
+                    width = door_def["width"]
+                    height = door_def["height"]
+                    theta = door_def["theta"]
+                    material = door_def["material"]
+                    material_subtype = door_def["material_subtype"]
+                    
+                    new_door = MCRectangle(origin, width, height, theta)
+                    new_door.material = material
+                    new_door.debug = False
+                    new_door.name = "Door"
+                    print(new_door)
+                    new_door.draw()
+
 
     # bmSetMaterials
     def set_materials(self, body, corners=None):
@@ -642,14 +706,22 @@ class MCDebug():
         wall1 = Wall((-5, 0, -2), width=wall_width,
                      height=wall_height, direction=Direction.NORTH)
         wall1.set_materials(materials.WOOD_PLANKS, materials.WOOD)
-        wall1.add_window(None, None, 1, 1)
-        print(f"Windows in Wall 1: {len(wall1.windows)}")
+        wall1.add_window(None, 1, 1)
         wall1.draw()
 
         wall2 = wall1.copy(extend=True)
-        print(f"Windows in Wall 2: {len(wall2.windows)}")
         wall2.rotate_left()
         wall2.draw()
+
+        wall3 = wall2.copy(extend=True)
+        wall3.rotate_left()
+        wall3.draw()
+
+        wall4 = wall3.copy(extend=True)
+        wall4.rotate_left()
+        wall4.add_door()
+        wall4.draw()
+
 
 
 def main():

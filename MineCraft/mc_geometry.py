@@ -305,8 +305,6 @@ class Wall(MCRectangle):
         self.opening_defs.clear()
 
     def _calc_absolute_location(self, opening_def):
-        width = opening_def["width"]
-        height = opening_def["height"]
         offset_x, offset_y = opening_def["offset"]
         
         opening_def["theta"] = self.theta

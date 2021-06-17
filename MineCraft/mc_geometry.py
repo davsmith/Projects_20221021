@@ -38,6 +38,11 @@ class Direction(IntEnum):
     WEST = 270
     FLAT = -270
     UP = -360
+    
+@unique
+class WallType(IntEnum):
+    INTERNAL = 1
+    EXTERNAL = 2
 
 
 # bmComponent
@@ -247,7 +252,56 @@ class MCRectangle(MCVector):
             self.phi = Direction.FLAT
         else:
             self.phi = Direction.UP
+            
+# bmStory
+class Story(MCComponent):
+    def __init__(self, origin, width, height, depth, direction=Direction.NORTH):
+        super().__init__("Story", origin)
+        self.direction = direction
+        self.width = width
+        self.height = height
+        self.depth = depth
+        self.direction = direction
+        self.internal_wall_template = None
+        self.external_wall_template = None
+        self.walls = []
+        self.ceiling = None
+        self.floor = None
 
+    def __repr__(self):
+        msg = f"<{self.name}> origin:{self.origin}, "
+        msg += f"width:{self.width}, "
+        msg += f"height:{self.height}, "
+        msg += f"depth:{self.depth}, "
+        msg += f"direction:{self.direction}, "
+        msg += f"# walls: {len(self.walls)}"
+        return msg
+
+
+    def build_from_dimensions(self, opening_size=0):
+        wall_lengths = [self.depth, self.width, self.depth]
+        new_wall = self.external_wall_template.copy(extend=False)
+        new_wall.origin = self.origin
+        new_wall.length = self.width
+        new_wall.height = self.height
+        self.walls.append(new_wall)
+        
+        for wall_length in wall_lengths:
+            new_wall = new_wall.copy(extend=True)
+            new_wall.clear_openings()
+            new_wall.rotate_left()
+            new_wall.length = wall_length
+            self.walls.append(new_wall)
+            
+        if opening_size > 0:
+            self.walls[0].add_door(None, opening_size, 2*opening_size)
+            for index in range(1,len(self.walls)):
+                self.walls[index].add_window(None, opening_size, opening_size)
+        
+    def draw(self):
+        for wall in self.walls:
+            wall.draw()
+        
 
 # bmWall
 class Wall(MCRectangle):
@@ -679,7 +733,7 @@ class MCDebug():
         site.clear()
 #        x,y,z = site.along(4,1)
 #        MC.setBlock(x, y+1, z, materials.WOOL)
-
+    @staticmethod
     def test_openings():
         wall_width = 5
         wall_height = 3
@@ -704,6 +758,23 @@ class MCDebug():
         wall4.clear_openings()
         wall4.add_door(None, 1, 2, block.AIR.id, 0)
         wall4.draw()
+        
+    @staticmethod
+    def test_stories():
+        story_origin = (-5, 0, -2)
+        story_width = 5
+        story_height = 3
+        story_depth = 5
+        story_direction = Direction.NORTH
+        
+        wall_template = Wall(story_origin, 1, 1)
+        wall_template.set_materials(block.WOOD_PLANKS.id, block.WOOD.id)
+        
+        first_floor = Story(story_origin, story_width, story_height, story_depth)
+        first_floor.external_wall_template = wall_template
+        first_floor.build_from_dimensions()
+        
+        first_floor.draw()
 
 
 def main():
@@ -724,7 +795,8 @@ def main():
 #    MCDebug.test_along_method()
 #    MCDebug.test_wall_on_lot()
 #    MCDebug.test_corners()
-    MCDebug.test_openings()
+#    MCDebug.test_openings()
+    MCDebug.test_stories()
 
 
 if __name__ == '__main__':

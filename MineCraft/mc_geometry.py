@@ -38,7 +38,8 @@ class Direction(IntEnum):
     WEST = 270
     FLAT = -270
     UP = -360
-    
+
+
 @unique
 class WallType(IntEnum):
     INTERNAL = 1
@@ -252,8 +253,10 @@ class MCRectangle(MCVector):
             self.phi = Direction.FLAT
         else:
             self.phi = Direction.UP
-            
+
 # bmStory
+
+
 class Story(MCComponent):
     def __init__(self, origin, width, height, depth, direction=Direction.NORTH):
         super().__init__("Story", origin)
@@ -277,7 +280,6 @@ class Story(MCComponent):
         msg += f"# walls: {len(self.walls)}"
         return msg
 
-
     def build_from_dimensions(self, opening_size=0):
         wall_lengths = [self.depth, self.width, self.depth]
         new_wall = self.external_wall_template.copy(extend=False)
@@ -285,23 +287,23 @@ class Story(MCComponent):
         new_wall.length = self.width
         new_wall.height = self.height
         self.walls.append(new_wall)
-        
+
         for wall_length in wall_lengths:
             new_wall = new_wall.copy(extend=True)
             new_wall.clear_openings()
             new_wall.rotate_left()
             new_wall.length = wall_length
             self.walls.append(new_wall)
-            
+
         if opening_size > 0:
             self.walls[0].add_door(None, opening_size, 2*opening_size)
-            for index in range(1,len(self.walls)):
+            for index in range(1, len(self.walls)):
                 self.walls[index].add_window(None, opening_size, opening_size)
-        
+
     def draw(self):
         for wall in self.walls:
             wall.draw()
-        
+
 
 # bmWall
 class Wall(MCRectangle):
@@ -318,10 +320,10 @@ class Wall(MCRectangle):
         self.corner_subtype = None
         self.opening_defs = []
 
-#bmWindow
-    def add_window(self, offset=None, width=1, height=1, material=materials.AIR, material_subtype=0):    
-        opening = {"offset":offset, "width":width, "height":height,
-                   "theta":self.theta, "material":material, "material_subtype":material_subtype}
+# bmWindow
+    def add_window(self, offset=None, width=1, height=1, material=materials.AIR, material_subtype=0):
+        opening = {"offset": offset, "width": width, "height": height,
+                   "theta": self.theta, "material": material, "material_subtype": material_subtype}
 
         if offset is None:
             offset = (None, None)
@@ -331,15 +333,15 @@ class Wall(MCRectangle):
             offset_x = (self.length - width) / 2
         if offset_y is None:
             offset_y = (self.height - height) / 2
-            
+
         opening["offset"] = (offset_x, offset_y)
 
         self._calc_absolute_location(opening)
         self.opening_defs.append(opening)
 
-    def add_door(self, offset=None, width=1, height=2, material=materials.AIR, material_subtype=0):    
-        opening = {"offset":offset, "width":width, "height":height,
-                   "theta":self.theta, "material":material, "material_subtype":material_subtype}
+    def add_door(self, offset=None, width=1, height=2, material=materials.AIR, material_subtype=0):
+        opening = {"offset": offset, "width": width, "height": height,
+                   "theta": self.theta, "material": material, "material_subtype": material_subtype}
 
         if offset is None:
             offset = (None, None)
@@ -354,13 +356,13 @@ class Wall(MCRectangle):
 
         self._calc_absolute_location(opening)
         self.opening_defs.append(opening)
-        
+
     def clear_openings(self):
         self.opening_defs.clear()
 
     def _calc_absolute_location(self, opening_def):
         offset_x, offset_y = opening_def["offset"]
-        
+
         opening_def["theta"] = self.theta
         opening_def["origin"] = self.along(offset_x, offset_y)
 
@@ -401,7 +403,7 @@ class Wall(MCRectangle):
                     theta = opening_def["theta"]
                     material = opening_def["material"]
                     material_subtype = opening_def["material_subtype"]
-                    
+
                     new_opening = MCRectangle(origin, width, height, theta)
                     new_opening.material = material
                     new_opening.material_subtype = material_subtype
@@ -484,18 +486,14 @@ class MCDebug():
     """Functions for setting up MineCraft environment on Raspberry Pi"""
 
     @staticmethod
-    def clear_space():
+    def clear_space(move_player=False):
+        """Clears the air above and ground below a fixed space in MineCraft"""
         if (MINECRAFT_EXISTS):
-            """Clears the air above and ground below a fixed space in MineCraft"""
             MC.setBlocks(-50, 0, -50, 50, 50, 50, 0)
             MC.setBlocks(-50, -1, -50, 50, -5, 50, 1)
 
-    @staticmethod
-    def reset_lot():
-        """Clears out a fixed space and moves the player"""
-        if (MINECRAFT_EXISTS):
-            MCDebug.clear_space()
-            MC.player.setPos(-5, 0, -5)
+            if move_player:
+                MC.player.setPos(-5, 0, -5)
 
     @staticmethod
     def draw_walls():
@@ -733,6 +731,7 @@ class MCDebug():
         site.clear()
 #        x,y,z = site.along(4,1)
 #        MC.setBlock(x, y+1, z, materials.WOOL)
+
     @staticmethod
     def test_openings():
         wall_width = 5
@@ -741,8 +740,8 @@ class MCDebug():
 
         wall1 = Wall(origin=origin, width=wall_width,
                      height=wall_height, direction=Direction.NORTH)
-        wall1.set_materials((block.WOOD_PLANKS.id,0), (block.WOOD.id,0))
-        wall1.add_window(None, 1, 1, block.AIR.id)
+        wall1.set_materials((materials.WOOD_PLANKS, 0), (materials.WOOD, 0))
+        wall1.add_window(None, 1, 1, materials.AIR)
         wall1.draw()
 
         wall2 = wall1.copy(extend=True)
@@ -756,9 +755,9 @@ class MCDebug():
         wall4 = wall3.copy(extend=True)
         wall4.rotate_left()
         wall4.clear_openings()
-        wall4.add_door(None, 1, 2, block.AIR.id, 0)
+        wall4.add_door(None, 1, 2, materials.AIR, 0)
         wall4.draw()
-        
+
     @staticmethod
     def test_stories():
         story_origin = (-5, 0, -2)
@@ -766,23 +765,23 @@ class MCDebug():
         story_height = 3
         story_depth = 5
         story_direction = Direction.NORTH
-        
+
         wall_template = Wall(story_origin, 1, 1)
-        wall_template.set_materials(block.WOOD_PLANKS.id, block.WOOD.id)
-        
-        first_floor = Story(story_origin, story_width, story_height, story_depth)
+        wall_template.set_materials(materials.WOOD_PLANKS, materials.WOOD)
+
+        first_floor = Story(story_origin, story_width,
+                            story_height, story_depth)
         first_floor.external_wall_template = wall_template
+        first_floor.direction = story_direction
         first_floor.build_from_dimensions()
-        
+
         first_floor.draw()
 
 
 def main():
     """Main function which is run when the program is run standalone"""
-    dbg_print("Testing the debug print", 5)
-#    MC.postToChat("Hello")
-#    MCDebug.reset_lot()
-    MCDebug.clear_space()
+    dbg_print(f"Debug level: {LOG_LEVEL}", 0)
+    MCDebug.clear_space()   # Low-level clear using setBlocks
 #    MCDebug.draw_walls()
 #    MCDebug.draw_vertical_rectangles()
 #    MCDebug.draw_flat_rectangles()

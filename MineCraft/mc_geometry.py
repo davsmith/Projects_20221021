@@ -488,9 +488,22 @@ class MCDebug():
     @staticmethod
     def clear_space(move_player=False):
         """Clears the air above and ground below a fixed space in MineCraft"""
+
+        plane_size = 100
+        space_above = 50
+        ground_below = 2
+
+        space_material = materials.AIR
+        bedrock_material = materials.STONE
+        ground_material = materials.DIRT
+
         if (MINECRAFT_EXISTS):
-            MC.setBlocks(-50, 0, -50, 50, 50, 50, 0)
-            MC.setBlocks(-50, -1, -50, 50, -5, 50, 1)
+            MC.setBlocks(-plane_size/2, 0, -plane_size/2,
+                         plane_size/2, space_above, plane_size/2, 0)
+            MC.setBlocks(-plane_size/2, -2, -plane_size/2, plane_size /
+                         2, -ground_below-1, plane_size/2, bedrock_material)
+            MC.setBlocks(-plane_size/2, -1, -plane_size/2,
+                         plane_size/2, -1, plane_size/2, ground_material)
 
             if move_player:
                 MC.player.setPos(-5, 0, -5)

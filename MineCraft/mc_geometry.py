@@ -67,6 +67,11 @@ class MCComponent:
         x, y, z = self.origin
         if MINECRAFT_EXISTS:
             MC.setBlock(x, y, z, material, subtype)
+            
+    def shift(self, x, y, z):
+        """Shifts the rectangle by an offset in each direction"""
+        origin_x, origin_y, origin_z = self.origin
+        self.origin = (origin_x + x, origin_y + y, origin_z + z)
 
 
 # bmVector
@@ -163,11 +168,6 @@ class MCRectangle(MCVector):
         along the bottom of the rectangle (0 is the origin)"""
 
         return self._calc_opposite_corner(floor(horizontal), floor(vertical))
-
-    def shift(self, x, y, z):
-        """Shifts the rectangle by an offset in each direction"""
-        origin_x, origin_y, origin_z = self.origin
-        self.origin = (origin_x + x, origin_y + y, origin_z + z)
 
     def rotate_left(self):
         """Rotates a rectangle 90 degrees counter-clockwise"""
@@ -279,6 +279,15 @@ class Story(MCComponent):
         msg += f"direction:{self.direction}, "
         msg += f"# walls: {len(self.walls)}"
         return msg
+    
+    def copy(self):
+        return copy.deepcopy(self)
+
+    def shift(self, x, y, z):
+        """Shifts the rectangle by an offset in each direction"""
+        super().shift(x, y, z)
+        for wall in self.walls:
+            wall.shift(x, y, z)
 
     def build_from_dimensions(self, opening_size=0):
         wall_lengths = [self.depth, self.width, self.depth]
@@ -453,6 +462,10 @@ class Lot(MCRectangle):
         self.is_tipped = True
         self.material = materials.GRASS
         self.thickness = 5
+        
+    def offset_origin(self, x, y):
+        x, y, z = self.along(x,y)
+        return (x, y+1, z)
 
     def clear(self):
         """Clears the space above and below the lot,
@@ -491,7 +504,7 @@ class MCDebug():
 
         plane_size = 100
         space_above = 50
-        ground_below = 2
+        ground_below = 5
 
         space_material = materials.AIR
         bedrock_material = materials.STONE
@@ -667,6 +680,7 @@ class MCDebug():
         print(site)
         site.material = materials.GRASS
         site.clear()
+        print(f"Structure origin: {site.offset_origin(2,2)}")
 
     @staticmethod
     def test_walls():
@@ -773,11 +787,19 @@ class MCDebug():
 
     @staticmethod
     def test_stories():
-        story_origin = (-5, 0, -2)
+        site_set_back = (2, 4)
+        
         story_width = 5
         story_height = 3
         story_depth = 5
         story_direction = Direction.NORTH
+
+        site = Lot(origin=(0, -1, 0), across=20, depth=50, direction=Direction.NORTH)
+        site.name = "Job site"
+        print(site)
+        site.material = materials.GRASS
+        site.clear()
+        story_origin = site.offset_origin(site_set_back[0], site_set_back[1])
 
         wall_template = Wall(story_origin, 1, 1)
         wall_template.set_materials(materials.WOOD_PLANKS, materials.WOOD)
@@ -786,15 +808,34 @@ class MCDebug():
                             story_height, story_depth)
         first_floor.external_wall_template = wall_template
         first_floor.direction = story_direction
-        first_floor.build_from_dimensions()
+        first_floor.build_from_dimensions(opening_size=1)
 
         first_floor.draw()
+        
+        second_floor = first_floor.copy()
+        second_floor.shift(0,0,-(story_width+1))
+        second_floor.draw()
+
+        third_floor = second_floor.copy()
+        third_floor.shift(0,0,-(story_width+1))
+        third_floor.draw()
+        
+    def test_build_houses():
+        site = Lot(origin=(0, -1, 0), across=20, depth=50, direction=Direction.NORTH)
+        site.name = "Job site"
+        print(site)
+        site.material = materials.GRASS
+        site.clear()
+
+        print(f"Structure origin: {site.offset_origin(2,2)}")
+
+        offset_origin
 
 
 def main():
     """Main function which is run when the program is run standalone"""
     dbg_print(f"Debug level: {LOG_LEVEL}", 0)
-    MCDebug.clear_space()   # Low-level clear using setBlocks
+    MCDebug.clear_space(False)   # Low-level clear using setBlocks
 #    MCDebug.draw_walls()
 #    MCDebug.draw_vertical_rectangles()
 #    MCDebug.draw_flat_rectangles()
@@ -802,7 +843,7 @@ def main():
 #    MCDebug.draw_copied_rectangles()
 #    MCDebug.draw_flip_origin()
 #    MCDebug.draw_outline()
-#    MCDebug.draw_lot()
+    MCDebug.draw_lot()
 #    MCDebug.test_walls()
 #    MCDebug.test_along_method()
 #    MCDebug.test_wall_on_lot()

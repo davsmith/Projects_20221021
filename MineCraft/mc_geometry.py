@@ -45,6 +45,13 @@ class WallType(IntEnum):
     INTERNAL = 1
     EXTERNAL = 2
 
+@unique
+class WallLocation(IntEnum):
+    FRONT = 1
+    BACK = 2
+    SIDE = 3
+
+
 
 # bmComponent
 class MCComponent:
@@ -268,6 +275,7 @@ class Story(MCComponent):
     def __init__(self, origin, width, height, depth, direction=Direction.NORTH):
         super().__init__("Story", origin)
         self.direction = direction
+        self.ground_floor = True
         self.width = width
         self.height = height
         self.depth = depth
@@ -295,30 +303,54 @@ class Story(MCComponent):
         for wall in self.walls:
             wall.shift(x, y, z)
 
-    def build_from_dimensions(self, opening_size=0):
+        for floor in self.floors:
+            floor.shift(x, y, z)
+
+
+    def build_walls_from_dimensions(self):
         wall_lengths = [self.depth, self.width, self.depth]
         new_wall = self.external_wall_template.copy(extend=False)
         new_wall.origin = self.origin
         new_wall.length = self.width
         new_wall.height = self.height
-        print(f"TT: new wall direction is {new_wall.theta}")
         new_wall.theta = self.direction
         self.walls.append(new_wall)
 
         for wall_length in wall_lengths:
             new_wall = new_wall.copy(extend=True)
+            new_wall.location = WallLocation.SIDE
             new_wall.clear_openings()
             new_wall.rotate_left()
             new_wall.length = wall_length
             self.walls.append(new_wall)
-
+            
+        self.walls[0].location = WallLocation.FRONT
+        self.walls[2].location = WallLocation.BACK
+        
+    def add_openings(self, opening_size=0):
+        front_wall = self.walls[0]
         if opening_size > 0:
-            self.walls[0].add_door(None, opening_size, 2*opening_size)
+            front_wall.clear_openings()
+            if self.level == 1:
+                self.walls[0].add_door(None, opening_size, 2*opening_size)
+            else:
+                self.walls[0].add_window(None, opening_size, opening_size)
+                
             for index in range(1, len(self.walls)):
-                self.walls[index].add_window(None, opening_size, opening_size)
+                wall = self.walls[index]
+                wall.clear_openings()
+                if (wall.location == WallLocation.SIDE):
+                    wall.add_window(None, opening_size, opening_size)
 
-    def build_floor_from_dimensions(self):
+    def build_floor_from_dimensions(self, material=None, subtype=None):
+        if material is None:
+            material = materials.WOOL
+            subtype = materials.ORANGE
+            
         floor = MCRectangle(self.origin, self.width, self.depth, self.direction)
+        floor.material = material
+        floor.material_subtype = subtype
+        
         floor.is_tipped = True
         floor.shrink(1)
         floor.shift(0,-1,0)
@@ -342,6 +374,7 @@ class Wall(MCRectangle):
         self.is_tipped = False
         self.material = materials.WOOD
         self.material_subtype = 0
+        self.location = WallLocation.FRONT
         self.corner_material = None
         self.corner_subtype = None
         self.opening_defs = []
@@ -807,7 +840,7 @@ class MCDebug():
         site_set_back = (2, 4)
         
         story_width = 5
-        story_height = 3
+        story_height = 4
         story_depth = 5
         lot_direction = Direction.NORTH
 
@@ -822,12 +855,20 @@ class MCDebug():
 
         first_floor = Story(story_origin, story_width,
                             story_height, story_depth)
+        first_floor.level = 1
         first_floor.external_wall_template = wall_template
         first_floor.direction = lot_direction
-        first_floor.build_from_dimensions(opening_size=1)
-        first_floor.build_floor_from_dimensions()
+        first_floor.build_walls_from_dimensions()
+        first_floor.add_openings(opening_size=1)
+        first_floor.build_floor_from_dimensions(materials.STONE)
 
         first_floor.draw()
+
+        second_floor = first_floor.copy()
+        second_floor.level = 2
+        second_floor.add_openings(opening_size=1)
+        second_floor.shift(0,story_height,0)
+        second_floor.draw()
         
 #        second_floor = first_floor.copy()
 #        second_floor.shift(0,0,-(story_width+1))

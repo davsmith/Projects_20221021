@@ -182,6 +182,13 @@ class MCRectangle(MCVector):
         origin_x, _, origin_z = self.opposite
         _, origin_y, _ = self.origin
         self.origin = (origin_x, origin_y, origin_z)
+        
+    def shrink(self, amount):
+        print(f"TT: Old bounds: {self.origin} to {self.opposite}")
+        self.origin = self.along(amount, amount)
+        self.length -= 2*amount
+        self.height -= 2*amount
+        print(f"TT: New bounds: {self.origin} to {self.opposite}")
 
     def draw(self):
         """Draws the rectangle based on the origin and opposite
@@ -268,8 +275,7 @@ class Story(MCComponent):
         self.internal_wall_template = None
         self.external_wall_template = None
         self.walls = []
-        self.ceiling = None
-        self.floor = None
+        self.floors = []
 
     def __repr__(self):
         msg = f"<{self.name}> origin:{self.origin}, "
@@ -295,6 +301,8 @@ class Story(MCComponent):
         new_wall.origin = self.origin
         new_wall.length = self.width
         new_wall.height = self.height
+        print(f"TT: new wall direction is {new_wall.theta}")
+        new_wall.theta = self.direction
         self.walls.append(new_wall)
 
         for wall_length in wall_lengths:
@@ -309,9 +317,18 @@ class Story(MCComponent):
             for index in range(1, len(self.walls)):
                 self.walls[index].add_window(None, opening_size, opening_size)
 
+    def build_floor_from_dimensions(self):
+        floor = MCRectangle(self.origin, self.width, self.depth, self.direction)
+        floor.is_tipped = True
+        floor.shrink(1)
+        floor.shift(0,-1,0)
+        self.floors.append(floor)
+
     def draw(self):
         for wall in self.walls:
             wall.draw()
+        for floor in self.floors:
+            floor.draw()
 
 
 # bmWall
@@ -792,11 +809,10 @@ class MCDebug():
         story_width = 5
         story_height = 3
         story_depth = 5
-        story_direction = Direction.NORTH
+        lot_direction = Direction.NORTH
 
-        site = Lot(origin=(0, -1, 0), across=20, depth=50, direction=Direction.NORTH)
-        site.name = "Job site"
-        print(site)
+        site = Lot(origin=(0, -1, 0), across=20, depth=50, direction=lot_direction)
+        site.name = "Pandaville"
         site.material = materials.GRASS
         site.clear()
         story_origin = site.offset_origin(site_set_back[0], site_set_back[1])
@@ -807,18 +823,19 @@ class MCDebug():
         first_floor = Story(story_origin, story_width,
                             story_height, story_depth)
         first_floor.external_wall_template = wall_template
-        first_floor.direction = story_direction
+        first_floor.direction = lot_direction
         first_floor.build_from_dimensions(opening_size=1)
+        first_floor.build_floor_from_dimensions()
 
         first_floor.draw()
         
-        second_floor = first_floor.copy()
-        second_floor.shift(0,0,-(story_width+1))
-        second_floor.draw()
+#        second_floor = first_floor.copy()
+#        second_floor.shift(0,0,-(story_width+1))
+#        second_floor.draw()
 
-        third_floor = second_floor.copy()
-        third_floor.shift(0,0,-(story_width+1))
-        third_floor.draw()
+#        third_floor = second_floor.copy()
+#        third_floor.shift(0,0,-(story_width+1))
+#        third_floor.draw()
         
     def test_build_houses():
         site = Lot(origin=(0, -1, 0), across=20, depth=50, direction=Direction.NORTH)
@@ -826,16 +843,30 @@ class MCDebug():
         print(site)
         site.material = materials.GRASS
         site.clear()
+        
+    def test_shrink():
+        rec1 = MCRectangle(origin=(0,0,0), length=8, height=4)
+        rec1.material_subtype = materials.MAGENTA
+        rec1.is_tipped = False
+        rec1.draw()
+        rec2 = rec1.copy(extend=False)
+        rec2.shrink(1)
+        rec2.material_subtype = materials.ORANGE
+        rec2.draw()
 
-        print(f"Structure origin: {site.offset_origin(2,2)}")
+    
 
-        offset_origin
 
+
+def test_unpacking(x, y):
+    print(f"x: {x}, y:{y}")
+    
 
 def main():
     """Main function which is run when the program is run standalone"""
     dbg_print(f"Debug level: {LOG_LEVEL}", 0)
     MCDebug.clear_space(False)   # Low-level clear using setBlocks
+    MCDebug.test_shrink()
 #    MCDebug.draw_walls()
 #    MCDebug.draw_vertical_rectangles()
 #    MCDebug.draw_flat_rectangles()
@@ -843,7 +874,7 @@ def main():
 #    MCDebug.draw_copied_rectangles()
 #    MCDebug.draw_flip_origin()
 #    MCDebug.draw_outline()
-    MCDebug.draw_lot()
+#    MCDebug.draw_lot()
 #    MCDebug.test_walls()
 #    MCDebug.test_along_method()
 #    MCDebug.test_wall_on_lot()

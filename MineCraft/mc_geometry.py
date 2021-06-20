@@ -571,6 +571,7 @@ class MCDebug():
     """Functions for setting up MineCraft environment on Raspberry Pi"""
 
     blue_wool = (materials.WOOL, materials.LIGHT_BLUE)
+    magenta_wool = (materials.WOOL, materials.MAGENTA)
 
     @staticmethod
     def clear_space(move_player=False):
@@ -612,7 +613,15 @@ class MCDebug():
         
     @staticmethod
     def test_mcvector():
-        pass
+        vec1 = MCVector('Vec1', origin=(5,0,5), length=3, phi=0, theta=90)
+        print(vec1)
+        print(f"End point: {vec1.end_point}")
+        
+        endpoint = MCComponent('End point', vec1.end_point)
+        endpoint._draw_origin(*MCDebug.magenta_wool)
+        
+        print(f"Testing for debug flag: {vec1.debug}")
+        
         
         
 

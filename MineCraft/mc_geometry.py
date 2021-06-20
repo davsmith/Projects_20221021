@@ -149,11 +149,14 @@ class MCVector(MCComponent):
 @dataclass
 class MCRectangleDef(MCVector):
     material: int=materials.WOOL
-    material_subtype=14
+    material_subtype: int=14
 
 @dataclass
 class MCRectangle(MCVector):
     """Manages coordinates of a 2D rectangle in MineCraft 3D space"""
+    height: int
+    material: int
+    material_subtype: int
 
 #    def __init__(self, origin=(0, 0, 0), length=5, height=3, theta=0):
 #        self.name = "Rectangle"
@@ -206,24 +209,30 @@ class MCRectangle(MCVector):
         """Rotates a rectangle 90 degrees clockwise"""
         self.theta -= 90
 
-    def flip_origin(self):
+    def flip_origin(self, keep_direction=True):
         """Swaps the origin to the opposite corner at the bottom"""
         origin_x, _, origin_z = self.opposite
         _, origin_y, _ = self.origin
         self.origin = (origin_x, origin_y, origin_z)
+        if not keep_direction:
+            self.theta += 180
         
     def shrink(self, amount):
-        print(f"TT: Old bounds: {self.origin} to {self.opposite}")
         self.origin = self.along(amount, amount)
         self.length -= 2*amount
         self.height -= 2*amount
-        print(f"TT: New bounds: {self.origin} to {self.opposite}")
 
-    def draw(self):
+    def draw(self, material=None, subtype=None):
         """Draws the rectangle based on the origin and opposite
         properties, with the material specified in the material property"""
         x1, y1, z1 = self.origin
         x2, y2, z2 = self.opposite
+        
+        if material is None:
+            material = self.material
+            
+        if subtype is None:
+            subtype = self.material_subtype
 
         msg = f"Drawing rectangle from ({x1},{y1},{z1}) to ({x2},{y2},{z2}) "
         msg += f"in material {self.material} subtype {self.material_subtype}"
@@ -231,9 +240,9 @@ class MCRectangle(MCVector):
 
         if MINECRAFT_EXISTS:
             MC.setBlocks(x1, y1, z1, x2, y2, z2,
-                         self.material, self.material_subtype)
-#            if self.debug:
-#                self._draw_origin()
+                         material, subtype)
+            if self.debug:
+                self._draw_origin()
 
     @property
     def opposite(self):
@@ -267,16 +276,6 @@ class MCRectangle(MCVector):
 
         return diagnol.end_point
 
-    @staticmethod
-    def _normalize_angle(angle):
-        """Make the specified angle fit to 0-360 degrees"""
-        normalized_angle = angle
-        while normalized_angle < 0:
-            normalized_angle += 360
-        while normalized_angle >= 360:
-            normalized_angle -= 360
-        return normalized_angle
-
     @property
     def is_tipped(self):
         '''Determines if the rectangle is vertical or flat'''
@@ -290,9 +289,80 @@ class MCRectangle(MCVector):
         else:
             self.phi = Direction.UP
 
+    @staticmethod
+    def _normalize_angle(angle):
+        """Make the specified angle fit to 0-360 degrees"""
+        normalized_angle = angle
+        while normalized_angle < 0:
+            normalized_angle += 360
+        while normalized_angle >= 360:
+            normalized_angle -= 360
+        return normalized_angle
+
+
+# bmLot
+@dataclass
+class Lot(MCRectangle):
+    """The plot of land on which to build a structure
+
+        The direction of the lot indicates the direction
+        of the property line along the front of the lot,
+        so a direction of North indicates an East facing lot.
+
+        The 'length' parameter indicates the width of the lot.
+        The 'height' parameter indicates how far back the lot goes."""
+
+    def __post_init__(self):
+        super().__post_init__()
+        self.thickness = 5
+        print("Setting is_tipped to True")
+        self.is_tipped = True
+#    def __init__(self, origin, width, depth, direction=Direction.NORTH):
+#        """A lot has an origin, across, depth, and direction"""
+#        super().__init__(origin, width, depth, direction)
+#        self.is_tipped = True
+#        self.material = materials.GRASS
+#        self.thickness = 5
+        
+    def offset_origin(self, x, y):
+        x, y, z = self.along(x,y)
+        return (x, y+1, z)
+
+    def clear(self, lot_material=None, ground_material=None, sky_material=None):
+        """Clears the space above and below the lot,
+            and redraws the lot in the specified material"""
+        if sky_material is None:
+            sky_material = materials.AIR
+            
+        if ground_material is None:
+            ground_material = materials.STONE
+            
+        if lot_material is None:
+            lot_material = materials.GRASS
+        
+        print(f"In Clear:  lot={lot_material}, ground={ground_material}, sky={sky_material}")
+        
+        origin_x, origin_y, origin_z = self.origin
+        opp_x, _, opp_z = self.opposite
+
+        # Define the space above the lot to clear with air
+        sky_start = self.origin
+        sky_end = (opp_x, origin_y+self.height, opp_z)
+
+        # Define the space beneath the lot
+        ground_start = (origin_x, origin_y - 1, origin_z)
+        ground_end = (opp_x, origin_y - self.thickness, opp_z)
+
+        if MINECRAFT_EXISTS:
+            MC.setBlocks(*sky_start, *sky_end, sky_material)
+            MC.setBlocks(*ground_start, *ground_end, ground_material)
+
+            # Create a flat rectangle for the lot itself
+            self.draw(lot_material)
+
+
+
 # bmStory
-
-
 class Story(MCComponent):
     def __init__(self, origin, width, height, depth, direction=Direction.NORTH):
         super().__init__("Story", origin)
@@ -515,63 +585,15 @@ class Wall(MCRectangle):
                 self.corner_material = corners
                 self.corner_subtype = 0
 
-# bmLot
-
-
-class Lot(MCRectangle):
-    """The plot of land on which to build a structure
-
-        The direction of the lot indicates the direction
-        of the property line along the front of the lot,
-        so a direction of North indicates an East facing lot
-
-        The 'across' parameter indicates the width of the lot.
-        The 'depth' parameter indicates how far back the lot goes."""
-
-    def __init__(self, origin, width, depth, direction=Direction.NORTH):
-        """A lot has an origin, across, depth, and direction"""
-        super().__init__(origin, width, depth, direction)
-        self.is_tipped = True
-        self.material = materials.GRASS
-        self.thickness = 5
-        
-    def offset_origin(self, x, y):
-        x, y, z = self.along(x,y)
-        return (x, y+1, z)
-
-    def clear(self):
-        """Clears the space above and below the lot,
-            and redraws the lot in the specified material"""
-        origin_x, origin_y, origin_z = self.origin
-        opp_x, _, opp_z = self.opposite
-
-        # Clear out the space above the lot
-        x1 = origin_x
-        y1 = origin_y
-        z1 = origin_z
-        x2 = opp_x
-        y2 = origin_y + self.height
-        z2 = opp_z
-        MC.setBlocks(x1, y1, z1, x2, y2, z2, materials.AIR)
-
-        # Create a flat rectangle for the lot itself
-        self.draw()
-
-        # Set the material for the ground beneath the lot
-        x1 = origin_x
-        y1 = origin_y - 1
-        z1 = origin_z
-        x2 = opp_x
-        y2 = origin_y - self.thickness
-        z2 = opp_z
-        MC.setBlocks(x1, y1, z1, x2, y2, z2, materials.BEDROCK)
-
 
 class MCDebug():
     """Functions for setting up MineCraft environment on Raspberry Pi"""
 
     blue_wool = (materials.WOOL, materials.LIGHT_BLUE)
     magenta_wool = (materials.WOOL, materials.MAGENTA)
+    orange_wool = (materials.WOOL, materials.ORANGE)
+    white_wool = (materials.WOOL, materials.WHITE)
+    
 
     @staticmethod
     def clear_space(move_player=False):
@@ -622,8 +644,58 @@ class MCDebug():
         
         print(f"Testing for debug flag: {vec1.debug}")
         
+    @staticmethod
+    def test_mcrectangle():
+        """Creates and manipulates several rectangles in MineCraft"""
         
+        # Draw a rectangle 5 wide, 3 high pointing East made of TNT
+        rec1 = MCRectangle('Rec1', (0,0,0), 5, 0, Direction.EAST, 3, materials.GRASS, 1)
+        print(rec1)
+        rec1.draw(materials.TNT, 1)
         
+        # Draw a rectangle 5 wide, 3 high pointing North made of orange wool
+        rec2 = rec1.copy(extend=False)
+        rec2.name = 'Rec2'
+        rec2.rotate_left()
+        print(rec2)
+        rec2.draw(*MCDebug.orange_wool)
+
+        # Draw a flat rectangle on top of the orange rectangle
+        # and set the origin to the opposite end (NorthWest)
+        rec3 = rec1.copy(extend=False)
+        rec3.name = 'Rec3'
+        rec3.shift(0,3,0)
+        rec3.is_tipped = True
+        rec3.rotate_left()
+        rec3.flip_origin(keep_direction=False)
+        print(rec3)
+        rec3.draw(*MCDebug.magenta_wool)
+
+        # Rotate the first rectangle to point South
+        rec1.rotate_right()
+        rec1.flip_origin(keep_direction = False)
+        rec1.draw(*MCDebug.blue_wool)
+        print(rec1)
+        
+        # Reduce the first rectangle to 3 long x 1 high, then
+        # redraw it in orange
+        rec1.shrink(1)
+        rec1.debug = False
+        rec1.draw(*MCDebug.orange_wool)
+        
+    @staticmethod
+    def test_lot():
+        """ Tests the creation of a job site by clearing a space to build on """
+        site = Lot('Job site', (0,-1,0), length=20, phi=0, theta=Direction.NORTH, height=50, material=materials.GRASS, material_subtype=0)
+        site.clear()
+        
+        structure_origin = site.offset_origin(3,5)
+        print(f"Structure origin: {structure_origin}")
+        one_block = MCComponent("structure origin", structure_origin)
+        one_block._draw_origin()
+
+    
+
 
     @staticmethod
     def test_vertical_rectangles():
@@ -776,17 +848,6 @@ class MCDebug():
             rec.material_subtype = i
             rec.rotate_left()
             rec.draw()
-
-    @staticmethod
-    def draw_lot():
-        """ Tests the creation of a job site by clearing a space to build on """
-        site = Lot(origin=(0, -1, 0), width=20,
-                   depth=50, direction=Direction.NORTH)
-        site.name = "Job site"
-        print(site)
-        site.material = materials.GRASS
-        site.clear()
-        print(f"Structure origin: {site.offset_origin(2,2)}")
 
     @staticmethod
     def test_walls():
@@ -942,10 +1003,6 @@ class MCDebug():
         rec2.material_subtype = materials.ORANGE
         rec2.draw()
 
-    
-
-
-
 def test_unpacking(x, y):
     print(f"x: {x}, y:{y}")
     
@@ -954,8 +1011,10 @@ def main():
     """Main function which is run when the program is run standalone"""
     dbg_print(f"Debug level: {LOG_LEVEL}", 0)
     MCDebug.clear_space(False)   # Low-level clear using setBlocks
-    MCDebug.test_mccomponent()
-    MCDebug.test_mcvector()
+#    MCDebug.test_mccomponent()
+#    MCDebug.test_mcvector()
+#    MCDebug.test_mcrectangle()
+    MCDebug.test_lot()
 #    MCDebug.test_vertical_rectangles()
 #    MCDebug.test_shrink()
 #    MCDebug.draw_walls()
@@ -964,7 +1023,6 @@ def main():
 #    MCDebug.draw_copied_rectangles()
 #    MCDebug.draw_flip_origin()
 #    MCDebug.draw_outline()
-#    MCDebug.draw_lot()
 #    MCDebug.test_walls()
 #    MCDebug.test_along_method()
 #    MCDebug.test_wall_on_lot()

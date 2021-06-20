@@ -4,6 +4,7 @@ Spherical coordinate equations from https://keisan.casio.com/exec/system/1359534
 
 from enum import IntEnum, unique
 from math import sin, cos, radians, sqrt, atan, degrees, floor
+from dataclasses import dataclass
 import materials
 import copy
 LOG_LEVEL = 9
@@ -54,21 +55,22 @@ class WallLocation(IntEnum):
 
 
 # bmComponent
+@dataclass
 class MCComponent:
     """Base class for all MineCraft components.
     It provides a few properties common to all components, and debug info"""
 
-    def __init__(self, name, origin):
-        """Set the name and origin for the object
-        The origin is a tuple consisting of x, y, and z"""
-        self.name = name
-        self.origin = origin
+    name: str
+    origin: tuple
+    
+    def __post_init__(self):
         self.debug = True
+        
 
-    def _repr__(self):
-        """Returns a string used with print <object>"""
-        msg = f"<MCComponent: {self.name}> "
-        msg += f"origin:{self.origin}, "
+#    def _repr__(self):
+#        """Returns a string used with print <object>"""
+#        msg = f"<MCComponent: {self.name}> "
+#        msg += f"origin:{self.origin}, "
 
     def _draw_origin(self, material=materials.TNT, subtype=0):
         x, y, z = self.origin
@@ -82,22 +84,34 @@ class MCComponent:
 
 
 # bmVector
+#@dataclass
+#class MCVectorDef(MCComponent):
+#    length: int
+#    phi: int
+#    theta: int
+ 
+@dataclass
 class MCVector(MCComponent):
     """A 3D vector with coordinate system adapted to Minecraft (x=E/W, y=U/D, z=S/N)"""
+    length: int
+    phi: int
+    theta: int
 
-    def __init__(self, origin=(0, 0, 0), length=1, phi=90, theta=0):
-        super().__init__("MCVector", origin)
-        self.length = length
-        self.phi = phi
-        self.theta = theta
+#    def __init__(self, origin=(0, 0, 0), length=1, phi=90, theta=0):
+#        super().__init__("MCVector", origin)
+#        self.length = length
+#        self.phi = phi
+#        self.theta = theta
 
-    def __repr__(self):
-        msg = f"<MCVector: {self.name}> origin:{self.origin}, "
-        msg += f"length:{self.length}, "
-        msg += f"phi:{self.phi}, "
-        msg += f"theta:{self.theta}, "
-        msg += f"endpoint:{self.end_point} "
-        return msg
+#    def __repr__(self):
+#        msg = f"<{self.name}> origin:{self.origin}, "
+#        msg += f"length:{self.length}, "
+#        msg += f"phi:{self.phi}, "
+#        msg += f"theta:{self.theta}, "
+#        msg += f"endpoint:{self.end_point} "
+#        return msg
+    def __post_init__(self):
+        super().__post_init__()
 
     def set_direction(self, direction):
         """Sets the rotation of the vector in the x/z Minecraft plane (theta)
@@ -132,21 +146,29 @@ class MCVector(MCComponent):
 
 
 # bmRectangle
+@dataclass
+class MCRectangleDef(MCVector):
+    material: int=materials.WOOL
+    material_subtype=14
+
+@dataclass
 class MCRectangle(MCVector):
     """Manages coordinates of a 2D rectangle in MineCraft 3D space"""
 
-    def __init__(self, origin=(0, 0, 0), length=5, height=3, theta=0):
-        self.name = "Rectangle"
-        self.origin = origin
-        self.length = length
-        self.height = height
-        self.phi = Direction.UP
-        self.theta = theta
-        self._tipped = False
-        self.material = materials.WOOL    # Wool - 35
-        self.material_subtype = 14       # Red
-        self.debug = True
-        super().__init__(origin, length, self.phi, theta)
+#    def __init__(self, origin=(0, 0, 0), length=5, height=3, theta=0):
+#        self.name = "Rectangle"
+#        self.origin = origin
+#        self.length = length
+#        self.height = height
+#        self.phi = Direction.UP
+#        self.theta = theta
+#        self.material = materials.WOOL    # Wool - 35
+#        self.material_subtype = 14       # Red
+#        super().__init__(origin, length, self.phi, theta)
+
+    def __post_init__(self):
+        super().__post_init__()
+
 
     def __repr__(self):
         msg = f"<MCRectangle {self.name}> origin:{self.origin}, "
@@ -210,8 +232,8 @@ class MCRectangle(MCVector):
         if MINECRAFT_EXISTS:
             MC.setBlocks(x1, y1, z1, x2, y2, z2,
                          self.material, self.material_subtype)
-            if self.debug:
-                self._draw_origin()
+#            if self.debug:
+#                self._draw_origin()
 
     @property
     def opposite(self):
@@ -240,7 +262,7 @@ class MCRectangle(MCVector):
             else:
                 slant = degrees(atan(length/height))
 
-        diagnol = MCVector(origin=self.origin, length=hypot,
+        diagnol = MCVector(name="Vector", origin=self.origin, length=hypot,
                            phi=slant, theta=rotation)
 
         return diagnol.end_point
@@ -307,7 +329,7 @@ class Story(MCComponent):
             floor.shift(x, y, z)
 
 
-    def build_walls_from_dimensions(self):
+    def build_walls_from_perimeter(self):
         wall_lengths = [self.depth, self.width, self.depth]
         new_wall = self.external_wall_template.copy(extend=False)
         new_wall.origin = self.origin
@@ -342,7 +364,7 @@ class Story(MCComponent):
                 if (wall.location == WallLocation.SIDE):
                     wall.add_window(None, opening_size, opening_size)
 
-    def build_floor_from_dimensions(self, material=None, subtype=None):
+    def build_floor_from_perimeter(self, material=None, subtype=None):
         if material is None:
             material = materials.WOOL
             subtype = materials.ORANGE
@@ -506,9 +528,9 @@ class Lot(MCRectangle):
         The 'across' parameter indicates the width of the lot.
         The 'depth' parameter indicates how far back the lot goes."""
 
-    def __init__(self, origin, depth, across, direction=Direction.NORTH):
+    def __init__(self, origin, width, depth, direction=Direction.NORTH):
         """A lot has an origin, across, depth, and direction"""
-        super().__init__(origin, across, depth, direction)
+        super().__init__(origin, width, depth, direction)
         self.is_tipped = True
         self.material = materials.GRASS
         self.thickness = 5
@@ -548,6 +570,8 @@ class Lot(MCRectangle):
 class MCDebug():
     """Functions for setting up MineCraft environment on Raspberry Pi"""
 
+    blue_wool = (materials.WOOL, materials.LIGHT_BLUE)
+
     @staticmethod
     def clear_space(move_player=False):
         """Clears the air above and ground below a fixed space in MineCraft"""
@@ -572,18 +596,28 @@ class MCDebug():
                 MC.player.setPos(-5, 0, -5)
 
     @staticmethod
-    def draw_walls():
-        """Draws a set of walls at hard coded coordinates"""
-        if MINECRAFT_EXISTS:
-            block_id = 35
-            MC.setBlocks(0, 0, 0, 4, 2, 0, block_id, 11)    # Blue
-            MC.setBlocks(0, 0, 0, 0, 2, 4, block_id, 13)    # Green
-            MC.setBlocks(0, 0, 4, 4, 2, 4, block_id, 4)     # Yellow
-            MC.setBlocks(4, 0, 0, 4, 2, 4, block_id, 2)     # Magenta
-            MC.setBlock(0, 0, 0, 46, 1)
+    def test_mccomponent():
+        comp1 = MCComponent('C1', (1,2,3))
+        print(comp1)
+        
+        comp2 = MCComponent('C2', (4,5,6))
+        comp2.shift(1,1,1)
+        print(comp2)
+        print(f"Checking for debug flag: {comp2.debug}")
+        
+        comp3 = MCComponent('C3', (0,0,0))
+        comp3._draw_origin()
+        comp3.shift(1,1,1)
+        comp3._draw_origin(*MCDebug.blue_wool)
+        
+    @staticmethod
+    def test_mcvector():
+        pass
+        
+        
 
     @staticmethod
-    def test_draw_vertical_rectangles():
+    def test_vertical_rectangles():
         """Creates and draws rectangles in a + pattern"""
         origin = (0, 0, 0)
 
@@ -607,6 +641,19 @@ class MCDebug():
                            height=3, theta=Direction.NORTH)
         rec4.material_subtype = 6  # Pink
         rec4.draw()
+
+
+    @staticmethod
+    def draw_walls():
+        """Draws a set of walls at hard coded coordinates"""
+        if MINECRAFT_EXISTS:
+            block_id = 35
+            MC.setBlocks(0, 0, 0, 4, 2, 0, block_id, 11)    # Blue
+            MC.setBlocks(0, 0, 0, 0, 2, 4, block_id, 13)    # Green
+            MC.setBlocks(0, 0, 4, 4, 2, 4, block_id, 4)     # Yellow
+            MC.setBlocks(4, 0, 0, 4, 2, 4, block_id, 2)     # Magenta
+            MC.setBlock(0, 0, 0, 46, 1)
+
 
     @staticmethod
     def draw_flat_rectangles():
@@ -724,7 +771,7 @@ class MCDebug():
     @staticmethod
     def draw_lot():
         """ Tests the creation of a job site by clearing a space to build on """
-        site = Lot(origin=(0, -1, 0), across=20,
+        site = Lot(origin=(0, -1, 0), width=20,
                    depth=50, direction=Direction.NORTH)
         site.name = "Job site"
         print(site)
@@ -839,16 +886,16 @@ class MCDebug():
     def test_stories():
         site_set_back = (2, 4)
         
-        story_width = 5
-        story_height = 4
-        story_depth = 5
+        story_width = 11
+        story_height = 6
+        story_depth = 9
         lot_direction = Direction.NORTH
 
-        site = Lot(origin=(0, -1, 0), across=20, depth=50, direction=lot_direction)
+        site = Lot(origin=(0, -1, 0), width=20, depth=50, direction=lot_direction)
         site.name = "Pandaville"
         site.material = materials.GRASS
         site.clear()
-        story_origin = site.offset_origin(site_set_back[0], site_set_back[1])
+        story_origin = site.offset_origin(*site_set_back)
 
         wall_template = Wall(story_origin, 1, 1)
         wall_template.set_materials(materials.WOOD_PLANKS, materials.WOOD)
@@ -858,10 +905,9 @@ class MCDebug():
         first_floor.level = 1
         first_floor.external_wall_template = wall_template
         first_floor.direction = lot_direction
-        first_floor.build_walls_from_dimensions()
+        first_floor.build_walls_from_perimeter()
         first_floor.add_openings(opening_size=1)
-        first_floor.build_floor_from_dimensions(materials.STONE)
-
+        first_floor.build_floor_from_perimeter(materials.COBBLESTONE)
         first_floor.draw()
 
         second_floor = first_floor.copy()
@@ -869,15 +915,7 @@ class MCDebug():
         second_floor.add_openings(opening_size=1)
         second_floor.shift(0,story_height,0)
         second_floor.draw()
-        
-#        second_floor = first_floor.copy()
-#        second_floor.shift(0,0,-(story_width+1))
-#        second_floor.draw()
-
-#        third_floor = second_floor.copy()
-#        third_floor.shift(0,0,-(story_width+1))
-#        third_floor.draw()
-        
+                
     def test_build_houses():
         site = Lot(origin=(0, -1, 0), across=20, depth=50, direction=Direction.NORTH)
         site.name = "Job site"
@@ -907,9 +945,11 @@ def main():
     """Main function which is run when the program is run standalone"""
     dbg_print(f"Debug level: {LOG_LEVEL}", 0)
     MCDebug.clear_space(False)   # Low-level clear using setBlocks
-    MCDebug.test_shrink()
+    MCDebug.test_mccomponent()
+    MCDebug.test_mcvector()
+#    MCDebug.test_vertical_rectangles()
+#    MCDebug.test_shrink()
 #    MCDebug.draw_walls()
-#    MCDebug.draw_vertical_rectangles()
 #    MCDebug.draw_flat_rectangles()
 #    MCDebug.draw_rotated_rectangles()
 #    MCDebug.draw_copied_rectangles()
@@ -921,7 +961,7 @@ def main():
 #    MCDebug.test_wall_on_lot()
 #    MCDebug.test_corners()
 #    MCDebug.test_openings()
-    MCDebug.test_stories()
+#    MCDebug.test_stories()
 
 
 if __name__ == '__main__':

@@ -16,7 +16,15 @@ class Coordinate():
 @dataclass(frozen=True)
 class Student():
     last_name: str
+    first_name: str
+    
+@dataclass(frozen=True)
+class CollegeStudent(Student):
+    major: str
 
+@dataclass(frozen=True)
+class PhDStudent(CollegeStudent):
+    thesis_topic: str
 
 home = Coordinate(127, 128, 129)
 print(f"Home before change: {home}")
@@ -29,6 +37,11 @@ end_points.append(Coordinate(x=5, y=6.2, z=7, name="Float for coordinate"))
 end_points.append(Coordinate(x=5, y=6, z='z value', name="String for value"))
 print(end_points)
 
-first_student = Student("Smith")
-print(first_student)
-first_student.last_name = "Jones"   # <--- Yields an error
+science_guy = PhDStudent(major="communications", thesis_topic="Science!", last_name="Nye", first_name="Bill")
+print(f"{science_guy}")
+
+alien_student = PhDStudent("A","B","C","D")
+print(f"{alien_student}")
+#first_student = Student("Smith")
+#print(first_student)
+#first_student.last_name = "Jones"   # <--- Yields an error

@@ -315,6 +315,7 @@ class Lot(MCRectangle):
     def __post_init__(self):
         super().__post_init__()
         self.thickness = 5
+        self.altitude = 50
         print("Setting is_tipped to True")
         self.is_tipped = True
 #    def __init__(self, origin, width, depth, direction=Direction.NORTH):
@@ -347,7 +348,7 @@ class Lot(MCRectangle):
 
         # Define the space above the lot to clear with air
         sky_start = self.origin
-        sky_end = (opp_x, origin_y+self.height, opp_z)
+        sky_end = (opp_x, origin_y+self.altitude, opp_z)
 
         # Define the space beneath the lot
         ground_start = (origin_x, origin_y - 1, origin_z)
@@ -686,16 +687,15 @@ class MCDebug():
     @staticmethod
     def test_lot():
         """ Tests the creation of a job site by clearing a space to build on """
-        site = Lot('Job site', (0,-1,0), length=20, phi=0, theta=Direction.NORTH, height=50, material=materials.GRASS, material_subtype=0)
-        site.clear()
+        site = Lot('Job site', (0,-1,0), length=20, phi=0, theta=Direction.NORTH, height=5, material=materials.GRASS, material_subtype=0)
+        site.clear(block.WOOL.id, block.STONE.id, block.GRASS.id)
+#        site.clear()
+        print(site)
         
         structure_origin = site.offset_origin(3,5)
         print(f"Structure origin: {structure_origin}")
         one_block = MCComponent("structure origin", structure_origin)
         one_block._draw_origin()
-
-    
-
 
     @staticmethod
     def test_vertical_rectangles():

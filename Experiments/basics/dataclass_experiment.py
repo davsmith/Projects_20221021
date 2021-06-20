@@ -11,6 +11,9 @@ class Coordinate():
     y:  int = 0
     z:  int = 0
     name: str = "Coordinate"
+    
+    def __post_init__(self):
+        print("Coordinate has been defined")
 
 
 @dataclass(frozen=True)

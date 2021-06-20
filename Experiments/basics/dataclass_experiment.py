@@ -14,6 +14,7 @@ class Coordinate():
     
     def __post_init__(self):
         print("Coordinate has been defined")
+        self.new_variable = True
 
 
 @dataclass(frozen=True)
@@ -39,6 +40,7 @@ end_points.append(Coordinate(1, 2, 3))
 end_points.append(Coordinate(x=5, y=6.2, z=7, name="Float for coordinate"))
 end_points.append(Coordinate(x=5, y=6, z='z value', name="String for value"))
 print(end_points)
+print(f"Added new_variable with a value of: {end_points[1].new_variable}")
 
 science_guy = PhDStudent(major="communications", thesis_topic="Science!", last_name="Nye", first_name="Bill")
 print(f"{science_guy}")

@@ -362,114 +362,28 @@ class Lot(MCRectangle):
             self.draw(lot_material)
 
 
-
-# bmStory
-class Story(MCComponent):
-    def __init__(self, origin, width, height, depth, direction=Direction.NORTH):
-        super().__init__("Story", origin)
-        self.direction = direction
-        self.ground_floor = True
-        self.width = width
-        self.height = height
-        self.depth = depth
-        self.direction = direction
-        self.internal_wall_template = None
-        self.external_wall_template = None
-        self.walls = []
-        self.floors = []
-
-    def __repr__(self):
-        msg = f"<{self.name}> origin:{self.origin}, "
-        msg += f"width:{self.width}, "
-        msg += f"height:{self.height}, "
-        msg += f"depth:{self.depth}, "
-        msg += f"direction:{self.direction}, "
-        msg += f"# walls: {len(self.walls)}"
-        return msg
-    
-    def copy(self):
-        return copy.deepcopy(self)
-
-    def shift(self, x, y, z):
-        """Shifts the rectangle by an offset in each direction"""
-        super().shift(x, y, z)
-        for wall in self.walls:
-            wall.shift(x, y, z)
-
-        for floor in self.floors:
-            floor.shift(x, y, z)
-
-
-    def build_walls_from_perimeter(self):
-        wall_lengths = [self.depth, self.width, self.depth]
-        new_wall = self.external_wall_template.copy(extend=False)
-        new_wall.origin = self.origin
-        new_wall.length = self.width
-        new_wall.height = self.height
-        new_wall.theta = self.direction
-        self.walls.append(new_wall)
-
-        for wall_length in wall_lengths:
-            new_wall = new_wall.copy(extend=True)
-            new_wall.location = WallLocation.SIDE
-            new_wall.clear_openings()
-            new_wall.rotate_left()
-            new_wall.length = wall_length
-            self.walls.append(new_wall)
-            
-        self.walls[0].location = WallLocation.FRONT
-        self.walls[2].location = WallLocation.BACK
-        
-    def add_openings(self, opening_size=0):
-        front_wall = self.walls[0]
-        if opening_size > 0:
-            front_wall.clear_openings()
-            if self.level == 1:
-                self.walls[0].add_door(None, opening_size, 2*opening_size)
-            else:
-                self.walls[0].add_window(None, opening_size, opening_size)
-                
-            for index in range(1, len(self.walls)):
-                wall = self.walls[index]
-                wall.clear_openings()
-                if (wall.location == WallLocation.SIDE):
-                    wall.add_window(None, opening_size, opening_size)
-
-    def build_floor_from_perimeter(self, material=None, subtype=None):
-        if material is None:
-            material = materials.WOOL
-            subtype = materials.ORANGE
-            
-        floor = MCRectangle(self.origin, self.width, self.depth, self.direction)
-        floor.material = material
-        floor.material_subtype = subtype
-        
-        floor.is_tipped = True
-        floor.shrink(1)
-        floor.shift(0,-1,0)
-        self.floors.append(floor)
-
-    def draw(self):
-        for wall in self.walls:
-            wall.draw()
-        for floor in self.floors:
-            floor.draw()
-
-
 # bmWall
+@dataclass
 class Wall(MCRectangle):
     """A vertically standing wall"""
+    location: int = WallLocation.FRONT
+    corner_material: int = None
+    corner_subtype: int = None
 
-    def __init__(self, origin, width, height, direction=Direction.NORTH):
-        """A wall has an origin a width, a height, and a direction"""
-        super().__init__(origin, width, height, direction)
-        self.name = "Wall"
-        self.is_tipped = False
-        self.material = materials.WOOD
-        self.material_subtype = 0
-        self.location = WallLocation.FRONT
-        self.corner_material = None
-        self.corner_subtype = None
+#    def __init__(self, origin, width, height, direction=Direction.NORTH):
+#        """A wall has an origin a width, a height, and a direction"""
+#        super().__init__(origin, width, height, direction)
+#        self.name = "Wall"
+#        self.is_tipped = False
+#        self.material = materials.WOOD
+#        self.material_subtype = 0
+#        self.location = WallLocation.FRONT
+#        self.corner_material = None
+#        self.corner_subtype = None
+#        self.opening_defs = []
+        
+    def __post_init__(self):
+        super().__post_init__()
         self.opening_defs = []
 
 # bmWindow
@@ -585,6 +499,101 @@ class Wall(MCRectangle):
             else:
                 self.corner_material = corners
                 self.corner_subtype = 0
+
+
+# bmStory
+class Story(MCComponent):
+    def __init__(self, origin, width, height, depth, direction=Direction.NORTH):
+        super().__init__("Story", origin)
+        self.direction = direction
+        self.ground_floor = True
+        self.width = width
+        self.height = height
+        self.depth = depth
+        self.direction = direction
+        self.internal_wall_template = None
+        self.external_wall_template = None
+        self.walls = []
+        self.floors = []
+
+    def __repr__(self):
+        msg = f"<{self.name}> origin:{self.origin}, "
+        msg += f"width:{self.width}, "
+        msg += f"height:{self.height}, "
+        msg += f"depth:{self.depth}, "
+        msg += f"direction:{self.direction}, "
+        msg += f"# walls: {len(self.walls)}"
+        return msg
+    
+    def copy(self):
+        return copy.deepcopy(self)
+
+    def shift(self, x, y, z):
+        """Shifts the rectangle by an offset in each direction"""
+        super().shift(x, y, z)
+        for wall in self.walls:
+            wall.shift(x, y, z)
+
+        for floor in self.floors:
+            floor.shift(x, y, z)
+
+
+    def build_walls_from_perimeter(self):
+        wall_lengths = [self.depth, self.width, self.depth]
+        new_wall = self.external_wall_template.copy(extend=False)
+        new_wall.origin = self.origin
+        new_wall.length = self.width
+        new_wall.height = self.height
+        new_wall.theta = self.direction
+        self.walls.append(new_wall)
+
+        for wall_length in wall_lengths:
+            new_wall = new_wall.copy(extend=True)
+            new_wall.location = WallLocation.SIDE
+            new_wall.clear_openings()
+            new_wall.rotate_left()
+            new_wall.length = wall_length
+            self.walls.append(new_wall)
+            
+        self.walls[0].location = WallLocation.FRONT
+        self.walls[2].location = WallLocation.BACK
+        
+    def add_openings(self, opening_size=0):
+        front_wall = self.walls[0]
+        if opening_size > 0:
+            front_wall.clear_openings()
+            if self.level == 1:
+                self.walls[0].add_door(None, opening_size, 2*opening_size)
+            else:
+                self.walls[0].add_window(None, opening_size, opening_size)
+                
+            for index in range(1, len(self.walls)):
+                wall = self.walls[index]
+                wall.clear_openings()
+                if (wall.location == WallLocation.SIDE):
+                    wall.add_window(None, opening_size, opening_size)
+
+    def build_floor_from_perimeter(self, material=None, subtype=None):
+        if material is None:
+            material = materials.WOOL
+            subtype = materials.ORANGE
+            
+        floor = MCRectangle(self.origin, self.width, self.depth, self.direction)
+        floor.material = material
+        floor.material_subtype = subtype
+        
+        floor.is_tipped = True
+        floor.shrink(1)
+        floor.shift(0,-1,0)
+        self.floors.append(floor)
+
+    def draw(self):
+        for wall in self.walls:
+            wall.draw()
+        for floor in self.floors:
+            floor.draw()
+
+
 
 
 class MCDebug():

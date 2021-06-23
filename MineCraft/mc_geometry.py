@@ -202,7 +202,7 @@ class MCRectangle(MCVector):
 
     def along(self, horizontal=0, vertical=0):
         """Returns the coordinate of the materials <distance> along
-        along the bottom of the rectangle (0 is the origin)"""
+        the bottom of the rectangle (0 is the origin)"""
 
         return self._calc_opposite_corner(floor(horizontal), floor(vertical))
 
@@ -392,6 +392,7 @@ class Wall(MCRectangle):
     def __post_init__(self):
         super().__post_init__()
         self.opening_defs = []
+        self.corners = []
 
 # bmWindow
     def add_window(self, offset=None, width=1, height=1, material=materials.AIR, material_subtype=0):
@@ -443,56 +444,49 @@ class Wall(MCRectangle):
         """ Draws a wall with corners (if specified) using MCRectangles"""
         
         super().draw()
-        """
+        
         if self.corner_material:
-            corner1_x1, corner1_y1, corner1_z1 = self.origin
-            _, corner1_y2, _ = self.opposite
+            wall_def = {'name':'Corner 1',
+                        'origin':self.origin,
+                        'length':1,
+                        'phi':self.phi,
+                        'theta':self.theta,
+                        'height':self.height,
+                        'material':self.corner_material,
+                        'material_subtype':self.corner_subtype,
+                       }
+            
+            corner1 = Wall(**wall_def)
+            self.corners.append(corner1)
+            
+            corner2 = corner1.copy(extend=True)
+            corner2.origin = corner1.along(self.length-1,0)
+            self.corners.append(corner2)
 
-            corner2_x1, corner2_y1, corner2_z1 = self.opposite
-            _, corner2_y2, _ = self.origin
+            for corner in self.corners:
+                corner.draw()
 
-            dbg_print(f"Drawing corners for {self.name}", 5)
-            msg = f"Corner 1: {corner1_x1}, {corner1_y1}, {corner1_z1} "
-            msg += f"to {corner1_x1}, {corner1_y2}, {corner1_z1} "
-            msg += f"in material {self.corner_material}, subtype {self.corner_subtype}"
-            dbg_print(msg, 9)
+            for opening_def in self.opening_defs:
+                self._calc_absolute_location(opening_def)
+                origin = opening_def["origin"]
+                width = opening_def["width"]
+                height = opening_def["height"]
+                theta = opening_def["theta"]
+                material = opening_def["material"]
+                material_subtype = opening_def["material_subtype"]
 
-            msg = f"Corner 2: {corner2_x1}, {corner2_y1}, {corner2_z1} "
-            msg += f"to {corner2_x1}, {corner2_y2}, {corner2_z1} "
-            msg += f"in material {self.corner_material}, subtype {self.corner_subtype}"
-            dbg_print(msg, 9)
-
-        if MINECRAFT_EXISTS:
-                MC.setBlocks(corner1_x1, corner1_y1, corner1_z1,
-                             corner1_x1, corner1_y2, corner1_z1,
-                             self.corner_material, self.corner_subtype)
-
-                MC.setBlocks(corner2_x1, corner2_y1, corner2_z1,
-                             corner2_x1, corner2_y2, corner2_z1,
-                             self.corner_material, self.corner_subtype)
-
-                for opening_def in self.opening_defs:
-                    self._calc_absolute_location(opening_def)
-                    origin = opening_def["origin"]
-                    width = opening_def["width"]
-                    height = opening_def["height"]
-                    theta = opening_def["theta"]
-                    material = opening_def["material"]
-                    material_subtype = opening_def["material_subtype"]
-
-                    new_opening = MCRectangle(origin, width, height, theta)
-                    new_opening.material = material
-                    new_opening.material_subtype = material_subtype
-                    new_opening.debug = False
-                    new_opening.name = "Opening"
-                    print(new_opening)
-                    new_opening.draw()
-        """
+                new_opening = MCRectangle(origin, width, height, theta)
+                new_opening.material = material
+                new_opening.material_subtype = material_subtype
+                new_opening.debug = False
+                new_opening.name = "Opening"
+                print(new_opening)
+                new_opening.draw()
 
     # bmSetMaterials
     def set_materials(self, body_material, body_subtype, corner_material=None, corner_subtype=None):
         """ Sets the materials of the wall with optional different material
-            for the wall corners."""
+            for wall corners."""
 #        BUGBUG: Document this --> print(type.mro(type((0,0))))
 #        BUGBUG: Document this --> if hasattr(main, '__iter__'):
 
@@ -611,6 +605,7 @@ class MCDebug():
     purple_wool = (35, 10)
     green_wool = (35, 13)
     yellow_wool = (35, 4)
+    pink_wool = (35, 6)
     magenta_wool = (35, 2)
     light_blue_wool = (35, 3)
     orange_wool = (35, 1)
@@ -661,6 +656,16 @@ class MCDebug():
         """Sets up the environment to run tests -- e.g. creates a job site"""
         site = Lot('Job site', (-5,-1,-5), length=20, phi=0, theta=Direction.NORTH, height=30, material=materials.GRASS, material_subtype=0)
         site.clear(block.GRASS.id, block.STONE.id, block.AIR.id)
+        
+    def get_test_def():
+        """Define a base template for tests"""
+        
+        base_def = {'name':'base_rect', 'phi':0, 'length':5, 'height':3}
+        base_def['origin'] = MCDebug.test_origin
+        base_def['material'], base_def['material_subtype'] = MCDebug.yellow_wool
+        base_def['theta'] = Direction.EAST
+        
+        return base_def
 
     @staticmethod
     def test_mccomponent():
@@ -792,11 +797,26 @@ class MCDebug():
             wall.rotate_right()
             wall.draw()
 
-
-
     @staticmethod
     def test_corners():
         """ Draws walls with different corners for the main wall and corners """
+        wall_def = {
+            'origin': MCDebug.test_origin,
+            'length': 5,
+            'height': 3,
+            'phi': 0,
+            'material': None,
+            'material_subtype': None
+        }
+
+        wall_def['name'] = f'Wall_{Direction.NORTH}'
+        wall_def['theta'] = Direction.NORTH
+        wall = Wall(**wall_def)
+        wall.set_materials(*MCDebug.blue_wool, *MCDebug.orange_wool)
+        print(wall)
+        wall.draw()
+
+        '''
         wall1 = Wall((-5, 0, -2), width=5, height=3, direction=Direction.NORTH)
         print(wall1)
 #        wall1.set_materials(materials.WOOD, materials.WOOL)
@@ -818,7 +838,8 @@ class MCDebug():
         wall4.rotate_left()
         wall4.set_materials((materials.WOOL, 5), (materials.TNT, 1.0))
         wall4.draw()
-
+        '''
+        
     @staticmethod
     def test_along_method():
         """ Tests the Rectangle.along method which returns the coordinate of
@@ -879,112 +900,142 @@ class MCDebug():
         wall4.draw()
 
     @staticmethod
-    def test_vertical_rectangles():
+    def test_mcrectangle_vertical():
         """Creates and draws rectangles in a + pattern"""
-        origin = (0, 0, 0)
+        
+        wall_def = {'name':'VRect1', 'phi':0, 'length':5, 'height':3}
+        wall_def['origin'] = MCDebug.test_origin
+        wall_def['material'], wall_def['material_subtype'] = MCDebug.yellow_wool
+        wall_def['theta'] = Direction.EAST
 
         # Vertical rectangles
-        rec1 = MCRectangle(origin=origin, length=5,
-                           height=3, theta=Direction.EAST)
-        rec1.material_subtype = 11  # Blue
+        wall_def['theta'] = Direction.EAST
+        rec1 = MCRectangle(**wall_def)
+        rec1.material, rec1.material_subtype = MCDebug.blue_wool
         rec1.draw()
 
-        rec2 = MCRectangle(origin=origin, length=5,
-                           height=3, theta=Direction.WEST)
-        rec2.material_subtype = 3  # Light Blue
+        wall_def['theta'] = Direction.WEST
+        rec2 = MCRectangle(**wall_def)
+        rec2.material, rec2.material_subtype = MCDebug.light_blue_wool
         rec2.draw()
 
-        rec3 = MCRectangle(origin=origin, length=5,
-                           height=3, theta=Direction.SOUTH)
-        rec3.material_subtype = 14  # Red
+        wall_def['theta'] = Direction.NORTH
+        rec3 = MCRectangle(**wall_def)
+        rec3.material, rec3.material_subtype = MCDebug.red_wool
         rec3.draw()
 
-        rec4 = MCRectangle(origin=origin, length=5,
-                           height=3, theta=Direction.NORTH)
+        wall_def['theta'] = Direction.SOUTH
+        rec4 = MCRectangle(**wall_def)
         rec4.material_subtype = 6  # Pink
         rec4.draw()
 
+    @staticmethod
+    def test_mcrectangle_rotated():
+        """ Exercises the rotate functionality on the Rectangle class
+        The result should be 4 walls in a + pattern"""
+
+        # Get a base definition for a 3x5 rectangle, pointing East
+        rec_def = MCDebug.get_test_def()
+        
+        # Vertical rectangles
+        rec1 = MCRectangle(**rec_def)
+        rec1.material, rec1.material_subtype = MCDebug.blue_wool
+        rec1.draw()
+
+        # Pointing South
+        rec1.material, rec1.material_subtype = MCDebug.light_blue_wool
+        rec1.rotate_right()
+        rec1.draw()
+
+        # Pointing West
+        rec1.material, rec1.material_subtype = MCDebug.pink_wool
+        rec1.rotate_right()
+        rec1.draw()
+
+        # Pointing North
+        rec1.material, rec1.material_subtype = MCDebug.red_wool
+        rec1.rotate_right()
+        rec1.draw()
 
     @staticmethod
-    def draw_flat_rectangles():
+    def test_mcrectangle_flat():
         """Creates and draws rectangles and their 'tipped' equivalent
         The rectangles should be 4 'L' shaped structures in a + pattern"""
-        origin = (0, 0, 10)
-        rec1 = MCRectangle(origin=origin, length=5,
-                           height=3, theta=Direction.EAST)
-        rec1.material_subtype = 11  # Blue
+
+        # Get a base definition for a 3x5 rectangle, pointing East
+        rec_def = MCDebug.get_test_def()
+
+        rec1 = MCRectangle(**rec_def)
+        rec1.material, rec1.material_subtype = MCDebug.blue_wool
         rec1.is_tipped = True
         rec1.draw()
         rec1.is_tipped = False
         rec1.draw()
 
-        rec2 = MCRectangle(origin=origin, length=5,
-                           height=3, theta=Direction.WEST)
-        rec2.material_subtype = 3  # Light Blue
+        rec_def['theta'] = Direction.SOUTH
+        rec2 = MCRectangle(**rec_def)
+        rec2.material, rec2.material_subtype = MCDebug.light_blue_wool
         rec2.is_tipped = True
         rec2.draw()
         rec2.is_tipped = False
         rec2.draw()
 
-        rec3 = MCRectangle(origin=origin, length=5,
-                           height=3, theta=Direction.SOUTH)
-        rec3.material_subtype = 14  # Red
+        rec_def['theta'] = Direction.WEST
+        rec3 = MCRectangle(**rec_def)
+        rec3.material, rec3.material_subtype = MCDebug.pink_wool
         rec3.is_tipped = True
         rec3.draw()
         rec3.is_tipped = False
         rec3.draw()
 
-        rec4 = MCRectangle(origin=origin, length=5,
-                           height=3, theta=Direction.NORTH)
-        rec4.material_subtype = 6  # Pink
+        rec_def['theta'] = Direction.NORTH
+        rec4 = MCRectangle(**rec_def)
+        rec4.material, rec4.material_subtype = MCDebug.red_wool
         rec4.is_tipped = True
         rec4.draw()
         rec4.is_tipped = False
         rec4.draw()
 
     @staticmethod
-    def draw_rotated_rectangles():
-        """ Exercises the rotate functionality on the Rectangle class
-        The result should be 4 walls in a + pattern"""
-        origin = (0, 0, 0)
-
-        # Vertical rectangles
-        rec1 = MCRectangle(origin=origin, length=5,
-                           height=3, theta=Direction.EAST)
-        rec1.material_subtype = 11  # Blue
-        rec1.draw()
-
-        rec1.material_subtype = 3  # Light Blue
-        rec1.rotate_right()
-        rec1.draw()
-
-        rec1.material_subtype = 14  # Red
-        rec1.rotate_right()
-        rec1.draw()
-
-        rec1.material_subtype = 6  # Pink
-        rec1.rotate_right()
-        rec1.draw()
-
-    @staticmethod
-    def draw_copied_rectangles():
+    def test_mcrectangle_copy():
         """Creates a rectangle and copies it to a second rectangle
         Result is two rectangles, the second offset the first by 5 spaces"""
 
-        origin = (0, 0, 0)
-        rec1 = MCRectangle(origin=origin, length=5,
-                           height=3, theta=Direction.EAST)
-        rec1.material_subtype = 11  # Blue
+        # Get a base definition for a 3x5 rectangle, pointing East
+        rec_def = MCDebug.get_test_def()
+
+        rec1 = MCRectangle(**rec_def)
+        rec1.material, rec1.material_subtype = MCDebug.blue_wool
         rec1.draw()
 
-        rec2 = rec1.copy()
-        rec2.origin = (0, 0, 5)
-#        rec2.rotate_left()
-        rec2.material_subtype = 14
+        rec2 = rec1.copy(extend=True)
+        rec2.material, rec2.material_subtype = MCDebug.light_blue_wool
         rec2.draw()
 
+        rec3 = rec2.copy(extend=False)
+        rec3.shift(0, 0, 2)
+        rec3.material, rec3.material_subtype = MCDebug.magenta_wool
+        rec3.draw()
+        
+    @staticmethod
+    def test_mcrectangle_shrink():
+        """Test the shrink method on a rectangle.
+        Draws a large rectangle then a smaller rectangle inside"""
+        
+        # Get a base definition for a 3x5 rectangle, pointing East
+        rec_def = MCDebug.get_test_def()
+        rec_def['length'] = 8
+        rec_def['height'] = 4
+
+        rec1 = MCRectangle(**rec_def)
+        rec1.material, rec1.material_subtype = MCDebug.magenta_wool
+        rec1.is_tipped = False
         rec1.draw()
-        rec1.draw()
+        
+        rec2 = rec1.copy(extend=False)
+        rec2.shrink(1)
+        rec2.material, rec2.material_subtype = MCDebug.orange_wool
+        rec2.draw()
 
     # bm1
     @staticmethod
@@ -1059,16 +1110,6 @@ class MCDebug():
         site.material = materials.GRASS
         site.clear()
         
-    def test_shrink():
-        rec1 = MCRectangle(origin=(0,0,0), length=8, height=4)
-        rec1.material_subtype = materials.MAGENTA
-        rec1.is_tipped = False
-        rec1.draw()
-        rec2 = rec1.copy(extend=False)
-        rec2.shrink(1)
-        rec2.material_subtype = materials.ORANGE
-        rec2.draw()
-
 def test_unpacking(x, y):
     print(f"x: {x}, y:{y}")
     
@@ -1081,19 +1122,19 @@ def main():
 #    MCDebug.test_mccomponent()
 #    MCDebug.test_mcvector()
 #    MCDebug.test_mcrectangle()
-#    MCDebug.test_lot()
-    MCDebug.test_wall()
-#    MCDebug.test_vertical_rectangles()
-#    MCDebug.test_shrink()
-#    MCDebug.draw_flat_rectangles()
-#    MCDebug.draw_rotated_rectangles()
-#    MCDebug.draw_copied_rectangles()
+#    MCDebug.test_mcrectangle_vertical()
+#    MCDebug.test_mcrectangle_rotated()
+#    MCDebug.test_mcrectangle_flat()
+#    MCDebug.test_mcrectangle_copy()
+    MCDebug.test_mcrectangle_shrink()
 #    MCDebug.draw_flip_origin()
+#    MCDebug.test_lot()
+#    MCDebug.test_wall()
+#    MCDebug.test_wall_corners()
 #    MCDebug.draw_outline()
 #    MCDebug.test_walls()
 #    MCDebug.test_along_method()
 #    MCDebug.test_wall_on_lot()
-#    MCDebug.test_corners()
 #    MCDebug.test_openings()
 #    MCDebug.test_stories()
 

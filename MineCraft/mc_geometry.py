@@ -15,6 +15,10 @@ def dbg_print(msg, level=5):
     if LOG_LEVEL >= level:
         print(">>> " + msg)
 
+def shift(origin, offset_x, offset_y, offset_z):
+    """ Returns a tuple with the base point shifted by x, y, and z """
+    origin_x, origin_y, origin_z = origin
+    return (origin_x+offset_x, origin_y+offset_y, origin_z+offset_z)
 
 try:
     # pylint: disable=import-error
@@ -78,9 +82,10 @@ class MCComponent:
             MC.setBlock(x, y, z, material, subtype)
             
     def shift(self, x, y, z):
-        """Shifts the rectangle by an offset in each direction"""
+        """Shifts the origin by an offset in each direction"""
         origin_x, origin_y, origin_z = self.origin
         self.origin = (origin_x + x, origin_y + y, origin_z + z)
+        return self.origin
 
 
 # bmVector
@@ -330,8 +335,10 @@ class Lot(MCRectangle):
         return (x, y+1, z)
 
     def clear(self, lot_material=None, ground_material=None, sky_material=None):
-        """Clears the space above and below the lot,
-            and redraws the lot in the specified material"""
+        """Clears the space above and below the lot, and redraws the lot in
+        the specified material.
+        
+        If no arguments are specified Air, Grass, and Stone are used """
         if sky_material is None:
             sky_material = materials.AIR
             
@@ -433,7 +440,10 @@ class Wall(MCRectangle):
         opening_def["origin"] = self.along(offset_x, offset_y)
 
     def draw(self):
+        """ Draws a wall with corners (if specified) using MCRectangles"""
+        
         super().draw()
+        """
         if self.corner_material:
             corner1_x1, corner1_y1, corner1_z1 = self.origin
             _, corner1_y2, _ = self.opposite
@@ -452,7 +462,7 @@ class Wall(MCRectangle):
             msg += f"in material {self.corner_material}, subtype {self.corner_subtype}"
             dbg_print(msg, 9)
 
-            if MINECRAFT_EXISTS:
+        if MINECRAFT_EXISTS:
                 MC.setBlocks(corner1_x1, corner1_y1, corner1_z1,
                              corner1_x1, corner1_y2, corner1_z1,
                              self.corner_material, self.corner_subtype)
@@ -477,28 +487,21 @@ class Wall(MCRectangle):
                     new_opening.name = "Opening"
                     print(new_opening)
                     new_opening.draw()
+        """
 
     # bmSetMaterials
-    def set_materials(self, body, corners=None):
+    def set_materials(self, body_material, body_subtype, corner_material=None, corner_subtype=None):
         """ Sets the materials of the wall with optional different material
-            for the wall corners.
-            The body and corner arguments can be numbers or indexable types (e.g. tuples)."""
+            for the wall corners."""
 #        BUGBUG: Document this --> print(type.mro(type((0,0))))
+#        BUGBUG: Document this --> if hasattr(main, '__iter__'):
 
-        if hasattr(main, '__iter__'):
-            self.material = body[0]
-            self.material_subtype = body[1]
-        else:
-            self.material = body
-            self.material_subtype = 0
-
-        if not corners is None:
-            if hasattr(corners, '__iter__'):
-                self.corner_material = corners[0]
-                self.corner_subtype = corners[1]
-            else:
-                self.corner_material = corners
-                self.corner_subtype = 0
+        self.material = body_material
+        self.material_subtype = body_subtype
+        
+        if not corner_material is None:
+            self.corner_material = corner_material
+            self.corner_subtype = corner_subtype
 
 
 # bmStory
@@ -597,13 +600,35 @@ class Story(MCComponent):
 
 
 class MCDebug():
-    """Functions for setting up MineCraft environment on Raspberry Pi"""
+    """Functions for setting up and testing MineCraft environment on Raspberry Pi.
 
-    blue_wool = (materials.WOOL, materials.LIGHT_BLUE)
-    magenta_wool = (materials.WOOL, materials.MAGENTA)
-    orange_wool = (materials.WOOL, materials.ORANGE)
-    white_wool = (materials.WOOL, materials.WHITE)
+    Methods that don't start with test_ (e.g. draw_ or clear_) use hard coded MineCraft APIs
+    to draw structures, rather than mc_geometry code."""
+
+    # Define some colored blocks for visual differentiation in tests
+    blue_wool = (35, 11)
+    red_wool = (35, 14)
+    purple_wool = (35, 10)
+    green_wool = (35, 13)
+    yellow_wool = (35, 4)
+    magenta_wool = (35, 2)
+    light_blue_wool = (35, 3)
+    orange_wool = (35, 1)
+    white_wool = (35, 0)
     
+    test_origin = (5, 0, 5)
+    
+    
+    @staticmethod
+    def draw_walls():
+        """Draws a set of walls at hard coded coordinates"""
+        if MINECRAFT_EXISTS:
+            block_id = 35
+            MC.setBlocks(0, 0, 0, 4, 2, 0, block_id, 11)    # Blue
+            MC.setBlocks(0, 0, 0, 0, 2, 4, block_id, 13)    # Green
+            MC.setBlocks(0, 0, 4, 4, 2, 4, block_id, 4)     # Yellow
+            MC.setBlocks(4, 0, 0, 4, 2, 4, block_id, 2)     # Magenta
+            MC.setBlock(0, 0, 0, 46, 1)
 
     @staticmethod
     def clear_space(move_player=False):
@@ -619,14 +644,23 @@ class MCDebug():
 
         if (MINECRAFT_EXISTS):
             MC.setBlocks(-plane_size/2, 0, -plane_size/2,
-                         plane_size/2, space_above, plane_size/2, 0)
+                         plane_size/2, space_above, plane_size/2, space_material)
             MC.setBlocks(-plane_size/2, -2, -plane_size/2, plane_size /
                          2, -ground_below-1, plane_size/2, bedrock_material)
             MC.setBlocks(-plane_size/2, -1, -plane_size/2,
                          plane_size/2, -1, plane_size/2, ground_material)
 
+            MC.setBlock(0, 0, 0, block.GOLD_BLOCK.id, 0)
+            MC.setBlock(0, 0, -1, *MCDebug.red_wool)
+            MC.setBlock(1, 0, 0, *MCDebug.blue_wool)
             if move_player:
                 MC.player.setPos(-5, 0, -5)
+
+    @staticmethod
+    def setup_tests():
+        """Sets up the environment to run tests -- e.g. creates a job site"""
+        site = Lot('Job site', (-5,-1,-5), length=20, phi=0, theta=Direction.NORTH, height=30, material=materials.GRASS, material_subtype=0)
+        site.clear(block.GRASS.id, block.STONE.id, block.AIR.id)
 
     @staticmethod
     def test_mccomponent():
@@ -698,13 +732,151 @@ class MCDebug():
         """ Tests the creation of a job site by clearing a space to build on """
         site = Lot('Job site', (0,-1,0), length=20, phi=0, theta=Direction.NORTH, height=5, material=materials.GRASS, material_subtype=0)
         site.clear(block.WOOL.id, block.STONE.id, block.GRASS.id)
-#        site.clear()
         print(site)
         
         structure_origin = site.offset_origin(3,5)
         print(f"Structure origin: {structure_origin}")
         one_block = MCComponent("structure origin", structure_origin)
         one_block._draw_origin()
+
+    @staticmethod
+    def test_wall():
+        """ Tests the basic methods of drawing a wall """
+
+        wall_def = {
+            'origin': MCDebug.test_origin,
+            'length': 5,
+            'height': 3,
+            'phi': 0
+        }
+            
+        """ Draw a single wall in 4 directions (North = Red) """
+        directions = [Direction.NORTH, Direction.SOUTH, Direction.EAST, Direction.WEST]
+        colors = [MCDebug.red_wool, MCDebug.orange_wool, MCDebug.blue_wool, MCDebug.light_blue_wool]
+        
+        for i in range(len(directions)):
+            wall_def['name'] = f"Plus_{directions[i]}"
+            wall_def['theta'] = directions[i]
+            wall_def['material'], wall_def['material_subtype'] = colors[i]
+            wall = Wall(**wall_def)
+            wall.flip_origin(keep_direction = False)
+            print(wall)
+            wall.draw()
+        
+        
+        """ Draws 4 walls with the rotate_left method """
+        wall_def['name'] = f'Wall_{Direction.NORTH}'
+        wall_def['origin'] = shift(MCDebug.test_origin, 15, 0, 0)
+        wall_def['theta'] = Direction.NORTH
+        wall_def['material'], wall_def['material_subtype'] = MCDebug.white_wool
+        wall = Wall(**wall_def)
+        wall.draw()
+        
+        for i in range(3):
+            wall = wall.copy(extend=True)
+            wall.set_materials(*colors[i])
+            wall.rotate_left()
+            wall.draw()
+
+        """ Draws 4 walls with the rotate_right method """
+        wall_def['name'] = f'Wall_{Direction.NORTH}'
+        wall_def['origin'] = shift(MCDebug.test_origin, 20, 0, 0)
+        wall_def['theta'] = Direction.NORTH
+        wall_def['material'], wall_def['material_subtype'] = MCDebug.white_wool
+        wall = Wall(**wall_def)
+        wall.draw()
+        
+        for i in range(3):
+            wall = wall.copy(extend=True)
+            wall.set_materials(*colors[i])
+            wall.rotate_right()
+            wall.draw()
+
+
+
+    @staticmethod
+    def test_corners():
+        """ Draws walls with different corners for the main wall and corners """
+        wall1 = Wall((-5, 0, -2), width=5, height=3, direction=Direction.NORTH)
+        print(wall1)
+#        wall1.set_materials(materials.WOOD, materials.WOOL)
+        wall1.draw()
+
+        wall2 = wall1.copy(extend=True)
+        wall2.shift(5, 0, 0)
+        wall2.set_materials(materials.WOOL, materials.WOOD)
+        wall2.draw()
+
+        wall3 = wall2.copy(extend=True)
+        wall3.shift(8, 0, 0)
+        wall3.rotate_left()
+        wall3.set_materials(materials.WOOL, (materials.TNT, 1.7))
+        wall3.draw()
+
+        wall4 = wall3.copy(extend=True)
+        wall4.shift(8, 0, 0)
+        wall4.rotate_left()
+        wall4.set_materials((materials.WOOL, 5), (materials.TNT, 1.0))
+        wall4.draw()
+
+    @staticmethod
+    def test_along_method():
+        """ Tests the Rectangle.along method which returns the coordinate of
+        a materials along a wall horizontally, vertically or both.
+        A successful test will result in two perpendicular walls each with
+        a materials of wool somewhere along the line."""
+        wall1 = Wall((-5, 0, -2), width=5, height=3, direction=Direction.EAST)
+        wall1.draw()
+        wall1.name = "Test Along East"
+
+        wall2 = Wall((-5, 0, -2), width=5, height=3, direction=Direction.NORTH)
+        wall2.draw()
+        wall2.name = "Test Along North"
+
+        x1, y1, z1 = wall1.along(2)
+        print(f"x1={x1}, y1={y1}, z1={z1}")
+        MC.setBlock(x1, y1, z1, materials.WOOL)
+
+        x2, y2, z2 = wall2.along(2.5, 1.5)
+        print(f"x2={x2}, y2={y2}, z2={z2}")
+        MC.setBlock(x2, y2, z2, materials.WOOL)
+
+    @staticmethod
+    def test_wall_on_lot():
+        """ Sets the origin of a wall based on an offset from the lot corner """
+        site = Lot(origin=(0, -1, 0), across=20,
+                   depth=50, direction=Direction.NORTH)
+        site.name = "Job site"
+        site.material = materials.GRASS
+        site.clear()
+#        x,y,z = site.along(4,1)
+#        MC.setBlock(x, y+1, z, materials.WOOL)
+
+    @staticmethod
+    def test_openings():
+        wall_width = 5
+        wall_height = 3
+        origin = (-5, 0, -2)
+
+        wall1 = Wall(origin=origin, width=wall_width,
+                     height=wall_height, direction=Direction.NORTH)
+        wall1.set_materials((materials.WOOD_PLANKS, 0), (materials.WOOD, 0))
+        wall1.add_window(None, 1, 1, materials.AIR)
+        wall1.draw()
+
+        wall2 = wall1.copy(extend=True)
+        wall2.rotate_left()
+        wall2.draw()
+
+        wall3 = wall2.copy(extend=True)
+        wall3.rotate_left()
+        wall3.draw()
+
+        wall4 = wall3.copy(extend=True)
+        wall4.rotate_left()
+        wall4.clear_openings()
+        wall4.add_door(None, 1, 2, materials.AIR, 0)
+        wall4.draw()
 
     @staticmethod
     def test_vertical_rectangles():
@@ -731,18 +903,6 @@ class MCDebug():
                            height=3, theta=Direction.NORTH)
         rec4.material_subtype = 6  # Pink
         rec4.draw()
-
-
-    @staticmethod
-    def draw_walls():
-        """Draws a set of walls at hard coded coordinates"""
-        if MINECRAFT_EXISTS:
-            block_id = 35
-            MC.setBlocks(0, 0, 0, 4, 2, 0, block_id, 11)    # Blue
-            MC.setBlocks(0, 0, 0, 0, 2, 4, block_id, 13)    # Green
-            MC.setBlocks(0, 0, 4, 4, 2, 4, block_id, 4)     # Yellow
-            MC.setBlocks(4, 0, 0, 4, 2, 4, block_id, 2)     # Magenta
-            MC.setBlock(0, 0, 0, 46, 1)
 
 
     @staticmethod
@@ -859,109 +1019,6 @@ class MCDebug():
             rec.draw()
 
     @staticmethod
-    def test_walls():
-        """ Draws 4 walls using the Wall class.
-        The result should be 4 walls in a square """
-        wall1 = Wall((-5, 0, -2), width=5, height=3, direction=Direction.NORTH)
-        wall1.set_materials(materials.WOOD_PLANKS, materials.TNT)
-        wall2 = wall1.copy(extend=True)
-        wall2.rotate_left()
-#        wall3 = wall2.copy(extend=True)
-#        wall3.rotate_left()
-#        wall4 = wall3.copy(extend=True)
-#        wall4.rotate_left()
-        print(f"Wall1 - {wall1}")
-        print(f"Wall2 - {wall2}")
-        wall1.draw()
-        wall2.draw()
-#        wall3.draw()
-#        wall4.draw()
-
-    @staticmethod
-    def test_corners():
-        """ Draws walls with different corners for the main wall and corners """
-        wall1 = Wall((-5, 0, -2), width=5, height=3, direction=Direction.NORTH)
-        print(wall1)
-#        wall1.set_materials(materials.WOOD, materials.WOOL)
-        wall1.draw()
-
-        wall2 = wall1.copy(extend=True)
-        wall2.shift(5, 0, 0)
-        wall2.set_materials(materials.WOOL, materials.WOOD)
-        wall2.draw()
-
-        wall3 = wall2.copy(extend=True)
-        wall3.shift(8, 0, 0)
-        wall3.rotate_left()
-        wall3.set_materials(materials.WOOL, (materials.TNT, 1.7))
-        wall3.draw()
-
-        wall4 = wall3.copy(extend=True)
-        wall4.shift(8, 0, 0)
-        wall4.rotate_left()
-        wall4.set_materials((materials.WOOL, 5), (materials.TNT, 1.0))
-        wall4.draw()
-
-    @staticmethod
-    def test_along_method():
-        """ Tests the Rectangle.along method which returns the coordinate of
-        a materials along a wall horizontally, vertically or both.
-        A successful test will result in two perpendicular walls each with
-        a materials of wool somewhere along the line."""
-        wall1 = Wall((-5, 0, -2), width=5, height=3, direction=Direction.EAST)
-        wall1.draw()
-        wall1.name = "Test Along East"
-
-        wall2 = Wall((-5, 0, -2), width=5, height=3, direction=Direction.NORTH)
-        wall2.draw()
-        wall2.name = "Test Along North"
-
-        x1, y1, z1 = wall1.along(2)
-        print(f"x1={x1}, y1={y1}, z1={z1}")
-        MC.setBlock(x1, y1, z1, materials.WOOL)
-
-        x2, y2, z2 = wall2.along(2.5, 1.5)
-        print(f"x2={x2}, y2={y2}, z2={z2}")
-        MC.setBlock(x2, y2, z2, materials.WOOL)
-
-    @staticmethod
-    def test_wall_on_lot():
-        """ Sets the origin of a wall based on an offset from the lot corner """
-        site = Lot(origin=(0, -1, 0), across=20,
-                   depth=50, direction=Direction.NORTH)
-        site.name = "Job site"
-        site.material = materials.GRASS
-        site.clear()
-#        x,y,z = site.along(4,1)
-#        MC.setBlock(x, y+1, z, materials.WOOL)
-
-    @staticmethod
-    def test_openings():
-        wall_width = 5
-        wall_height = 3
-        origin = (-5, 0, -2)
-
-        wall1 = Wall(origin=origin, width=wall_width,
-                     height=wall_height, direction=Direction.NORTH)
-        wall1.set_materials((materials.WOOD_PLANKS, 0), (materials.WOOD, 0))
-        wall1.add_window(None, 1, 1, materials.AIR)
-        wall1.draw()
-
-        wall2 = wall1.copy(extend=True)
-        wall2.rotate_left()
-        wall2.draw()
-
-        wall3 = wall2.copy(extend=True)
-        wall3.rotate_left()
-        wall3.draw()
-
-        wall4 = wall3.copy(extend=True)
-        wall4.rotate_left()
-        wall4.clear_openings()
-        wall4.add_door(None, 1, 2, materials.AIR, 0)
-        wall4.draw()
-
-    @staticmethod
     def test_stories():
         site_set_back = (2, 4)
         
@@ -1020,13 +1077,14 @@ def main():
     """Main function which is run when the program is run standalone"""
     dbg_print(f"Debug level: {LOG_LEVEL}", 0)
     MCDebug.clear_space(False)   # Low-level clear using setBlocks
+    MCDebug.setup_tests()
 #    MCDebug.test_mccomponent()
 #    MCDebug.test_mcvector()
 #    MCDebug.test_mcrectangle()
-    MCDebug.test_lot()
+#    MCDebug.test_lot()
+    MCDebug.test_wall()
 #    MCDebug.test_vertical_rectangles()
 #    MCDebug.test_shrink()
-#    MCDebug.draw_walls()
 #    MCDebug.draw_flat_rectangles()
 #    MCDebug.draw_rotated_rectangles()
 #    MCDebug.draw_copied_rectangles()

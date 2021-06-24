@@ -293,7 +293,7 @@ class Rectangle(Component):
             This method is mostly for debugging
         '''
         if material is None:
-            material = block.TNT.id
+            material = materials.TNT
             subtype = 1
         x1, y1, z1 = self.origin
         mc.setBlock(x1, y1, z1, material, subtype)

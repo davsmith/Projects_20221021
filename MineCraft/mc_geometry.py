@@ -86,6 +86,15 @@ class MCComponent:
         origin_x, origin_y, origin_z = self.origin
         self.origin = (origin_x + x, origin_y + y, origin_z + z)
         return self.origin
+    
+    def shift_parallel(self, distance):
+        scalar = 90 * (distance/abs(distance))
+        self.theta += scalar
+        self.origin = self.along(distance)
+        self.theta -= scalar
+    
+    def shift_perpendicular(self, distance):
+        pass
 
 
 # bmVector
@@ -733,18 +742,6 @@ class MCDebug():
         rec1.draw(*MCDebug.orange_wool)
         
     @staticmethod
-    def test_lot():
-        """ Tests the creation of a job site by clearing a space to build on """
-        site = Lot('Job site', (0,-1,0), length=20, phi=0, theta=Direction.NORTH, height=5, material=materials.GRASS, material_subtype=0)
-        site.clear(block.WOOL.id, block.STONE.id, block.GRASS.id)
-        print(site)
-        
-        structure_origin = site.offset_origin(3,5)
-        print(f"Structure origin: {structure_origin}")
-        one_block = MCComponent("structure origin", structure_origin)
-        one_block._draw_origin()
-
-    @staticmethod
     def test_wall():
         """ Tests the basic methods of drawing a wall """
 
@@ -1037,37 +1034,85 @@ class MCDebug():
         rec2.material, rec2.material_subtype = MCDebug.orange_wool
         rec2.draw()
 
-    # bm1
     @staticmethod
-    def draw_flip_origin():
-        """ Draws a rectangle, then flips it around so that the origin is
-        at the opposite side of the rectangle"""
-        origin = (0, 0, 0)
-        rec1 = MCRectangle(origin=origin, length=5,
-                           height=3, theta=Direction.WEST)
-        rec1.material_subtype = 11  # Blue
+    def test_mcrectangle_flip_origin():
+        """Test the flip_origin method on a rectangle
+        Success is two rectangles with the origins at opposite sides,
+        on the bottom of the rectangle"""
+
+        # Get a base definition for a 3x5 rectangle, pointing East
+        rec_def = MCDebug.get_test_def()
+
+        rec1 = MCRectangle(**rec_def)
+        rec1.material, rec1.material_subtype = MCDebug.magenta_wool
         rec1.draw()
 
         rec2 = rec1.copy(extend=True)
-        rec2.material_subtype = 14
+        rec2.shift(3,0,0)
+        rec2.flip_origin(keep_direction=False)
+        rec2.draw()
+        
+    def test_mcrectangle_shift_parallel():
+        """Tests the shift_parallel method on a rectangle
+        Draws three rectangles, magenta in the center, blue and orange
+        offset by 3 blocks in either direction"""
+        
+        # Get a base definition for a 3x5 rectangle, pointing East
+        rec_def = MCDebug.get_test_def()
+        rec_def['theta'] = Direction.EAST
+        rec1 = MCRectangle(**rec_def)
+        rec1.material, rec1.material_subtype = MCDebug.magenta_wool
+        print(rec1)
+        rec1.draw()
+        
+        rec2 = rec1.copy(extend=False)
+        rec2.material, rec2.material_subtype = MCDebug.blue_wool
+        rec2.shift_parallel(3)
         rec2.draw()
 
-    @staticmethod
-    def draw_outline():
-        """Draws a square shaped structure from 4 walls draw by making
-        3 copies of the original wall, and rotating them left"""
-        origin = (0, 0, 0)
+        rec3 = rec1.copy(extend=False)
+        rec3.material, rec3.material_subtype = MCDebug.orange_wool
+        rec3.shift_parallel(-3)
+        rec3.draw()
 
-        rec = MCRectangle(origin=origin, length=5,
-                          height=3, theta=Direction.WEST)
-        rec.material_subtype = 11  # Blue
+
+    @staticmethod
+    def build_outline():
+        """Draws a square shaped structure from 4 walls drawn by making
+        3 copies of the original wall, and rotating them left"""
+        # Get a base definition for a 3x5 rectangle, pointing East
+        rec_def = MCDebug.get_test_def()
+
+        rec = MCRectangle(**rec_def)
+        rec.material, rec.material_subtype = MCDebug.magenta_wool
         rec.draw()
 
         for i in range(3):
             rec = rec.copy(extend=True)
-            rec.material_subtype = i
             rec.rotate_left()
-            rec.draw()
+            rec.draw()        
+
+    @staticmethod
+    def test_lot():
+        """ Tests the creation of a job site by clearing a space to build on """
+
+        # Get a base definition for a 3x5 rectangle, pointing East
+        lot_def = MCDebug.get_test_def()
+
+        site = Lot(**lot_def)
+        site.clear(materials.WOOL, materials.STONE, materials.GRASS)
+        print(site)
+        
+        lot_def['origin'] = shift(site.origin, 10, -1, 0)
+        lot_def['length'] = 10
+        lot_def['height'] = 20
+        site2 = Lot(**lot_def)
+        site2.clear(materials.GRASS, materials.STONE, materials.AIR)
+        
+        structure_origin = site2.offset_origin(3,5)
+        print(f"Structure origin: {structure_origin}")
+        one_block = MCComponent("structure origin", structure_origin)
+        one_block._draw_origin()
 
     @staticmethod
     def test_stories():
@@ -1126,12 +1171,13 @@ def main():
 #    MCDebug.test_mcrectangle_rotated()
 #    MCDebug.test_mcrectangle_flat()
 #    MCDebug.test_mcrectangle_copy()
-    MCDebug.test_mcrectangle_shrink()
-#    MCDebug.draw_flip_origin()
+#    MCDebug.test_mcrectangle_shrink()
+#    MCDebug.test_mcrectangle_flip_origin()
+    MCDebug.test_mcrectangle_shift_parallel()
+#    MCDebug.build_outline()
 #    MCDebug.test_lot()
 #    MCDebug.test_wall()
 #    MCDebug.test_wall_corners()
-#    MCDebug.draw_outline()
 #    MCDebug.test_walls()
 #    MCDebug.test_along_method()
 #    MCDebug.test_wall_on_lot()

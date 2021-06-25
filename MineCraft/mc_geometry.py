@@ -740,124 +740,34 @@ class MCDebug():
         rec1.shrink(1)
         rec1.debug = False
         rec1.draw(*MCDebug.orange_wool)
-        
+                
     @staticmethod
-    def test_wall():
-        """ Tests the basic methods of drawing a wall """
-
-        wall_def = {
-            'origin': MCDebug.test_origin,
-            'length': 5,
-            'height': 3,
-            'phi': 0
-        }
-            
-        """ Draw a single wall in 4 directions (North = Red) """
-        directions = [Direction.NORTH, Direction.SOUTH, Direction.EAST, Direction.WEST]
-        colors = [MCDebug.red_wool, MCDebug.orange_wool, MCDebug.blue_wool, MCDebug.light_blue_wool]
-        
-        for i in range(len(directions)):
-            wall_def['name'] = f"Plus_{directions[i]}"
-            wall_def['theta'] = directions[i]
-            wall_def['material'], wall_def['material_subtype'] = colors[i]
-            wall = Wall(**wall_def)
-            wall.flip_origin(keep_direction = False)
-            print(wall)
-            wall.draw()
-        
-        
-        """ Draws 4 walls with the rotate_left method """
-        wall_def['name'] = f'Wall_{Direction.NORTH}'
-        wall_def['origin'] = shift(MCDebug.test_origin, 15, 0, 0)
-        wall_def['theta'] = Direction.NORTH
-        wall_def['material'], wall_def['material_subtype'] = MCDebug.white_wool
-        wall = Wall(**wall_def)
-        wall.draw()
-        
-        for i in range(3):
-            wall = wall.copy(extend=True)
-            wall.set_materials(*colors[i])
-            wall.rotate_left()
-            wall.draw()
-
-        """ Draws 4 walls with the rotate_right method """
-        wall_def['name'] = f'Wall_{Direction.NORTH}'
-        wall_def['origin'] = shift(MCDebug.test_origin, 20, 0, 0)
-        wall_def['theta'] = Direction.NORTH
-        wall_def['material'], wall_def['material_subtype'] = MCDebug.white_wool
-        wall = Wall(**wall_def)
-        wall.draw()
-        
-        for i in range(3):
-            wall = wall.copy(extend=True)
-            wall.set_materials(*colors[i])
-            wall.rotate_right()
-            wall.draw()
-
-    @staticmethod
-    def test_corners():
-        """ Draws walls with different corners for the main wall and corners """
-        wall_def = {
-            'origin': MCDebug.test_origin,
-            'length': 5,
-            'height': 3,
-            'phi': 0,
-            'material': None,
-            'material_subtype': None
-        }
-
-        wall_def['name'] = f'Wall_{Direction.NORTH}'
-        wall_def['theta'] = Direction.NORTH
-        wall = Wall(**wall_def)
-        wall.set_materials(*MCDebug.blue_wool, *MCDebug.orange_wool)
-        print(wall)
-        wall.draw()
-
-        '''
-        wall1 = Wall((-5, 0, -2), width=5, height=3, direction=Direction.NORTH)
-        print(wall1)
-#        wall1.set_materials(materials.WOOD, materials.WOOL)
-        wall1.draw()
-
-        wall2 = wall1.copy(extend=True)
-        wall2.shift(5, 0, 0)
-        wall2.set_materials(materials.WOOL, materials.WOOD)
-        wall2.draw()
-
-        wall3 = wall2.copy(extend=True)
-        wall3.shift(8, 0, 0)
-        wall3.rotate_left()
-        wall3.set_materials(materials.WOOL, (materials.TNT, 1.7))
-        wall3.draw()
-
-        wall4 = wall3.copy(extend=True)
-        wall4.shift(8, 0, 0)
-        wall4.rotate_left()
-        wall4.set_materials((materials.WOOL, 5), (materials.TNT, 1.0))
-        wall4.draw()
-        '''
-        
-    @staticmethod
-    def test_along_method():
+    def test_mcrectangle_along():
         """ Tests the Rectangle.along method which returns the coordinate of
         a materials along a wall horizontally, vertically or both.
         A successful test will result in two perpendicular walls each with
         a materials of wool somewhere along the line."""
-        wall1 = Wall((-5, 0, -2), width=5, height=3, direction=Direction.EAST)
-        wall1.draw()
+        
+        wall_def = MCDebug.get_test_def()
+        wall_def['theta'] = Direction.EAST
+        wall1 = Wall(**wall_def)
         wall1.name = "Test Along East"
+        wall1.set_materials(*MCDebug.light_blue_wool)
+        wall1.draw()
 
-        wall2 = Wall((-5, 0, -2), width=5, height=3, direction=Direction.NORTH)
-        wall2.draw()
+        wall_def['theta'] = Direction.NORTH
+        wall2 = Wall(**wall_def)
         wall2.name = "Test Along North"
+        wall2.set_materials(*MCDebug.magenta_wool)
+        wall2.draw()
 
         x1, y1, z1 = wall1.along(2)
         print(f"x1={x1}, y1={y1}, z1={z1}")
-        MC.setBlock(x1, y1, z1, materials.WOOL)
+        MCComponent('Along1', (x1, y1, z1))._draw_origin(*MCDebug.blue_wool)
 
         x2, y2, z2 = wall2.along(2.5, 1.5)
         print(f"x2={x2}, y2={y2}, z2={z2}")
-        MC.setBlock(x2, y2, z2, materials.WOOL)
+        MCComponent('Along2', (x2, y2, z2))._draw_origin(*MCDebug.blue_wool)
 
     @staticmethod
     def test_wall_on_lot():
@@ -1099,21 +1009,93 @@ class MCDebug():
         # Get a base definition for a 3x5 rectangle, pointing East
         lot_def = MCDebug.get_test_def()
 
+        # Draw a lot with wool for the lot, stone for the ground, and
+        # grass for the sky
         site = Lot(**lot_def)
         site.clear(materials.WOOL, materials.STONE, materials.GRASS)
         print(site)
         
-        lot_def['origin'] = shift(site.origin, 10, -1, 0)
+        # Build a lot 10 across and 20 deep
         lot_def['length'] = 10
         lot_def['height'] = 20
         site2 = Lot(**lot_def)
+        site2.shift_parallel(5)
         site2.clear(materials.GRASS, materials.STONE, materials.AIR)
         
+        # Mark the origin of a new structure
         structure_origin = site2.offset_origin(3,5)
         print(f"Structure origin: {structure_origin}")
         one_block = MCComponent("structure origin", structure_origin)
         one_block._draw_origin()
 
+    @staticmethod
+    def test_wall():
+        """ Tests the basic methods of drawing a wall """
+
+        # Get a base definition for a 3x5 rectangle, pointing East
+        wall_def = MCDebug.get_test_def()
+            
+        """ Draw a single wall in 4 directions (North = Red) """
+        directions = [Direction.NORTH, Direction.SOUTH, Direction.EAST, Direction.WEST]
+        colors = [MCDebug.red_wool, MCDebug.orange_wool, MCDebug.blue_wool, MCDebug.light_blue_wool]
+        
+        for i in range(len(directions)):
+            wall_def['name'] = f"Plus_{directions[i]}"
+            wall_def['theta'] = directions[i]
+            wall_def['material'], wall_def['material_subtype'] = colors[i]
+            wall = Wall(**wall_def)
+            wall.flip_origin(keep_direction = False)
+            print(wall)
+            wall.draw()
+        
+        """ Draws 4 walls with the rotate_left method """
+        wall_def['name'] = f'Wall_{Direction.NORTH}'
+        wall_def['origin'] = shift(MCDebug.test_origin, 15, 0, 0)
+        wall_def['theta'] = Direction.NORTH
+        wall_def['material'], wall_def['material_subtype'] = MCDebug.white_wool
+        wall = Wall(**wall_def)
+        wall.draw()
+        
+        for i in range(3):
+            wall = wall.copy(extend=True)
+            wall.set_materials(*colors[i])
+            wall.rotate_left()
+            wall.draw()
+
+        """ Draws 4 walls with the rotate_right method """
+        wall_def['name'] = f'Wall_{Direction.NORTH}'
+        wall_def['origin'] = shift(MCDebug.test_origin, 20, 0, 0)
+        wall_def['theta'] = Direction.NORTH
+        wall_def['material'], wall_def['material_subtype'] = MCDebug.white_wool
+        wall = Wall(**wall_def)
+        wall.draw()
+        
+        for i in range(3):
+            wall = wall.copy(extend=True)
+            wall.set_materials(*colors[i])
+            wall.rotate_right()
+            wall.draw()
+            
+    @staticmethod
+    def test_wall_corners():
+        """ Draws walls with different corners for the main wall and corners """
+
+        # Get a base definition for a 3x5 rectangle, pointing East
+        wall_def = MCDebug.get_test_def()
+
+        wall_def['name'] = f'Wall_{Direction.NORTH}'
+        wall_def['theta'] = Direction.NORTH
+        wall1 = Wall(**wall_def)
+        wall1.set_materials(*MCDebug.blue_wool, *MCDebug.orange_wool)
+        print(wall1)
+        wall1.draw()
+
+        wall2 = wall1.copy(extend=False)
+        wall2.set_materials(*MCDebug.magenta_wool, *MCDebug.light_blue_wool)
+        wall2.shift_parallel(-8)
+        wall2.rotate_left()
+        wall2.draw()
+        
     @staticmethod
     def test_stories():
         site_set_back = (2, 4)
@@ -1173,13 +1155,12 @@ def main():
 #    MCDebug.test_mcrectangle_copy()
 #    MCDebug.test_mcrectangle_shrink()
 #    MCDebug.test_mcrectangle_flip_origin()
-    MCDebug.test_mcrectangle_shift_parallel()
+#    MCDebug.test_mcrectangle_shift_parallel()
 #    MCDebug.build_outline()
 #    MCDebug.test_lot()
 #    MCDebug.test_wall()
 #    MCDebug.test_wall_corners()
-#    MCDebug.test_walls()
-#    MCDebug.test_along_method()
+    MCDebug.test_mcrectangle_along()
 #    MCDebug.test_wall_on_lot()
 #    MCDebug.test_openings()
 #    MCDebug.test_stories()

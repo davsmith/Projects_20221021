@@ -13,15 +13,27 @@ class Coordinate():
     name: str = "Coordinate"
     
     def __post_init__(self):
-        print("Coordinate has been defined")
+        print("Coordinate post-init called")
         self.new_variable = True
+
+@dataclass
+class EndPoint(Coordinate):
+    direction: int = 90
+    
+    def __post_init__(self):
+        print("EndPoint post-init called.")
+        super().__post_init__()
+        
+ep = EndPoint()
+print(f"End point is {ep}")
+print(f"End point hidden variable: {ep.new_variable}")
 
 
 @dataclass(frozen=True)
 class Student():
     last_name: str
     first_name: str
-    
+        
 @dataclass(frozen=True)
 class CollegeStudent(Student):
     major: str

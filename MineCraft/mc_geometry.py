@@ -50,12 +50,12 @@ class WallType(IntEnum):
     INTERNAL = 1
     EXTERNAL = 2
 
+
 @unique
 class WallLocation(IntEnum):
     FRONT = 1
     BACK = 2
     SIDE = 3
-
 
 
 # bmComponent
@@ -140,7 +140,8 @@ class MCVector(MCComponent):
             self.phi = 90
         elif slant == Direction.UP:
             self.phi = 0
-
+        # BUGBUG: Raise an exception if not FLAT or UP
+        
     @property
     def end_point(self):
         """Calculate x,y,z in minecraft space
@@ -444,6 +445,7 @@ class Wall(MCRectangle):
         self.opening_defs.clear()
 
     def _calc_absolute_location(self, opening_def):
+        #BUGBUG: Should this be a dictionary or just called with **?
         offset_x, offset_y = opening_def["offset"]
 
         opening_def["theta"] = self.theta
@@ -770,43 +772,6 @@ class MCDebug():
         MCComponent('Along2', (x2, y2, z2))._draw_origin(*MCDebug.blue_wool)
 
     @staticmethod
-    def test_wall_on_lot():
-        """ Sets the origin of a wall based on an offset from the lot corner """
-        site = Lot(origin=(0, -1, 0), across=20,
-                   depth=50, direction=Direction.NORTH)
-        site.name = "Job site"
-        site.material = materials.GRASS
-        site.clear()
-#        x,y,z = site.along(4,1)
-#        MC.setBlock(x, y+1, z, materials.WOOL)
-
-    @staticmethod
-    def test_openings():
-        wall_width = 5
-        wall_height = 3
-        origin = (-5, 0, -2)
-
-        wall1 = Wall(origin=origin, width=wall_width,
-                     height=wall_height, direction=Direction.NORTH)
-        wall1.set_materials((materials.WOOD_PLANKS, 0), (materials.WOOD, 0))
-        wall1.add_window(None, 1, 1, materials.AIR)
-        wall1.draw()
-
-        wall2 = wall1.copy(extend=True)
-        wall2.rotate_left()
-        wall2.draw()
-
-        wall3 = wall2.copy(extend=True)
-        wall3.rotate_left()
-        wall3.draw()
-
-        wall4 = wall3.copy(extend=True)
-        wall4.rotate_left()
-        wall4.clear_openings()
-        wall4.add_door(None, 1, 2, materials.AIR, 0)
-        wall4.draw()
-
-    @staticmethod
     def test_mcrectangle_vertical():
         """Creates and draws rectangles in a + pattern"""
         
@@ -1095,7 +1060,54 @@ class MCDebug():
         wall2.shift_parallel(-8)
         wall2.rotate_left()
         wall2.draw()
+#bm1
+    @staticmethod
+    def test_wall_openings():
+        """ Tests adding windows and doors to a wall """
         
+        wall_def = MCDebug.get_test_def()
+
+        wall1 = Wall(**wall_def)
+        wall1.set_materials((materials.WOOD_PLANKS, 0), (materials.WOOD, 0))
+        wall1.add_window(None, 1, 1, materials.AIR)
+        wall1.draw()
+
+        wall2 = wall1.copy(extend=True)
+        wall2.rotate_left()
+        wall2.draw()
+
+        wall3 = wall2.copy(extend=True)
+        wall3.rotate_left()
+        wall3.draw()
+
+        wall4 = wall3.copy(extend=True)
+        wall4.rotate_left()
+        wall4.clear_openings()
+        wall4.add_door(None, 1, 2, materials.AIR, 0)
+        wall4.draw()
+
+    @staticmethod
+    def test_wall_on_lot():
+        """ Sets the origin of a wall based on an offset from the lot corner """
+        
+        lot_def = MCDebug.get_test_def()
+        origin_x, origin_y, origin_z = lot_def['origin']
+        origin_y -= 1
+        lot_def['origin'] = (origin_x, origin_y, origin_z)
+        lot_def['length'] = 20
+        lot_def['height'] = 30
+        site = Lot(**lot_def)
+        
+        site.name = "Job site"
+        site.material = materials.GRASS
+        site.clear()
+        
+        wall_def = MCDebug.get_test_def()
+        wall_def['origin'] = site.offset_origin(2,3)
+        wall = Wall(**wall_def)
+        wall.set_materials(*MCDebug.light_blue_wool)
+        wall.draw()
+
     @staticmethod
     def test_stories():
         site_set_back = (2, 4)
@@ -1149,6 +1161,7 @@ def main():
 #    MCDebug.test_mccomponent()
 #    MCDebug.test_mcvector()
 #    MCDebug.test_mcrectangle()
+#    MCDebug.test_mcrectangle_along()
 #    MCDebug.test_mcrectangle_vertical()
 #    MCDebug.test_mcrectangle_rotated()
 #    MCDebug.test_mcrectangle_flat()
@@ -1160,9 +1173,8 @@ def main():
 #    MCDebug.test_lot()
 #    MCDebug.test_wall()
 #    MCDebug.test_wall_corners()
-    MCDebug.test_mcrectangle_along()
+    MCDebug.test_wall_openings()
 #    MCDebug.test_wall_on_lot()
-#    MCDebug.test_openings()
 #    MCDebug.test_stories()
 
 

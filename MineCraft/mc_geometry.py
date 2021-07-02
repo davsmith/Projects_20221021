@@ -950,23 +950,6 @@ class MCDebug():
         rec3.shift_parallel(-3)
         rec3.draw()
 
-
-    @staticmethod
-    def build_outline():
-        """Draws a square shaped structure from 4 walls drawn by making
-        3 copies of the original wall, and rotating them left"""
-        # Get a base definition for a 3x5 rectangle, pointing East
-        rec_def = MCDebug.get_test_def()
-
-        rec = MCRectangle(**rec_def)
-        rec.material, rec.material_subtype = MCDebug.magenta_wool
-        rec.draw()
-
-        for i in range(3):
-            rec = rec.copy(extend=True)
-            rec.rotate_left()
-            rec.draw()        
-
     @staticmethod
     def test_lot():
         """ Tests the creation of a job site by clearing a space to build on """
@@ -1142,6 +1125,22 @@ class MCDebug():
         second_floor.shift(0,story_height,0)
         second_floor.draw()
                 
+    @staticmethod
+    def build_outline():
+        """Draws a square shaped structure from 4 walls drawn by making
+        3 copies of the original wall, and rotating them left"""
+        # Get a base definition for a 3x5 rectangle, pointing East
+        rec_def = MCDebug.get_test_def()
+
+        rec = MCRectangle(**rec_def)
+        rec.material, rec.material_subtype = MCDebug.magenta_wool
+        rec.draw()
+
+        for i in range(3):
+            rec = rec.copy(extend=True)
+            rec.rotate_left()
+            rec.draw()        
+
     def test_build_houses():
         site = Lot(origin=(0, -1, 0), across=20, depth=50, direction=Direction.NORTH)
         site.name = "Job site"
@@ -1149,14 +1148,11 @@ class MCDebug():
         site.material = materials.GRASS
         site.clear()
         
-def test_unpacking(x, y):
-    print(f"x: {x}, y:{y}")
-    
 
 def main():
     """Main function which is run when the program is run standalone"""
     dbg_print(f"Debug level: {LOG_LEVEL}", 0)
-    MCDebug.clear_space(False)   # Low-level clear using setBlocks
+    MCDebug.clear_space(True)   # Low-level clear using setBlocks
     MCDebug.setup_tests()
 #    MCDebug.test_mccomponent()
 #    MCDebug.test_mcvector()

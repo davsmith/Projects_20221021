@@ -406,8 +406,10 @@ class Wall(MCRectangle):
 
 # bmWindow
     def add_window(self, offset=None, width=1, height=1, material=materials.AIR, material_subtype=0):
-        opening = {"offset": offset, "width": width, "height": height,
-                   "theta": self.theta, "material": material, "material_subtype": material_subtype}
+        """ Adds a window definition to the list of openings in a wall
+            The window definition is a dictionary containing paramenters specifying
+            the window dimensions and location relative to the wall origin """
+        opening_def = {"length": width, "height": height, "material": material, "material_subtype": material_subtype}
 
         if offset is None:
             offset = (None, None)
@@ -418,14 +420,12 @@ class Wall(MCRectangle):
         if offset_y is None:
             offset_y = (self.height - height) / 2
 
-        opening["offset"] = (offset_x, offset_y)
+        opening_def['offset'] = (offset_x, offset_y)
 
-        self._calc_absolute_location(opening)
-        self.opening_defs.append(opening)
+        self.opening_defs.append(opening_def)
 
     def add_door(self, offset=None, width=1, height=2, material=materials.AIR, material_subtype=0):
-        opening = {"offset": offset, "width": width, "height": height,
-                   "theta": self.theta, "material": material, "material_subtype": material_subtype}
+        opening_def = {"length": width, "height": height, "material": material, "material_subtype": material_subtype}
 
         if offset is None:
             offset = (None, None)
@@ -436,28 +436,29 @@ class Wall(MCRectangle):
         if offset_y is None:
             offset_y = 0
 
-        opening["offset"] = (offset_x, offset_y)
+        opening_def["offset"] = (offset_x, offset_y)
 
-        self._calc_absolute_location(opening)
-        self.opening_defs.append(opening)
+        self.opening_defs.append(opening_def)
 
     def clear_openings(self):
         self.opening_defs.clear()
 
     def _calc_absolute_location(self, opening_def):
-        #BUGBUG: Should this be a dictionary or just called with **?
+        """ Calculates the origin and rotation of an opening based on
+            the origin of the parent Wall """
         offset_x, offset_y = opening_def["offset"]
-
-        opening_def["theta"] = self.theta
-        opening_def["origin"] = self.along(offset_x, offset_y)
-
+        
+        opening_def['origin'] = self.along(offset_x, offset_y)
+        opening_def['phi'] = self.phi
+        opening_def['theta'] = self.theta
+        
     def draw(self):
         """ Draws a wall with corners (if specified) using MCRectangles"""
         
         super().draw()
         
         if self.corner_material:
-            wall_def = {'name':'Corner 1',
+            wall_def = {'name':f'{self.name}:Corner 1',
                         'origin':self.origin,
                         'length':1,
                         'phi':self.phi,
@@ -467,6 +468,7 @@ class Wall(MCRectangle):
                         'material_subtype':self.corner_subtype,
                        }
             
+            # BUGBUG: Should this be an MCRectangle rather than a Wall?
             corner1 = Wall(**wall_def)
             self.corners.append(corner1)
             
@@ -477,22 +479,20 @@ class Wall(MCRectangle):
             for corner in self.corners:
                 corner.draw()
 
-            for opening_def in self.opening_defs:
-                self._calc_absolute_location(opening_def)
-                origin = opening_def["origin"]
-                width = opening_def["width"]
-                height = opening_def["height"]
-                theta = opening_def["theta"]
-                material = opening_def["material"]
-                material_subtype = opening_def["material_subtype"]
+        print(f"TT: {self.name} has {len(self.opening_defs)} openings")
+        for opening_def in self.opening_defs:
+            absolute_def = opening_def.copy()
 
-                new_opening = MCRectangle(origin, width, height, theta)
-                new_opening.material = material
-                new_opening.material_subtype = material_subtype
-                new_opening.debug = False
-                new_opening.name = "Opening"
-                print(new_opening)
-                new_opening.draw()
+            print(f"TT: Definition before {absolute_def}")
+            self._calc_absolute_location(absolute_def)
+            print(f"TT: Definition after  {absolute_def}")
+            absolute_def['name'] = f"{self.name}:opening"
+            del absolute_def['offset']
+            
+            print(f"New opening: {absolute_def}")
+            new_opening = MCRectangle(**absolute_def)
+            new_opening.debug = False
+            new_opening.draw()
 
     # bmSetMaterials
     def set_materials(self, body_material, body_subtype, corner_material=None, corner_subtype=None):
@@ -1052,14 +1052,16 @@ class MCDebug():
 
         wall1 = Wall(**wall_def)
         wall1.set_materials((materials.WOOD_PLANKS, 0), (materials.WOOD, 0))
-        wall1.add_window(None, 1, 1, materials.AIR)
+        wall1.add_window(None, 1, 1, materials.TNT, 1)
         wall1.draw()
 
         wall2 = wall1.copy(extend=True)
         wall2.rotate_left()
+        wall2.clear_openings()
         wall2.draw()
 
         wall3 = wall2.copy(extend=True)
+        wall3.add_window()
         wall3.rotate_left()
         wall3.draw()
 
@@ -1152,8 +1154,8 @@ class MCDebug():
 def main():
     """Main function which is run when the program is run standalone"""
     dbg_print(f"Debug level: {LOG_LEVEL}", 0)
-    MCDebug.clear_space(True)   # Low-level clear using setBlocks
-    MCDebug.setup_tests()
+    MCDebug.clear_space(False)   # Low-level clear using setBlocks
+#    MCDebug.setup_tests()
 #    MCDebug.test_mccomponent()
 #    MCDebug.test_mcvector()
 #    MCDebug.test_mcrectangle()

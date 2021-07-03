@@ -333,12 +333,30 @@ class Lot(MCRectangle):
         self.altitude = 50
         print("Setting is_tipped to True")
         self.is_tipped = True
+        self.setbacks = (5,5,5,5)
+        self.structures = []
 #    def __init__(self, origin, width, depth, direction=Direction.NORTH):
 #        """A lot has an origin, across, depth, and direction"""
 #        super().__init__(origin, width, depth, direction)
 #        self.is_tipped = True
 #        self.material = materials.GRASS
 #        self.thickness = 5
+    def get_next_structure_origin(self):
+        max_left_origin = 0
+        max_depth_origin = 0
+        setback_front, setback_left, setback_back, setback_right = self.setbacks
+        offset_x = max_left_origin + setback_left
+        offset_y = max_depth_origin + setback_front
+        return self.offset_origin(offset_x, offset_y) 
+
+
+    def add_structure(self, width, depth, direction, story_height, origin=None):
+        if origin is None:
+            origin = self.get_next_structure(origin)
+        building = Structure(width, depth, direction, story_height, origin )
+        print(building)
+        return building
+        
         
     def offset_origin(self, x, y):
         x, y, z = self.along(x,y)
@@ -377,7 +395,60 @@ class Lot(MCRectangle):
 
             # Create a flat rectangle for the lot itself
             self.draw(lot_material)
+            
+    def set_setbacks(self, front, left=None, back=None, right=None):
+        if left is None:
+            left = front
+            
+        if back is None:
+            back = front
+            
+        if right is None:
+            right = left
+            
+        self.setbacks = (front, left, back, right)
+        
 
+# bmStructure
+@dataclass
+class Structure():
+    """ A building is a collection of stories, and a roof """
+    width: int
+    depth: int
+    direction: Direction
+    story_height: int
+    origin: tuple
+    
+    def __post_init__(self):
+        self.stories = []
+        self.roof = None
+        
+        base_def = MCDebug.get_test_def()
+        print(f"Base def: {base_def}")
+        foundation_def = {}
+        foundation_def['name'] = 'House'
+        foundation_def['length'] = self.width
+        foundation_def['height'] = self.depth
+        foundation_def['origin'] = self.origin
+        foundation_def['theta'] = self.direction
+        foundation_def['phi'] = Direction.UP
+        foundation_def['material'] = materials.STONE
+        foundation_def['material_subtype'] = 0
+        
+        self.foundation = MCRectangle(**foundation_def)
+        self.foundation.is_tipped = True
+        self.foundation.shift(0,-1,0)
+        
+    def draw(self):
+        if self.foundation:
+            self.foundation.draw()
+        for story in self.stories:
+            story.draw()
+        if self.roof:
+            self.roof.draw()
+        
+        
+        
 
 # bmWall
 @dataclass
@@ -676,6 +747,15 @@ class MCDebug():
         base_def['material'], base_def['material_subtype'] = MCDebug.yellow_wool
         base_def['theta'] = Direction.EAST
         
+        base_def['lot_width'] = 20
+        base_def['lot_depth'] = 30
+        base_def['lot_direction'] = Direction.NORTH
+        base_def['lot_setbacks'] = (5,3,8,3)
+
+        base_def['story_width'] = 5
+        base_def['story_depth'] = 5
+        base_def['story_height'] = 3
+        
         return base_def
 
     @staticmethod
@@ -955,12 +1035,24 @@ class MCDebug():
         """ Tests the creation of a job site by clearing a space to build on """
 
         # Get a base definition for a 3x5 rectangle, pointing East
-        lot_def = MCDebug.get_test_def()
-
+        base_def = MCDebug.get_test_def()
+        
+        lot_def = {}
+        lot_def['name'] = base_def['name']
+        lot_def['origin'] = base_def['origin']
+        lot_def['length'] = base_def['lot_width']
+        lot_def['height'] = base_def['lot_depth']
+        lot_def['theta'] = base_def['lot_direction']
+        lot_def['phi'] = Direction.UP
+        lot_def['material'] = materials.STONE
+        lot_def['material_subtype'] = 0
+        
         # Draw a lot with wool for the lot, stone for the ground, and
         # grass for the sky
         site = Lot(**lot_def)
-        site.clear(materials.WOOL, materials.STONE, materials.GRASS)
+        site.shift(0,-1,0)
+        site.draw(materials.GRASS)
+#        site.clear(materials.WOOL, materials.STONE, materials.GRASS)
         print(site)
         
         # Build a lot 10 across and 20 deep
@@ -968,7 +1060,21 @@ class MCDebug():
         lot_def['height'] = 20
         site2 = Lot(**lot_def)
         site2.shift_parallel(5)
-        site2.clear(materials.GRASS, materials.STONE, materials.AIR)
+        site2.shift(0,-1,0)
+        site2.clear(materials.BEDROCK, materials.STONE, materials.AIR)
+        
+        # Set the setbacks
+        site2.set_setbacks(5,2)
+        print(f"Setbacks are: {site2.setbacks}")
+        
+        # Add a structure
+        structure_def = {'width':5, 'depth':5, 'direction':Direction.NORTH, 'story_height':3}
+        structure_def['origin'] = site2.get_next_structure_origin()
+        house = site2.add_structure(**structure_def)
+        print(f"Printing the house: {house}")
+        house.draw()
+        
+        fail
         
         # Mark the origin of a new structure
         structure_origin = site2.offset_origin(3,5)
@@ -1154,7 +1260,7 @@ class MCDebug():
 def main():
     """Main function which is run when the program is run standalone"""
     dbg_print(f"Debug level: {LOG_LEVEL}", 0)
-    MCDebug.clear_space(False)   # Low-level clear using setBlocks
+    MCDebug.clear_space(True)   # Low-level clear using setBlocks
 #    MCDebug.setup_tests()
 #    MCDebug.test_mccomponent()
 #    MCDebug.test_mcvector()
@@ -1168,10 +1274,10 @@ def main():
 #    MCDebug.test_mcrectangle_flip_origin()
 #    MCDebug.test_mcrectangle_shift_parallel()
 #    MCDebug.build_outline()
-#    MCDebug.test_lot()
+    MCDebug.test_lot()
 #    MCDebug.test_wall()
 #    MCDebug.test_wall_corners()
-    MCDebug.test_wall_openings()
+#    MCDebug.test_wall_openings()
 #    MCDebug.test_wall_on_lot()
 #    MCDebug.test_stories()
 

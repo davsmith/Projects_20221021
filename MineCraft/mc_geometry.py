@@ -326,12 +326,11 @@ class Lot(MCRectangle):
 
         The 'length' parameter indicates the width of the lot.
         The 'height' parameter indicates how far back the lot goes."""
-
+    
     def __post_init__(self):
         super().__post_init__()
         self.thickness = 5
         self.altitude = 50
-        print("Setting is_tipped to True")
         self.is_tipped = True
         self.setbacks = (5,5,5,5)
         self.structures = []
@@ -367,6 +366,11 @@ class Lot(MCRectangle):
         the specified material.
         
         If no arguments are specified Air, Grass, and Stone are used """
+
+
+        # BUGBUG: Consider making this a composition of three boxes (sky, surface and crust)
+        # BUGBUG: Create a box object which is the 3D version of a rectangle
+
         if sky_material is None:
             sky_material = materials.AIR
             
@@ -739,7 +743,7 @@ class MCDebug():
         site = Lot('Job site', (-5,-1,-5), length=20, phi=0, theta=Direction.NORTH, height=30, material=materials.GRASS, material_subtype=0)
         site.clear(block.GRASS.id, block.STONE.id, block.AIR.id)
         
-    def get_test_def():
+    def get_test_def(attributes = None):
         """Define a base template for tests"""
         
         base_def = {'name':'base_rect', 'phi':0, 'length':5, 'height':3}
@@ -755,8 +759,16 @@ class MCDebug():
         base_def['story_width'] = 5
         base_def['story_depth'] = 5
         base_def['story_height'] = 3
-        
-        return base_def
+
+        if attributes is None:
+            sub_def = base_def.copy()
+        else:
+            sub_def = {}
+            for attribute in attributes:
+                print(f"{attribute} = {base_def.get(attribute)}")
+                sub_def[attribute] = base_def.get(attribute)
+
+        return sub_def
 
     @staticmethod
     def test_mccomponent():
@@ -1261,6 +1273,8 @@ def main():
     """Main function which is run when the program is run standalone"""
     dbg_print(f"Debug level: {LOG_LEVEL}", 0)
     MCDebug.clear_space(True)   # Low-level clear using setBlocks
+    sample_def = MCDebug.get_test_def(['origin', 'width'])
+    print(sample_def)
 #    MCDebug.setup_tests()
 #    MCDebug.test_mccomponent()
 #    MCDebug.test_mcvector()
@@ -1274,7 +1288,7 @@ def main():
 #    MCDebug.test_mcrectangle_flip_origin()
 #    MCDebug.test_mcrectangle_shift_parallel()
 #    MCDebug.build_outline()
-    MCDebug.test_lot()
+#    MCDebug.test_lot()
 #    MCDebug.test_wall()
 #    MCDebug.test_wall_corners()
 #    MCDebug.test_wall_openings()

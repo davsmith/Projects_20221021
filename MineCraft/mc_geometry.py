@@ -415,7 +415,7 @@ class Lot(MCRectangle):
 
 # bmStructure
 @dataclass
-class Structure():
+class Structure(MCComponent):
     """ A building is a collection of stories, and a roof """
     width: int
     depth: int
@@ -427,10 +427,8 @@ class Structure():
         self.stories = []
         self.roof = None
         
-        base_def = MCDebug.get_test_def()
-        print(f"Base def: {base_def}")
         foundation_def = {}
-        foundation_def['name'] = 'House'
+        foundation_def['name'] = f'{self.name}_foundation'
         foundation_def['length'] = self.width
         foundation_def['height'] = self.depth
         foundation_def['origin'] = self.origin
@@ -697,8 +695,6 @@ class MCDebug():
     orange_wool = (35, 1)
     white_wool = (35, 0)
     
-    test_origin = (5, 0, 5)
-    
     
     @staticmethod
     def draw_walls():
@@ -731,34 +727,45 @@ class MCDebug():
             MC.setBlocks(-plane_size/2, -1, -plane_size/2,
                          plane_size/2, -1, plane_size/2, ground_material)
 
+            # Put down blocks at 0,0,0, a red block point N and blue E
             MC.setBlock(0, 0, 0, block.GOLD_BLOCK.id, 0)
             MC.setBlock(0, 0, -1, *MCDebug.red_wool)
             MC.setBlock(1, 0, 0, *MCDebug.blue_wool)
+            
+            # Optionally move the player to a spot near the origin
             if move_player:
                 MC.player.setPos(-5, 0, -5)
-
-    @staticmethod
-    def setup_tests():
-        """Sets up the environment to run tests -- e.g. creates a job site"""
-        site = Lot('Job site', (-5,-1,-5), length=20, phi=0, theta=Direction.NORTH, height=30, material=materials.GRASS, material_subtype=0)
-        site.clear(block.GRASS.id, block.STONE.id, block.AIR.id)
         
-    def get_test_def(attributes = None):
-        """Define a base template for tests"""
+    def get_test_def(attributes = None, component_type=None):
+        """Provide a set of test attributes"""
+        
+        if component_type is None:
+            component_type = 'BASE'
+        else:
+            component_type = component_type.upper()
         
         base_def = {'name':'base_rect', 'phi':0, 'length':5, 'height':3}
-        base_def['origin'] = MCDebug.test_origin
+        base_def['origin'] = (5, 0, 5)
         base_def['material'], base_def['material_subtype'] = MCDebug.yellow_wool
         base_def['theta'] = Direction.EAST
         
-        base_def['lot_width'] = 20
-        base_def['lot_depth'] = 30
-        base_def['lot_direction'] = Direction.NORTH
-        base_def['lot_setbacks'] = (5,3,8,3)
+        if component_type == 'LOT':
+            base_def['origin'] = (5, -1, 5)
+            base_def['length'] = 20
+            base_def['height'] = 30
+            base_def['direction'] = Direction.NORTH
+            base_def['setbacks'] = (5,3,8,3)
+            
+        if component_type == 'STRUCTURE':
+            base_def['width'] = 5
+            base_def['depth'] = 5
+            base_def['direction'] = Direction.NORTH
+            base_def['story_height'] = 3
 
-        base_def['story_width'] = 5
-        base_def['story_depth'] = 5
-        base_def['story_height'] = 3
+        if component_type == 'STORY':
+            base_def['width'] = 5
+            base_def['depth'] = 5
+            base_def['height'] = 3
 
         if attributes is None:
             sub_def = base_def.copy()
@@ -768,29 +775,42 @@ class MCDebug():
                 print(f"{attribute} = {base_def.get(attribute)}")
                 sub_def[attribute] = base_def.get(attribute)
 
+        if attributes is str:
+            print("Attributes is a string")
+
+        if len(sub_def) == 1:
+            sub_def = list(sub_def.values())[0]
+            
         return sub_def
 
     @staticmethod
     def test_mccomponent():
+        """Tests the MineCraft component class (mccomponent)
+        Succesful result is an orange block in the air to the SE of
+        the TNT origin marker"""
+        
+        # Sets and prints the name and origin
         comp1 = MCComponent('C1', (1,2,3))
         print(comp1)
         
+        # Creates a second instance and displays the debug flag
         comp2 = MCComponent('C2', (4,5,6))
         comp2.shift(1,1,1)
         print(comp2)
         print(f"Checking for debug flag: {comp2.debug}")
         
+        # Creates a third instance, shifted by 1 in each direction
         comp3 = MCComponent('C3', (0,0,0))
-        comp3._draw_origin()
         comp3.shift(1,1,1)
-        comp3._draw_origin(*MCDebug.blue_wool)
+        comp3._draw_origin(*MCDebug.orange_wool)
         
     @staticmethod
     def test_mcvector():
+        """Success is a magenta block in the air to the SE of the
+            origin (5,3,5)"""
         vec1 = MCVector('Vec1', origin=(5,0,5), length=3, phi=0, theta=90)
         print(vec1)
         print(f"End point: {vec1.end_point}")
-        
         endpoint = MCComponent('End point', vec1.end_point)
         endpoint._draw_origin(*MCDebug.magenta_wool)
         
@@ -842,8 +862,12 @@ class MCDebug():
         A successful test will result in two perpendicular walls each with
         a materials of wool somewhere along the line."""
         
-        wall_def = MCDebug.get_test_def()
+        # Get base set of attributes for tests
+        attributes = ['name', 'origin', 'theta', 'phi', 'length', 'height']
+        attributes.extend(['material', 'material_subtype'])
+        wall_def = MCDebug.get_test_def(attributes)
         wall_def['theta'] = Direction.EAST
+        
         wall1 = Wall(**wall_def)
         wall1.name = "Test Along East"
         wall1.set_materials(*MCDebug.light_blue_wool)
@@ -866,11 +890,12 @@ class MCDebug():
     @staticmethod
     def test_mcrectangle_vertical():
         """Creates and draws rectangles in a + pattern"""
-        
-        wall_def = {'name':'VRect1', 'phi':0, 'length':5, 'height':3}
-        wall_def['origin'] = MCDebug.test_origin
-        wall_def['material'], wall_def['material_subtype'] = MCDebug.yellow_wool
-        wall_def['theta'] = Direction.EAST
+
+        # Get base set of attributes for tests
+        attributes = ['name', 'origin', 'theta', 'phi', 'length', 'height']
+        attributes.extend(['material', 'material_subtype'])
+        wall_def = MCDebug.get_test_def(attributes)
+        wall_def['name'] = 'VRect1'
 
         # Vertical rectangles
         wall_def['theta'] = Direction.EAST
@@ -899,24 +924,30 @@ class MCDebug():
         The result should be 4 walls in a + pattern"""
 
         # Get a base definition for a 3x5 rectangle, pointing East
-        rec_def = MCDebug.get_test_def()
+        attributes = ['name', 'origin', 'theta', 'phi', 'length', 'height']
+        attributes.extend(['material', 'material_subtype'])
+        rec_def = MCDebug.get_test_def(attributes)
         
         # Vertical rectangles
+        rec_def['name'] = 'VRect_East'
         rec1 = MCRectangle(**rec_def)
         rec1.material, rec1.material_subtype = MCDebug.blue_wool
         rec1.draw()
 
         # Pointing South
+        rec_def['name'] = 'VRect_South'
         rec1.material, rec1.material_subtype = MCDebug.light_blue_wool
         rec1.rotate_right()
         rec1.draw()
 
         # Pointing West
+        rec_def['name'] = 'VRect_West'
         rec1.material, rec1.material_subtype = MCDebug.pink_wool
         rec1.rotate_right()
         rec1.draw()
 
         # Pointing North
+        rec_def['name'] = 'VRect_North'
         rec1.material, rec1.material_subtype = MCDebug.red_wool
         rec1.rotate_right()
         rec1.draw()
@@ -927,8 +958,11 @@ class MCDebug():
         The rectangles should be 4 'L' shaped structures in a + pattern"""
 
         # Get a base definition for a 3x5 rectangle, pointing East
-        rec_def = MCDebug.get_test_def()
+        attributes = ['name', 'origin', 'theta', 'phi', 'length', 'height']
+        attributes.extend(['material', 'material_subtype'])
+        rec_def = MCDebug.get_test_def(attributes)
 
+        rec_def['name'] = 'FlatRect_East'
         rec1 = MCRectangle(**rec_def)
         rec1.material, rec1.material_subtype = MCDebug.blue_wool
         rec1.is_tipped = True
@@ -936,6 +970,7 @@ class MCDebug():
         rec1.is_tipped = False
         rec1.draw()
 
+        rec_def['name'] = 'FlatRect_South'
         rec_def['theta'] = Direction.SOUTH
         rec2 = MCRectangle(**rec_def)
         rec2.material, rec2.material_subtype = MCDebug.light_blue_wool
@@ -944,6 +979,7 @@ class MCDebug():
         rec2.is_tipped = False
         rec2.draw()
 
+        rec_def['name'] = 'FlatRect_West'
         rec_def['theta'] = Direction.WEST
         rec3 = MCRectangle(**rec_def)
         rec3.material, rec3.material_subtype = MCDebug.pink_wool
@@ -952,6 +988,7 @@ class MCDebug():
         rec3.is_tipped = False
         rec3.draw()
 
+        rec_def['name'] = 'FlatRect_North'
         rec_def['theta'] = Direction.NORTH
         rec4 = MCRectangle(**rec_def)
         rec4.material, rec4.material_subtype = MCDebug.red_wool
@@ -966,7 +1003,9 @@ class MCDebug():
         Result is two rectangles, the second offset the first by 5 spaces"""
 
         # Get a base definition for a 3x5 rectangle, pointing East
-        rec_def = MCDebug.get_test_def()
+        attributes = ['name', 'origin', 'theta', 'phi', 'length', 'height']
+        attributes.extend(['material', 'material_subtype'])
+        rec_def = MCDebug.get_test_def(attributes)
 
         rec1 = MCRectangle(**rec_def)
         rec1.material, rec1.material_subtype = MCDebug.blue_wool
@@ -987,7 +1026,10 @@ class MCDebug():
         Draws a large rectangle then a smaller rectangle inside"""
         
         # Get a base definition for a 3x5 rectangle, pointing East
-        rec_def = MCDebug.get_test_def()
+        attributes = ['name', 'origin', 'theta', 'phi', 'length', 'height']
+        attributes.extend(['material', 'material_subtype'])
+        rec_def = MCDebug.get_test_def(attributes)
+
         rec_def['length'] = 8
         rec_def['height'] = 4
 
@@ -1008,7 +1050,9 @@ class MCDebug():
         on the bottom of the rectangle"""
 
         # Get a base definition for a 3x5 rectangle, pointing East
-        rec_def = MCDebug.get_test_def()
+        attributes = ['name', 'origin', 'theta', 'phi', 'length', 'height']
+        attributes.extend(['material', 'material_subtype'])
+        rec_def = MCDebug.get_test_def(attributes)
 
         rec1 = MCRectangle(**rec_def)
         rec1.material, rec1.material_subtype = MCDebug.magenta_wool
@@ -1025,7 +1069,10 @@ class MCDebug():
         offset by 3 blocks in either direction"""
         
         # Get a base definition for a 3x5 rectangle, pointing East
-        rec_def = MCDebug.get_test_def()
+        attributes = ['name', 'origin', 'theta', 'phi', 'length', 'height']
+        attributes.extend(['material', 'material_subtype'])
+        rec_def = MCDebug.get_test_def(attributes)
+
         rec_def['theta'] = Direction.EAST
         rec1 = MCRectangle(**rec_def)
         rec1.material, rec1.material_subtype = MCDebug.magenta_wool
@@ -1046,28 +1093,20 @@ class MCDebug():
     def test_lot():
         """ Tests the creation of a job site by clearing a space to build on """
 
-        # Get a base definition for a 3x5 rectangle, pointing East
-        base_def = MCDebug.get_test_def()
-        
-        lot_def = {}
-        lot_def['name'] = base_def['name']
-        lot_def['origin'] = base_def['origin']
-        lot_def['length'] = base_def['lot_width']
-        lot_def['height'] = base_def['lot_depth']
-        lot_def['theta'] = base_def['lot_direction']
-        lot_def['phi'] = Direction.UP
-        lot_def['material'] = materials.STONE
-        lot_def['material_subtype'] = 0
+        # Get a base definition for a lot
+        attributes = ['name', 'origin', 'theta', 'phi', 'length', 'height']
+        attributes.extend(['material', 'material_subtype'])
+        lot_def = MCDebug.get_test_def(attributes)
         
         # Draw a lot with wool for the lot, stone for the ground, and
         # grass for the sky
         site = Lot(**lot_def)
         site.shift(0,-1,0)
-        site.draw(materials.GRASS)
-#        site.clear(materials.WOOL, materials.STONE, materials.GRASS)
+        site.clear(materials.WOOL, materials.STONE, materials.GRASS)
         print(site)
         
-        # Build a lot 10 across and 20 deep
+        # Build a lot 10 across and 20 deep along the East axis
+        lot_def['theta'] = Direction.EAST
         lot_def['length'] = 10
         lot_def['height'] = 20
         site2 = Lot(**lot_def)
@@ -1077,8 +1116,8 @@ class MCDebug():
         
         # Set the setbacks
         site2.set_setbacks(5,2)
-        print(f"Setbacks are: {site2.setbacks}")
-        
+        print(f"Setbacks are: {site2.setbacks} (front, left, back, right)")
+        """        
         # Add a structure
         structure_def = {'width':5, 'depth':5, 'direction':Direction.NORTH, 'story_height':3}
         structure_def['origin'] = site2.get_next_structure_origin()
@@ -1093,13 +1132,15 @@ class MCDebug():
         print(f"Structure origin: {structure_origin}")
         one_block = MCComponent("structure origin", structure_origin)
         one_block._draw_origin()
-
+        """
     @staticmethod
     def test_wall():
         """ Tests the basic methods of drawing a wall """
 
         # Get a base definition for a 3x5 rectangle, pointing East
-        wall_def = MCDebug.get_test_def()
+        attributes = ['name', 'origin', 'theta', 'phi', 'length', 'height']
+        attributes.extend(['material', 'material_subtype'])
+        wall_def = MCDebug.get_test_def(attributes)
             
         """ Draw a single wall in 4 directions (North = Red) """
         directions = [Direction.NORTH, Direction.SOUTH, Direction.EAST, Direction.WEST]
@@ -1147,7 +1188,9 @@ class MCDebug():
         """ Draws walls with different corners for the main wall and corners """
 
         # Get a base definition for a 3x5 rectangle, pointing East
-        wall_def = MCDebug.get_test_def()
+        attributes = ['name', 'origin', 'theta', 'phi', 'length', 'height']
+        attributes.extend(['material', 'material_subtype'])
+        wall_def = MCDebug.get_test_def(attributes)
 
         wall_def['name'] = f'Wall_{Direction.NORTH}'
         wall_def['theta'] = Direction.NORTH
@@ -1166,7 +1209,10 @@ class MCDebug():
     def test_wall_openings():
         """ Tests adding windows and doors to a wall """
         
-        wall_def = MCDebug.get_test_def()
+        # Get a base definition for a 3x5 rectangle, pointing East
+        attributes = ['name', 'origin', 'theta', 'phi', 'length', 'height']
+        attributes.extend(['material', 'material_subtype'])
+        wall_def = MCDebug.get_test_def(attributes)
 
         wall1 = Wall(**wall_def)
         wall1.set_materials((materials.WOOD_PLANKS, 0), (materials.WOOD, 0))
@@ -1193,14 +1239,15 @@ class MCDebug():
     def test_wall_on_lot():
         """ Sets the origin of a wall based on an offset from the lot corner """
         
-        lot_def = MCDebug.get_test_def()
-        origin_x, origin_y, origin_z = lot_def['origin']
-        origin_y -= 1
-        lot_def['origin'] = (origin_x, origin_y, origin_z)
-        lot_def['length'] = 20
-        lot_def['height'] = 30
+        # Get a base definition for a 3x5 rectangle, pointing East
+        attributes = ['name', 'origin', 'theta', 'phi', 'length', 'height']
+        attributes.extend(['material', 'material_subtype'])
+        lot_def = MCDebug.get_test_def(attributes, 'LOT')
+        print(lot_def)
         site = Lot(**lot_def)
-        
+        site.clear()
+
+        """
         site.name = "Job site"
         site.material = materials.GRASS
         site.clear()
@@ -1210,7 +1257,18 @@ class MCDebug():
         wall = Wall(**wall_def)
         wall.set_materials(*MCDebug.light_blue_wool)
         wall.draw()
+        """
+        
+    @staticmethod
+    def test_structure():
+        # Get a base definition for a structure pointing East
+        attributes = ['name', 'origin', "width", "depth", "direction", "story_height"]
+        structure_def = MCDebug.get_test_def(attributes, 'structure')
+        print(structure_def)
+        building = Structure(**structure_def)
+        building.draw()
 
+    
     @staticmethod
     def test_stories():
         site_set_back = (2, 4)
@@ -1272,10 +1330,7 @@ class MCDebug():
 def main():
     """Main function which is run when the program is run standalone"""
     dbg_print(f"Debug level: {LOG_LEVEL}", 0)
-    MCDebug.clear_space(True)   # Low-level clear using setBlocks
-    sample_def = MCDebug.get_test_def(['origin', 'width'])
-    print(sample_def)
-#    MCDebug.setup_tests()
+    MCDebug.clear_space(False)   # Low-level clear using setBlocks
 #    MCDebug.test_mccomponent()
 #    MCDebug.test_mcvector()
 #    MCDebug.test_mcrectangle()
@@ -1287,14 +1342,14 @@ def main():
 #    MCDebug.test_mcrectangle_shrink()
 #    MCDebug.test_mcrectangle_flip_origin()
 #    MCDebug.test_mcrectangle_shift_parallel()
-#    MCDebug.build_outline()
 #    MCDebug.test_lot()
 #    MCDebug.test_wall()
 #    MCDebug.test_wall_corners()
 #    MCDebug.test_wall_openings()
 #    MCDebug.test_wall_on_lot()
 #    MCDebug.test_stories()
-
+    MCDebug.test_structure()
+#    MCDebug.build_outline()
 
 if __name__ == '__main__':
     main()

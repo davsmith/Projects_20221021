@@ -334,12 +334,7 @@ class Lot(MCRectangle):
         self.is_tipped = True
         self.setbacks = (5,5,5,5)
         self.structures = []
-#    def __init__(self, origin, width, depth, direction=Direction.NORTH):
-#        """A lot has an origin, across, depth, and direction"""
-#        super().__init__(origin, width, depth, direction)
-#        self.is_tipped = True
-#        self.material = materials.GRASS
-#        self.thickness = 5
+
     def get_next_structure_origin(self):
         max_left_origin = 0
         max_depth_origin = 0
@@ -424,9 +419,11 @@ class Structure(MCComponent):
     origin: tuple
     
     def __post_init__(self):
+        self.foundation = None
         self.stories = []
         self.roof = None
         
+    def add_foundation(self):
         foundation_def = {}
         foundation_def['name'] = f'{self.name}_foundation'
         foundation_def['length'] = self.width
@@ -440,6 +437,12 @@ class Structure(MCComponent):
         self.foundation = MCRectangle(**foundation_def)
         self.foundation.is_tipped = True
         self.foundation.shift(0,-1,0)
+
+    def add_story(self):
+        pass
+    
+    def add_roof(self):
+        pass
         
     def draw(self):
         if self.foundation:
@@ -1096,12 +1099,13 @@ class MCDebug():
         # Get a base definition for a lot
         attributes = ['name', 'origin', 'theta', 'phi', 'length', 'height']
         attributes.extend(['material', 'material_subtype'])
-        lot_def = MCDebug.get_test_def(attributes)
+        lot_def = MCDebug.get_test_def(attributes, 'LOT')
+        lot_def['length'] = 5
+        lot_def['height'] = 7
         
         # Draw a lot with wool for the lot, stone for the ground, and
         # grass for the sky
         site = Lot(**lot_def)
-        site.shift(0,-1,0)
         site.clear(materials.WOOL, materials.STONE, materials.GRASS)
         print(site)
         
@@ -1110,8 +1114,7 @@ class MCDebug():
         lot_def['length'] = 10
         lot_def['height'] = 20
         site2 = Lot(**lot_def)
-        site2.shift_parallel(5)
-        site2.shift(0,-1,0)
+        site2.shift_parallel(8)
         site2.clear(materials.BEDROCK, materials.STONE, materials.AIR)
         
         # Set the setbacks
@@ -1266,6 +1269,7 @@ class MCDebug():
         structure_def = MCDebug.get_test_def(attributes, 'structure')
         print(structure_def)
         building = Structure(**structure_def)
+        building.add_foundation()
         building.draw()
 
     
@@ -1342,13 +1346,13 @@ def main():
 #    MCDebug.test_mcrectangle_shrink()
 #    MCDebug.test_mcrectangle_flip_origin()
 #    MCDebug.test_mcrectangle_shift_parallel()
-#    MCDebug.test_lot()
+    MCDebug.test_lot()
 #    MCDebug.test_wall()
 #    MCDebug.test_wall_corners()
 #    MCDebug.test_wall_openings()
 #    MCDebug.test_wall_on_lot()
 #    MCDebug.test_stories()
-    MCDebug.test_structure()
+#    MCDebug.test_structure()
 #    MCDebug.build_outline()
 
 if __name__ == '__main__':

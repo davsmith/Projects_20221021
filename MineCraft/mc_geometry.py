@@ -346,7 +346,7 @@ class Lot(MCRectangle):
 
     def add_structure(self, width, depth, direction, story_height, origin=None):
         if origin is None:
-            origin = self.get_next_structure(origin)
+            origin = self.get_next_structure_origin()
         building = Structure(width, depth, direction, story_height, origin )
         print(building)
         return building
@@ -1115,11 +1115,12 @@ class MCDebug():
         lot_def['height'] = 20
         site2 = Lot(**lot_def)
         site2.shift_parallel(8)
-        site2.clear(materials.BEDROCK, materials.STONE, materials.AIR)
+        site2.clear(materials.STONE, materials.BEDROCK, materials.AIR)
         
         # Set the setbacks
         site2.set_setbacks(5,2)
         print(f"Setbacks are: {site2.setbacks} (front, left, back, right)")
+        
         """        
         # Add a structure
         structure_def = {'width':5, 'depth':5, 'direction':Direction.NORTH, 'story_height':3}
@@ -1136,6 +1137,30 @@ class MCDebug():
         one_block = MCComponent("structure origin", structure_origin)
         one_block._draw_origin()
         """
+        
+    @staticmethod
+    def test_lot_get_next_structure_origin():
+        # Get a base definition for a lot
+        attributes = ['name', 'origin', 'theta', 'phi', 'length', 'height']
+        attributes.extend(['material', 'material_subtype'])
+        lot_def = MCDebug.get_test_def(attributes, 'LOT')
+        lot_def['length'] = 20
+        lot_def['height'] = 40
+ #       lot_def['setbacks'] = (3,3,3,3)
+        
+        # Draw a lot with wool for the lot, stone for the ground, and
+        # grass for the sky
+        site = Lot(**lot_def)
+        site.setbacks = (3,5,1,1)
+        site.clear()
+        print(site)
+        
+        new_origin = site.get_next_structure_origin()
+        print(f"Next origin is: {new_origin}")
+        
+        block = MCComponent(name="block", origin=new_origin)
+        block._draw_origin()
+        
     @staticmethod
     def test_wall():
         """ Tests the basic methods of drawing a wall """
@@ -1346,7 +1371,8 @@ def main():
 #    MCDebug.test_mcrectangle_shrink()
 #    MCDebug.test_mcrectangle_flip_origin()
 #    MCDebug.test_mcrectangle_shift_parallel()
-    MCDebug.test_lot()
+#    MCDebug.test_lot()
+    MCDebug.test_lot_get_next_structure_origin()
 #    MCDebug.test_wall()
 #    MCDebug.test_wall_corners()
 #    MCDebug.test_wall_openings()

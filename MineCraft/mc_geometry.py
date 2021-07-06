@@ -357,12 +357,24 @@ class Lot(MCComponent):
         setback_front, setback_left, setback_back, setback_right = self.setbacks
         offset_x = max_left_origin + setback_left
         offset_y = max_depth_origin + setback_front
-        return self.offset_origin(offset_x, offset_y) 
+        return self.offset_origin(offset_x, offset_y)
+    
+    def get_building_envelope(self):
+        setback_front, setback_left, setback_back, setback_right = self.setbacks
+        width = self.width - setback_left - setback_right
+        depth = self.depth - setback_front - setback_back
+        origin = shift(self.surface.along(setback_left, setback_front), 0, 1, 0)
+        
+        return origin, width, depth
 
     def add_structure(self, width, depth, direction, story_height, origin=None):
+        name = "Structure"
         if origin is None:
             origin = self.get_next_structure_origin()
-        building = Structure(width, depth, direction, story_height, origin )
+        building = Structure(origin=origin, name=name,
+                             width=width, depth=depth, direction=direction,
+                             story_height=story_height)
+        building.add_foundation()
         return building
         
     def offset_origin(self, x, y):
@@ -430,7 +442,6 @@ class Structure(MCComponent):
     depth: int
     direction: Direction
     story_height: int
-    origin: tuple
     
     def __post_init__(self):
         self.foundation = None
@@ -1330,13 +1341,34 @@ class MCDebug():
             rec.rotate_left()
             rec.draw()        
 
-    def test_build_houses():
-        site = Lot(origin=(0, -1, 0), across=20, depth=50, direction=Direction.NORTH)
-        site.name = "Job site"
-        print(site)
-        site.material = materials.GRASS
+    def build_house():
+        site_def = {}
+        site_def["name"] = "Lot 1"
+        site_def["origin"] = (0,-1,0)
+        site_def["width"] = 20
+        site_def["depth"] = 40
+        site_def["direction"] = Direction.EAST
+        site = build_lot(**site_def)
+        site.set_setbacks(front=5, left=3, back=10, right=3)
+        site.set_setbacks(front=1, left=2, back=3, right=4)
+        print(f"Site: {site}, setbacks={site.setbacks}")
         site.clear()
         
+        house_def = {}
+#        house_def["origin"] = site.get_next_structure_origin()
+        house_def["origin"], house_def["width"], house_def["depth"] = site.get_building_envelope()
+        house_def["direction"] = Direction.EAST
+        house_def["story_height"] = 3
+        house = site.add_structure(**house_def)
+        house.name = "House 1"
+        house.draw()
+        
+        
+        
+def build_lot(width, depth, origin=(0,0,0), direction=Direction.EAST, name="Site"):
+    new_lot = Lot(width=width, depth=depth, origin=origin, direction=direction, name=name)
+    new_lot.add_surface()
+    return new_lot
 
 def main():
     """Main function which is run when the program is run standalone"""
@@ -1354,14 +1386,15 @@ def main():
 #    MCDebug.test_mcrectangle_flip_origin()
 #    MCDebug.test_mcrectangle_shift_parallel()
 #    MCDebug.test_lot()
-    MCDebug.test_lot_get_next_structure_origin()
-#    MCDebug.test_wall()
-#    MCDebug.test_wall_corners()
-#    MCDebug.test_wall_openings()
-#    MCDebug.test_wall_on_lot()
-#    MCDebug.test_stories()
-#    MCDebug.test_structure()
-#    MCDebug.build_outline()
+#    MCDebug.test_lot_get_next_structure_origin()
+#    MCDebug._test_wall()
+#    MCDebug._test_wall_corners()
+#    MCDebug._test_wall_openings()
+#    MCDebug._test_wall_on_lot()
+#    MCDebug._test_stories()
+#    MCDebug._test_structure()
+#    MCDebug._build_outline()
+    MCDebug.build_house()
 
 if __name__ == '__main__':
     main()

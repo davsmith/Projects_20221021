@@ -92,6 +92,7 @@ class MCComponent:
         self.theta += scalar
         self.origin = self.along(distance)
         self.theta -= scalar
+        return self.origin
     
     def shift_perpendicular(self, distance):
         pass
@@ -172,17 +173,6 @@ class MCRectangle(MCVector):
     height: int
     material: int
     material_subtype: int
-
-#    def __init__(self, origin=(0, 0, 0), length=5, height=3, theta=0):
-#        self.name = "Rectangle"
-#        self.origin = origin
-#        self.length = length
-#        self.height = height
-#        self.phi = Direction.UP
-#        self.theta = theta
-#        self.material = materials.WOOL    # Wool - 35
-#        self.material_subtype = 14       # Red
-#        super().__init__(origin, length, self.phi, theta)
 
     def __post_init__(self):
         super().__post_init__()
@@ -317,15 +307,20 @@ class MCRectangle(MCVector):
 
 # bmLot
 @dataclass
-class Lot(MCRectangle):
+class Lot(MCComponent):
     """The plot of land on which to build a structure
 
         The direction of the lot indicates the direction
         of the property line along the front of the lot,
         so a direction of North indicates an East facing lot.
 
-        The 'length' parameter indicates the width of the lot.
-        The 'height' parameter indicates how far back the lot goes."""
+        'length' indicates the width of the lot.
+        'height' indicates the depth of the lot.
+        'origin' is the corner of the lot in x,y,z.  y is typically -1.
+        """
+    width: int = 10
+    depth: int = 20
+    direction: Direction = Direction.EAST
     
     def __post_init__(self):
         super().__post_init__()
@@ -334,6 +329,27 @@ class Lot(MCRectangle):
         self.is_tipped = True
         self.setbacks = (5,5,5,5)
         self.structures = []
+        self.surface = None
+
+    def add_surface(self):
+        """Defines a flat rectangle to be the top layer of ground"""
+        surface_def = {}
+        surface_def['name'] = 'Surface_rectangle'
+        surface_def['origin'] = self.origin
+        surface_def['phi'] = Direction.UP
+        surface_def['theta'] = self.direction
+        surface_def['length'] = self.width
+        surface_def['height'] = self.depth
+        surface_def['material'] = materials.GRASS
+        surface_def['material_subtype'] = 0
+        self.surface = MCRectangle(**surface_def)
+        self.surface.is_tipped = True
+    
+    def add_sky():
+        pass
+    
+    def add_underground():
+        pass
 
     def get_next_structure_origin(self):
         max_left_origin = 0
@@ -343,25 +359,21 @@ class Lot(MCRectangle):
         offset_y = max_depth_origin + setback_front
         return self.offset_origin(offset_x, offset_y) 
 
-
     def add_structure(self, width, depth, direction, story_height, origin=None):
         if origin is None:
             origin = self.get_next_structure_origin()
         building = Structure(width, depth, direction, story_height, origin )
-        print(building)
         return building
         
-        
     def offset_origin(self, x, y):
-        x, y, z = self.along(x,y)
+        x, y, z = self.surface.along(x,y)
         return (x, y+1, z)
 
-    def clear(self, lot_material=None, ground_material=None, sky_material=None):
+    def clear(self, surface_material=None, underground_material=None, sky_material=None):
         """Clears the space above and below the lot, and redraws the lot in
         the specified material.
         
         If no arguments are specified Air, Grass, and Stone are used """
-
 
         # BUGBUG: Consider making this a composition of three boxes (sky, surface and crust)
         # BUGBUG: Create a box object which is the 3D version of a rectangle
@@ -369,31 +381,33 @@ class Lot(MCRectangle):
         if sky_material is None:
             sky_material = materials.AIR
             
-        if ground_material is None:
-            ground_material = materials.STONE
+        if underground_material is None:
+            underground_material = materials.STONE
             
-        if lot_material is None:
-            lot_material = materials.GRASS
-        
-        print(f"In Clear:  lot={lot_material}, ground={ground_material}, sky={sky_material}")
+        if surface_material is None:
+            surface_material = materials.GRASS
         
         origin_x, origin_y, origin_z = self.origin
-        opp_x, _, opp_z = self.opposite
+        opp_x, _, opp_z = self.surface.opposite
 
         # Define the space above the lot to clear with air
         sky_start = self.origin
         sky_end = (opp_x, origin_y+self.altitude, opp_z)
 
         # Define the space beneath the lot
-        ground_start = (origin_x, origin_y - 1, origin_z)
-        ground_end = (opp_x, origin_y - self.thickness, opp_z)
+        underground_start = (origin_x, origin_y - 1, origin_z)
+        underground_end = (opp_x, origin_y - self.thickness, opp_z)
 
         if MINECRAFT_EXISTS:
             MC.setBlocks(*sky_start, *sky_end, sky_material)
-            MC.setBlocks(*ground_start, *ground_end, ground_material)
+            MC.setBlocks(*underground_start, *underground_end, underground_material)
 
             # Create a flat rectangle for the lot itself
-            self.draw(lot_material)
+            self.surface.draw(surface_material)
+            
+    def shift_parallel(self, distance):
+        print(f"TT: Shifting {self.surface}")
+        self.origin = self.surface.shift_parallel(distance)
             
     def set_setbacks(self, front, left=None, back=None, right=None):
         if left is None:
@@ -452,8 +466,6 @@ class Structure(MCComponent):
         if self.roof:
             self.roof.draw()
         
-        
-        
 
 # bmWall
 @dataclass
@@ -463,18 +475,6 @@ class Wall(MCRectangle):
     corner_material: int = None
     corner_subtype: int = None
 
-#    def __init__(self, origin, width, height, direction=Direction.NORTH):
-#        """A wall has an origin a width, a height, and a direction"""
-#        super().__init__(origin, width, height, direction)
-#        self.name = "Wall"
-#        self.is_tipped = False
-#        self.material = materials.WOOD
-#        self.material_subtype = 0
-#        self.location = WallLocation.FRONT
-#        self.corner_material = None
-#        self.corner_subtype = None
-#        self.opening_defs = []
-        
     def __post_init__(self):
         super().__post_init__()
         self.opening_defs = []
@@ -754,8 +754,8 @@ class MCDebug():
         
         if component_type == 'LOT':
             base_def['origin'] = (5, -1, 5)
-            base_def['length'] = 20
-            base_def['height'] = 30
+            base_def['width'] = 20
+            base_def['depth'] = 30
             base_def['direction'] = Direction.NORTH
             base_def['setbacks'] = (5,3,8,3)
             
@@ -1097,60 +1097,42 @@ class MCDebug():
         """ Tests the creation of a job site by clearing a space to build on """
 
         # Get a base definition for a lot
-        attributes = ['name', 'origin', 'theta', 'phi', 'length', 'height']
-        attributes.extend(['material', 'material_subtype'])
+        attributes = ['name', 'origin', 'width', 'depth']
+        # attributes.extend(['material', 'material_subtype'])
         lot_def = MCDebug.get_test_def(attributes, 'LOT')
-        lot_def['length'] = 5
-        lot_def['height'] = 7
+        lot_def['width'] = 5
+        lot_def['depth'] = 8
         
         # Draw a lot with wool for the lot, stone for the ground, and
         # grass for the sky
         site = Lot(**lot_def)
-        site.clear(materials.WOOL, materials.STONE, materials.GRASS)
-        print(site)
-        
+        site.add_surface()
+        print(f"Lot: {site}")
+        site.clear(materials.WOOL, materials.BEDROCK, materials.GRASS)
+        print(f"First site: {site}")
+ 
         # Build a lot 10 across and 20 deep along the East axis
-        lot_def['theta'] = Direction.EAST
-        lot_def['length'] = 10
-        lot_def['height'] = 20
+        lot_def['direction'] = Direction.EAST
+        lot_def['width'] = 10
+        lot_def['depth'] = 20
         site2 = Lot(**lot_def)
-        site2.shift_parallel(8)
-        site2.clear(materials.STONE, materials.BEDROCK, materials.AIR)
-        
+        site2.add_surface()
+        site2.shift_parallel(site2.width)
+        site2.clear(materials.GRASS, materials.BEDROCK, materials.AIR)
+
         # Set the setbacks
         site2.set_setbacks(5,2)
         print(f"Setbacks are: {site2.setbacks} (front, left, back, right)")
         
-        """        
-        # Add a structure
-        structure_def = {'width':5, 'depth':5, 'direction':Direction.NORTH, 'story_height':3}
-        structure_def['origin'] = site2.get_next_structure_origin()
-        house = site2.add_structure(**structure_def)
-        print(f"Printing the house: {house}")
-        house.draw()
-        
-        fail
-        
-        # Mark the origin of a new structure
-        structure_origin = site2.offset_origin(3,5)
-        print(f"Structure origin: {structure_origin}")
-        one_block = MCComponent("structure origin", structure_origin)
-        one_block._draw_origin()
-        """
-        
     @staticmethod
     def test_lot_get_next_structure_origin():
         # Get a base definition for a lot
-        attributes = ['name', 'origin', 'theta', 'phi', 'length', 'height']
-        attributes.extend(['material', 'material_subtype'])
+        attributes = ['name', 'origin', 'direction', 'width', 'depth']
         lot_def = MCDebug.get_test_def(attributes, 'LOT')
-        lot_def['length'] = 20
-        lot_def['height'] = 40
- #       lot_def['setbacks'] = (3,3,3,3)
+        print(f"Lot definition: {lot_def}")
         
-        # Draw a lot with wool for the lot, stone for the ground, and
-        # grass for the sky
         site = Lot(**lot_def)
+        site.add_surface()
         site.setbacks = (3,5,1,1)
         site.clear()
         print(site)

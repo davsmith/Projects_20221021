@@ -1,0 +1,48 @@
+{
+	// Example file for code snippets in VS Code.
+	//
+	// - Snippet files placed in the .vscode folder will be available only to the current workspace
+	// - Snippet files placed in %APPDATA%\Code\User\snippets\ will be available to all workspaces
+	// - Files with a .code-snippets extension are available to all languages/file types
+	// - Snippets can have a "scope" parameter to specify for which languages the snippet is available
+	// - Snippet files for a specific language are named <language>.json in the user\snippets folder
+	//
+	// - Each snippet is defined under a snippet name and has a scope, prefix, body and description.
+	// - Add comma separated ids of the languages where the snippet is applicable in the scope field.
+	// - If scope is left empty or omitted, the snippet gets applied to all languages.
+	// - The prefix is what is used to trigger the snippet and the body will be expanded and inserted.
+	// - Variables are defined with $1, $2, $3 and mark tab stops.
+	// - Adding :text after a variable name, e.g. ${2:sample text} will include sample text as placeholder
+	// - $0 will mark the final tab position 
+	// - Placeholders with the same ids are connected.
+	//
+	// Examples below...
+	//
+	"Print to javascript console": {
+		"scope": "javascript,typescript",
+		"prefix": "_jlog",
+		"body": [
+			"console.log('$1');",
+			"$2"
+		],
+		"description": "Log output to console"
+	},
+	"Python Print": {
+		"scope": "python",
+		"prefix": "_plog",
+		"body": [
+			"print '$1'",
+			"print ${2:default text}"
+		],
+		"description": "Prints two lines of text in Python"
+	},
+	"Global snippet available to all languages and file types": {
+		"scope": "",
+		"prefix": "_gcomment",
+		"body": [
+			"// '$1';",
+			"// ${2:default text}"
+		],
+		"description": "Create a two line comment"
+	}
+}

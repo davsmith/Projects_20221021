@@ -1,0 +1,33 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            // Shows the use of variable replacement and 
+            // assigning a task to use with Run Build Task
+            "label": "Copy current file to temp directory",
+            "type": "shell",
+            "command": "copy ${file} ${env:TEMP}\\delete_me.txt",
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+          // If a task is to function across platforms, specify
+          // the command property under an os parent property
+          // (e.g. windows, linux, or osx)
+            "label": "Cross platform task",
+            "type": "shell",
+            "command": "mujiber <ignored>",
+            "windows": {
+              "command": "dir /s"
+            },
+            "linux": {
+              "command": "ls"
+            }
+          }
+    ]
+}

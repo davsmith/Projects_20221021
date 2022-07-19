@@ -1,0 +1,4 @@
+06/29/2022 01:44:12 PM:_1b2_employee: (DEBUG) Created instance log for employee module
+06/29/2022 01:44:12 PM:_1b2_employee: (INFO) Created Employee: John Smith - John.Smith@email.com
+06/29/2022 01:44:12 PM:_1b2_employee: (INFO) Created Employee: Corey Schafer - Corey.Schafer@email.com
+06/29/2022 01:44:12 PM:_1b2_employee: (INFO) Created Employee: Jane Doe - Jane.Doe@email.com

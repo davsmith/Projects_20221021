@@ -1,0 +1,44 @@
+''' Properties (https://tinyurl.com/2bz2r22f) '''
+
+from logging import exception
+
+
+class Vehicle():
+
+    def __init__(self, make, model, year):
+        self._make = make
+        self._model = model
+        self._year = year
+        self._weight = 9999
+
+    @property
+    def weight(self):
+        return self._weight
+
+    @weight.setter
+    def weight(self, value):
+        if value > 10000:
+            raise ValueError('Vehicle weight cannot exceed 10,000 lbs')
+        self._weight = value
+
+    def print_stats(self):
+        print(f'The vehicle is a {self._year} {self._make} {self._model}')
+
+    @weight.deleter
+    def weight(self):
+        self._weight = -1
+
+veh1 = Vehicle("Toyota", "Tundra", 2012)
+veh1.weight = 5000
+print(f'Vehicle weight: {veh1.weight}')
+
+# Causes an exception to be raised in the setter
+try:
+    veh1.weight = 11500
+except ValueError:
+    print('The setter caught an invalid value')
+print(f'Vehicle weight: {veh1.weight}')
+
+del veh1.weight
+print(f'Vehicle weight: {veh1.weight}')
+

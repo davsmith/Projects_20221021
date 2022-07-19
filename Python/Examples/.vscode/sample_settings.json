@@ -1,0 +1,6 @@
+// Information about Linting settings https://code.visualstudio.com/docs/python/linting
+
+{
+    "terminal.integrated.shell.windows": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+    "python.linting.pylintArgs": ["--generate-members"] // Get rid of Module 'x' has no 'y' member errors in Pylint
+}

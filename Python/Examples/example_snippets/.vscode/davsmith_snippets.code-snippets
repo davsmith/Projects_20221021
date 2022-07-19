@@ -1,0 +1,63 @@
+{
+	// Snippet archive for Dave Smith (davsmith).  Working copy is in %APPDATA%\Code\User\snippets\
+	//
+	// - Snippet files placed in the .vscode folder will be available only to the current workspace
+	// - Snippet files placed in %APPDATA%\Code\User\snippets\ will be available to all workspaces
+	// - Files with a .code-snippets extension are available to all languages/file types
+	// - Snippets can have a "scope" parameter to specify for which languages the snippet is available
+	// - Snippet files for a specific language are named <language>.json in the user\snippets folder
+	//
+	// - Each snippet is defined under a snippet name and has a scope, prefix, body and description.
+	// - Add comma separated ids of the languages where the snippet is applicable in the scope field.
+	// - If scope is left empty or omitted, the snippet gets applied to all languages.
+	// - The prefix is what is used to trigger the snippet and the body will be expanded and inserted.
+	// - Variables are defined with $1, $2, $3 and mark tab stops.
+	// - Adding :text after a variable name, e.g. ${2:sample text} will include sample text as placeholder
+	// - $0 will mark the final tab position 
+	// - Placeholders with the same ids are connected.
+	//
+	// Example template:
+	// "Python snippet template": {
+	// 	"prefix": "_python_snippet",
+	// 	"scope": "python",
+	// 	"body": [
+	// 		"print('Today is ${1:Day of week}')",
+	// 		"print('I am having a ${2} day')",
+	// 	],
+	// 	"description": "An example snippet for Python"
+	// },
+
+	"Pygame template": {
+			"prefix": "_pygame_skel",
+			"scope": "python",
+			"body": [
+				"\"\"\"\r",
+				"    Skeleton pygame app\r",
+				"\r",
+				"    - Replace screen dimensions with proper values for the app\r",
+				"    - Add relevant event checks\r",
+				"\"\"\"\r",
+				"import pygame\r",
+				"\r",
+				"SCREEN_DIM = SCREEN_DIM_X, SCREEN_DIM_Y = (${1:1024, 768})\r",
+				"APP_NAME = \"${2:Pygame Template}\"\r",
+				"\r",
+				"def main():\r",
+				"    \"\"\" Main code loop \"\"\"\r",
+				"    pygame.init()\r",
+				"    pygame.display.set_mode(SCREEN_DIM)\r",
+				"    pygame.display.set_caption(APP_NAME)\r",
+				"\r",
+				"    running = True\r",
+				"\r",
+				"    while running:\r",
+				"        for event in pygame.event.get():\r",
+				"            if event.type == pygame.QUIT:\r",
+				"                running = False\r",
+				"\r",
+				"if __name__ == \"__main__\":\r",
+				"    main()"
+			],
+			"description": "A skeleton app using PyGame"
+		}
+}

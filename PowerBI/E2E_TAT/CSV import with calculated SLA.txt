@@ -1,0 +1,9 @@
+let
+    Source = Csv.Document(File.Contents("C:\Users\dasmit\OneDrive - Microsoft\E2E_TAT_Data\Export_Completed_SourceRevision.ss_TOP_10000.csv"),[Delimiter=",", Columns=14, Encoding=1252, QuoteStyle=QuoteStyle.None]),
+    #"Promoted Headers" = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+    #"Changed Type" = Table.TransformColumnTypes(#"Promoted Headers",{{"ResourceImportedEventcV", type text}, {"targetCulture", type text}, {"resourceIdentity", Int64.Type}, {"sourceRevision", Int64.Type}, {"importTimestamp", type datetime}, {"tenantName", type text}, {"subtenantName", type text}, {"projectName", type text}, {"iD", type text}, {"terminate", type logical}, {"exportTimestamp", type datetime}, {"ResourceExportedEventcV", type text}, {"ExportedSourceRevision", Int64.Type}, {"TotalMinutesTaken", type number}}),
+    #"Added Met SLA" = Table.AddColumn(#"Changed Type", "MetSLA", each if ([TotalMinutesTaken]<24*60*5) then 1 else 0),
+    #"Changed Type1" = Table.TransformColumnTypes(#"Added Met SLA",{{"MetSLA", Int64.Type}}),
+    #"Filtered Rows" = Table.SelectRows(#"Changed Type1", each ([targetCulture] = "English"))
+in
+    #"Filtered Rows"

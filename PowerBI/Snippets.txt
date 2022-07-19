@@ -1,0 +1,32 @@
+
+//
+// Loading a CSV file from a named parameter in a CurrentWorkbook
+//
+#"Retrieve file path parameter" = Excel.CurrentWorkbook(){[Name="tblDataPath"]}[Content],
+    #"CSV file path" = #"Retrieve file path parameter"{0}[Source],
+    #"Source content" = Csv.Document(File.Contents(#"CSV file path"),[Delimiter=",", Columns=9, Encoding=1252, QuoteStyle=QuoteStyle.Csv])
+
+//
+// Conditionals
+//
+
+// Create a new column based on a value column and set the value to positive or negative based on the value (credit or debit) in a type field
+#"Set amount from type" = Table.AddColumn(#"Set column types", "True Amount", each if ([Transaction Type]="debit") then (-1*[Amount]) else ([Amount]))
+
+
+//
+// Append and Merge
+//
+
+// Combine (append) the records from multiple tables
+Source = Table.Combine({tblDaily2016, tblDaily2017, tblDaily2018, tblDaily2019, tblDaily2020})
+
+// Join (merge) tblAQI into tblDailyCombined on the Date field to make a new table (join only the records that match from the first table)
+Source = Table.NestedJoin(tblDailyCombined, {"Date"}, tblAQI, {"Date"}, "tblAQI", JoinKind.LeftOuter)
+
+// Join (merge) tblAQI into tblDailyCombined on the Date field to make a new table (join only the records from the right that do not match on the left)
+Source = Table.NestedJoin(tblDailyCombined, {"Date"}, tblAQI, {"Date"}, "tblAQI", JoinKind.RightAnti),
+
+// Expand the data from the joined table after the join
+#"Expanded tblAQI" = Table.ExpandTableColumn(Source, "tblAQI", {"AQI"}, {"tblAQI.AQI"})
+

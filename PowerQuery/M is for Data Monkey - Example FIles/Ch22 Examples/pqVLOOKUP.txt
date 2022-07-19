@@ -1,0 +1,56 @@
+// pqVLOOKUP function written by Ken Puls, FCPA, FCMA, MS MVP (Excel)
+// Original source can be found at the following URL:
+// http://www.excelguru.ca/blog/2015/01/28/creating-a-vlookup-function-in-power-query/
+
+// To use the function it is recommended that you pull your lookuptable into a connection only query
+// Copy the contents of this entire file into a blank query
+// Provided you save this query under the name "pqVLOOKUP", you can then reference it just like
+// Excel's VLOOKUP function as shown below:
+//
+//  =pqVLOOKUP(lookup_value,table(query),col_index_number,[approximate match]
+//  Assuming you want to lookup up the value in the [Data] column in a table you
+//  pulled into a query called "myLookupTable" and return the 4th column, you could use:
+//  =pqVLOOKUP([Data],myLookupTable,4)
+//  =pqVLOOKUP([Data],myLookupTable,4,true)
+//
+//  While you could use =pqVLOOKUP([Data],myLookupTable,4,false) to return an exact match or #N/A
+//  it is recommended to just merge tables for an exact match, as this query will be much slower
+
+(lookup_value as any, table_array as table, col_index_number as number, optional approximate_match as logical ) as any =>
+  let
+    /*Provide optional match if user didn't */
+	matchtype = 
+		if approximate_match = null
+		then true
+		else approximate_match,
+
+     /*Get name of return column */
+	Cols = Table.ColumnNames(table_array),
+	ColTable = Table.FromList(Cols, Splitter.SplitByNothing(), null, null, ExtraValues.Error),
+	ColName_match = Record.Field(ColTable{0},"Column1"),
+	ColName_return = Record.Field(ColTable{col_index_number - 1},"Column1"),
+
+    /*Find closest match */
+	SortData = Table.Sort(table_array,{{ColName_match, Order.Descending}}),
+        RenameLookupCol = Table.RenameColumns(SortData,{{ColName_match, "Lookup"}}),
+	RemoveExcess = Table.SelectRows(RenameLookupCol, each [Lookup] <= lookup_value),
+	ClosestMatch=
+		if Table.IsEmpty(RemoveExcess)=true 
+		then "#N/A" 
+		else Record.Field(RemoveExcess{0},"Lookup"),
+
+    /*What should be returned in case of approximate match? */
+	ClosestReturn=
+		if Table.IsEmpty(RemoveExcess)=true 
+		then "#N/A" 
+		else Record.Field(RemoveExcess{0},ColName_return),
+
+    /*Modify result if we need an exact match */
+	Return = 
+		if matchtype=true
+		then ClosestReturn
+		else
+			if lookup_value = ClosestMatch
+			then ClosestReturn
+			else "#N/A"
+  in Return

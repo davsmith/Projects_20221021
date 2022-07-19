@@ -1,0 +1,4 @@
+    // Retrieve a parameter from a worksheet
+    #"Retrieve file path parameter" = Excel.CurrentWorkbook(){[Name="tableParameters"]}[Content]{0}[Value],
+    #"CSV file path" = #"Retrieve file path parameter" & "Citi - Costco.csv",
+    #"Source content" = Csv.Document(File.Contents(#"CSV file path"),[Delimiter=",", Columns=10, Encoding=1252, QuoteStyle=QuoteStyle.Csv]),

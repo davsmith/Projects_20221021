@@ -1,0 +1,12 @@
+The Challenge:
+Import rows bewteen ID Number and ID Total	
+
+	
+ID Number	Amount	OrderDate
+1234	5	2015-05-01
+1235	45	2015-05-12
+1236	82	2015-05-13
+1237	32	2015-05-22
+ID Total	164
+	
+More irrelevant data shows here	

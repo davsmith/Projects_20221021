@@ -1,0 +1,35 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
+Project("{E24C65DC-7377-472B-9ABA-BC803B73C61A}") = "Frames2", ".", "{64C8DEC1-2C0D-4E60-900F-BC5D20C8F87F}"
+	ProjectSection(WebsiteProperties) = preProject
+		TargetFramework = "3.5"
+		Debug.AspNetCompiler.VirtualPath = "/Frames2"
+		Debug.AspNetCompiler.PhysicalPath = "..\..\WebSites\Examples\Frames2\"
+		Debug.AspNetCompiler.TargetPath = "PrecompiledWeb\Frames2\"
+		Debug.AspNetCompiler.Updateable = "true"
+		Debug.AspNetCompiler.ForceOverwrite = "true"
+		Debug.AspNetCompiler.FixedNames = "false"
+		Debug.AspNetCompiler.Debug = "True"
+		Release.AspNetCompiler.VirtualPath = "/Frames2"
+		Release.AspNetCompiler.PhysicalPath = "..\..\WebSites\Examples\Frames2\"
+		Release.AspNetCompiler.TargetPath = "PrecompiledWeb\Frames2\"
+		Release.AspNetCompiler.Updateable = "true"
+		Release.AspNetCompiler.ForceOverwrite = "true"
+		Release.AspNetCompiler.FixedNames = "false"
+		Release.AspNetCompiler.Debug = "False"
+		VWDPort = "1662"
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|.NET = Debug|.NET
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{64C8DEC1-2C0D-4E60-900F-BC5D20C8F87F}.Debug|.NET.ActiveCfg = Debug|.NET
+		{64C8DEC1-2C0D-4E60-900F-BC5D20C8F87F}.Debug|.NET.Build.0 = Debug|.NET
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

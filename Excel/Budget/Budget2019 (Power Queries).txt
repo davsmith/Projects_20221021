@@ -1,0 +1,68 @@
+// Get Transactions CSV
+let
+    Source = Csv.Document(File.Contents("C:\Users\lived\Downloads\transactions.csv"),[Delimiter=",", Columns=9, Encoding=1252, QuoteStyle=QuoteStyle.Csv]),
+    #"_Promoted Headers" = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+    #"_Changed Type" = Table.TransformColumnTypes(#"_Promoted Headers",{{"Date", type date}, {"Description", type text}, {"Original Description", type text}, {"Amount", type number}, {"Transaction Type", type text}, {"Category", type text}, {"Account Name", type text}, {"Labels", type text}, {"Notes", type text}}),
+    #"Added and calculated  True Amount" = Table.AddColumn(#"_Changed Type", "True Amount", each if ([Transaction Type]="debit") then (-1*[Amount]) else ([Amount])),
+    #"Removed Amount, Transaction Type" = Table.RemoveColumns(#"Added and calculated  True Amount",{"Amount", "Transaction Type"}),
+    #"Renamed Notes, and True Amount" = Table.RenameColumns(#"Removed Amount, Transaction Type",{{"Notes", "Memo"}, {"True Amount", "Amount"}}),
+    #"Added Subcategory" = Table.AddColumn(#"Renamed Notes, and True Amount", "Subcategory", each Text.Lower(Text.BetweenDelimiters([Memo],"#","#"))),
+    #"Added Confirmed (Blank)" = Table.AddColumn(#"Added Subcategory", "Confirmed", each ""),
+    #"Moved Subcategory" = Table.ReorderColumns(#"Added Confirmed (Blank)",{"Account Name", "Date", "Amount", "Description", "Original Description", "Category", "Subcategory", "Labels", "Memo"}),
+    #"Split Subcategory on delimeter" = Table.SplitColumn(#"Moved Subcategory", "Subcategory", Splitter.SplitTextByDelimiter("|", QuoteStyle.Csv), {"Subcategory.1", "Subcategory.2", "Subcategory.3", "Subcategory.4"}),
+    #"Changed Subcats" = Table.TransformColumnTypes(#"Split Subcategory on delimeter",{{"Subcategory.1", type text}, {"Subcategory.2", type text}, {"Subcategory.3", type text}, {"Subcategory.4", type text}})
+in
+    #"Changed Subcats"
+
+
+// Get Categories table
+let
+    Source = Excel.CurrentWorkbook(){[Name="Categories"]}[Content],
+    #"Changed Type" = Table.TransformColumnTypes(Source,{{"Category", type text}, {"Parent", type text}, {"Type", type text}})
+in
+    #"Changed Type"
+
+
+// Get Payees Table
+let
+    Source = Excel.CurrentWorkbook(){[Name="Payees"]}[Content],
+    #"Changed Type" = Table.TransformColumnTypes(Source,{{"Mint", type text}, {"Actual", type text}})
+in
+    #"Changed Type"
+
+
+// Merge fields from Categories
+let
+    Source = Table.NestedJoin(#"Get Transactions CSV",{"Category"},#"Get Categories table",{"Category"},"Categories",JoinKind.LeftOuter),
+    #"Expanded Categories" = Table.ExpandTableColumn(Source, "Categories", {"Parent", "Type", "Discretionary", "Frequency"}, {"Parent", "Type", "Discretionary", "Frequency"}),
+    #"Sorted Rows" = Table.Sort(#"Expanded Categories",{{"Date", Order.Descending}})
+in
+    #"Sorted Rows"
+
+
+// Merge fields from Payees
+let
+    Source = Table.NestedJoin(#"Merge fields from Categories", {"Description"}, #"Get Payees table", {"Mint"}, "Get Payees table", JoinKind.LeftOuter),
+    #"Expanded Get Payees table" = Table.ExpandTableColumn(Source, "Get Payees table", {"Actual"}, {"Actual"}),
+    #"Reordered Columns" = Table.ReorderColumns(#"Expanded Get Payees table",{"Account Name", "Date", "Amount", "Actual", "Description", "Original Description", "Parent", "Category", "Subcategory.1", "Subcategory.2", "Subcategory.3", "Subcategory.4", "Labels", "Memo", "Confirmed", "Type", "Discretionary", "Frequency"}),
+    #"Replaced Value" = Table.ReplaceValue(#"Reordered Columns",null,each [Description],Replacer.ReplaceValue,{"Actual"})
+in
+    #"Replaced Value"
+
+
+// Get Budget Table
+let
+    Source = Excel.CurrentWorkbook(){[Name="Table44"]}[Content],
+    #"Changed Type" = Table.TransformColumnTypes(Source,{{"Category", type text}, {"Parent", type text}, {"Jan - Apr", type any}, {"Expected Annual", type number}, {"Normalized Expenses", type number}, {"Target Annual", type number}, {"Target Monthly", type number}, {"Difference (annual)", Int64.Type}, {"Notes", type text}})
+in
+    #"Changed Type"
+
+
+// Merge1
+// Under construction
+let
+    Source = Table.NestedJoin(#"Get Budget Table", {"Category"}, #"Get Categories table", {"Category"}, "Get Categories table", JoinKind.LeftOuter),
+    #"Expanded Get Categories table" = Table.ExpandTableColumn(Source, "Get Categories table", {"Discretionary", "Frequency", "Type"}, {"Discretionary", "Frequency", "Type"}),
+    #"Filtered Rows" = Table.SelectRows(#"Expanded Get Categories table", each ([Type] <> "Parent"))
+in
+    #"Filtered Rows"

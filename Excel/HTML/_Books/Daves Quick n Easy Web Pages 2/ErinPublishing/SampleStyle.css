@@ -1,0 +1,26 @@
+﻿body{ font-family:verdana,arial,sans-serif;  }
+
+body.content{ color:#000000; background:#ffffff; margin: 40px 80px; font-size:16px }
+body.content h1 { color:#339933; font-size:30px; text-indent:-30px }
+body.content h2{font-size:20px;}
+body.content a{ color:#339933; font-weight:bold; text-decoration:none }
+body.content span.highlight{ background:#ffff00 }
+body.content dd { font-weight:bold; font-style:italic}
+body.content div.sidebar{ background:#fffdda; padding:10px; border:solid 1px #000000; margin:10px; font-size:12px }
+body.content td.standardtext{ font-size:16px }
+body.content td.smalltext{ font-size:12px }
+
+body.contact{ background:#339933; margin:1.5px 14px;font-size:12px }
+body.contact a{ color:#ffffff; font-size:14px; font-weight:bold; text-decoration:none }
+
+body.masthead { background:#339933; font-size:12px }
+body.masthead a{ color:#ffffff; font-weight:bold; text-decoration:none }
+body.masthead a#logo{ font-size:35px; position:absolute; top:15px; left:15px }
+body.masthead span#buttons{ font-size:20px; position:absolute; top:70px; left:215px; word-spacing:30px }
+body.masthead a:hover{ color:#ffffcc }
+
+body.navigation{ color:#0000; background:#ffffcc; margin: 14px 18px; font-size:12px }
+body.navigation a { color:#339933; text-decoration: none;  }
+body.navigation a.buttons{ font-weight:bold; font-size:18px }
+
+body a:hover{ color:#ff0000 }

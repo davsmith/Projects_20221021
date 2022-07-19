@@ -1,0 +1,82 @@
+/* entire web site - font */ 
+body{font-family:verdana,arial,sans-serif}
+
+
+
+/* content frame - colors, margins, base font size */
+body.content{color:#000000; background:#ffffff; margin:40px 80px; font-size:16px}
+
+/* content frame - h1 - color, font size, hanging indent */
+body.content h1{color:#339933; font-size:30px; text-indent:-30px}
+
+/* content frame - h2 - font size */
+body.content h2{font-size:20px;}
+
+/* content frame - hyperlinks - color, bold, no underline */
+body.content a{color:#339933; font-weight:bold; text-decoration:none}
+
+/* content frame - create highlighting */		
+body.content span.highlight{background:#ffff00}
+
+/* content frame - create sidebar */
+body.content div.sidebar{background:#fffdda; padding:10px; border:solid 1px #000000; margin:10px; font-size:12px}
+
+/* content frame - definition list - italics, bold */
+body.content dd{font-style:italic; font-weight:bold}
+
+/* content frame - td.standardtext -  */
+body.content td.standardtext{font-size:16px}
+
+/* content frame - td.smalltext -  */
+body.content td.smalltext{font-size:12px}
+
+
+
+/* masthead frame - background color, base font size */
+body.masthead{background:#339933; font-size:12px}
+
+/* masthead frame - hyperlinks - color, bold, no underline */
+body.masthead a{color:#ffffff; font-weight:bold; text-decoration:none}
+
+/* masthead frame - logo - font size, position */
+body.masthead a#logo{font-size:35px; position:absolute; top:15px; left:15px}
+
+/* masthead frame - buttons - font size, position, spacing */
+body.masthead span#buttons{font-size:20px;  position:absolute; top:70px; left:215px; word-spacing:30px}
+
+
+
+/* navigation frame - colors, margins, base font size */
+body.navigation{color:#000000; background:#ffffcc; margin:14px 18px; font-size:12px}
+
+/* navigation frame - hyperlinks - color, remove underline */
+body.navigation a {color:#339933; text-decoration: none}
+
+/* navigation frame - home page and site map hyperlinks - bold, font size */
+body.navigation a.buttons{color:#339933; font-weight:bold; font-size:18px}
+
+
+
+/* contact frame - background color, margins, base font size */
+body.contact{background:#339933; margin:1.5px 14px; font-size:12px}
+
+/* contact frame - hyperlinks - color, font size, bold, remove underlines */
+body.contact a{color:#ffffff; font-size:14px; font-weight:bold; text-decoration: none}
+
+
+
+/* entire web site - hover */
+body a:hover{color:#ff0000}
+
+/* masthead frame - hover */				
+body.masthead a:hover{color:#ffffcc}
+
+/* navigation frame - home page and site map hyperlinks - hover */
+body.navigation a.buttons:hover{color:#ff0000}
+
+
+
+
+
+
+

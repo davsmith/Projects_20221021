@@ -1,0 +1,35 @@
+S_ConnectToDatastore
+	Directory.Connect
+	Directory.GetProductByName
+
+QueryUsingPSQ
+	GetQueryFromPSQ
+	RunQuery
+	PutPSResultsInWorksheet
+
+QueryUsingText
+	T_GetDataSheet
+	T_HeadingFromColumn
+	RunQuery
+	PutPSResultsInWorksheet
+
+S_PutPSResultsInWorksheet
+	T_GetDataSheet
+	P_DatastoreItemList.DataStoreItems
+	
+S_GetQueryFromPSQ
+	P_PSQFile.Load
+		 .currentmode
+		 .Modes().Handler.GenerateProductQueries
+				 .Format.resultlist
+		 .PrimaryProductName
+	P_PSQProductQueries().SelectionCriteria
+	P_ResultList.DisplayColumns
+
+S_RunQuery
+	P_PsDatastoreItemTypeEnum
+	P_Query.CountOnly
+	       .ItemType
+	
+	
+	

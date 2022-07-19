@@ -1,0 +1,35 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
+Project("{E24C65DC-7377-472B-9ABA-BC803B73C61A}") = "ErinPublishing", ".", "{BD7D6E0B-8BF6-4C09-8A75-A6401258254E}"
+	ProjectSection(WebsiteProperties) = preProject
+		TargetFramework = "3.5"
+		Debug.AspNetCompiler.VirtualPath = "/ErinPublishing"
+		Debug.AspNetCompiler.PhysicalPath = "E:\FolderShare\Home\Projects\WebPages\Samples\ErinPublishing\"
+		Debug.AspNetCompiler.TargetPath = "PrecompiledWeb\ErinPublishing\"
+		Debug.AspNetCompiler.Updateable = "true"
+		Debug.AspNetCompiler.ForceOverwrite = "true"
+		Debug.AspNetCompiler.FixedNames = "false"
+		Debug.AspNetCompiler.Debug = "True"
+		Release.AspNetCompiler.VirtualPath = "/ErinPublishing"
+		Release.AspNetCompiler.PhysicalPath = "E:\FolderShare\Home\Projects\WebPages\Samples\ErinPublishing\"
+		Release.AspNetCompiler.TargetPath = "PrecompiledWeb\ErinPublishing\"
+		Release.AspNetCompiler.Updateable = "true"
+		Release.AspNetCompiler.ForceOverwrite = "true"
+		Release.AspNetCompiler.FixedNames = "false"
+		Release.AspNetCompiler.Debug = "False"
+		VWDPort = "49163"
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|.NET = Debug|.NET
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{BD7D6E0B-8BF6-4C09-8A75-A6401258254E}.Debug|.NET.ActiveCfg = Debug|.NET
+		{BD7D6E0B-8BF6-4C09-8A75-A6401258254E}.Debug|.NET.Build.0 = Debug|.NET
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

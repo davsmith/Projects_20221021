@@ -1,0 +1,21 @@
+﻿<html>
+    <head>
+        <title>Z-Order Example</title>
+        <style type="text/css">
+            h1#A{ position:absolute; top:-.3em; left:-1em; z-index:3 }
+            h1#B{ position:absolute; top:3em; left:5em; z-index:-5 }
+            h1#C{ position:absolute; top:4em; left:0em; z-index:5 }
+            h1#A{ background:#ffff00; padding:2em; border:dashed #ff0000 .5em; margin:3em; 
+                  font:3em arial, helvetica, sans-serif; text-align:center }
+            h1#B{ background:#f5ba5c; padding:1em; border:solid #0000ff .25em; margin:3em; 
+                  font:3em arial, helvetica, sans-serif; text-align:center }
+            h1#C{ background:#00ff00; padding:0em; border:dotted black .1em; margin:0em; 
+                  font:3em arial, helvetica, sans-serif; text-align:center }
+        </style>
+    </head>
+    <body>
+        <h1 id="A">Content A</h1>
+        <h1 id="B">Content B</h1>
+        <h1 id="C">Content C</h1>
+    </body>
+</html>

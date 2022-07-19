@@ -1,0 +1,56 @@
+﻿body{ font-family:verdana,arial,sans-serif;  }
+
+body.content{ color:#000000; background:#ffffff; margin: 40px 80px; font-size:16px }
+body.content h1 { color:#339933; font-size:30px; text-indent:-30px }
+body.content h2{font-size:20px;}
+body.content a{ color:#339933; font-weight:bold; text-decoration:none }
+body.content span.highlight{ background:#ffff00 }
+body.content dd { font-weight:bold; font-style:italic}
+body.content div.sidebar{ background:#fffdda; padding:10px; border:solid 1px #000000; margin:10px; font-size:12px }
+body.content td.standardtext{ font-size:16px }
+body.content td.smalltext{ font-size:12px }
+
+body.contact{ background:#339933; margin:1.5px 14px;font-size:12px }
+body.contact a{ color:#ffffff; font-size:14px; font-weight:bold; text-decoration:none }
+
+body.masthead { background:#339933; font-size:12px }
+body.masthead a{ color:#ffffff; font-weight:bold; text-decoration:none }
+body.masthead a#logo{ font-size:35px; position:absolute; top:15px; left:15px }
+body.masthead span#buttons{ font-size:20px; position:absolute; top:70px; left:215px; word-spacing:30px }
+body.masthead a:hover{ color:#ffffcc }
+
+body.navigation{ color:#0000; background:#ffffcc; margin: 14px 18px; font-size:12px }
+body.navigation a { color:#339933; text-decoration: none;  }
+body.navigation a.buttons{ font-weight:bold; font-size:18px }
+
+body a:hover{ color:#ff0000 }
+
+body table.photos { background:#339933; width:auto; height:auto }
+body table.photos img { border-right-color:#000000; width:133px; height:100px}
+body td { vertical-align:middle }
+body table.photos td.smalltext { font-weight:bolder }
+
+body div#single img{ width:133px; height:100px; border-width:0px; margin :0px; padding:0px; vertical-align:top }
+body div#single table{  background-color:#ff0000; border-width:5px; margin-left:75px; padding:10px }
+body div#single tr{ background-color:#FF0000; margin:0px; padding:0px; border-width:0px }
+body div#single h5{ font-size:12px; font-weight:normal; background-color:#00FFFF; vertical-align:text-top }
+body div#single td{ width:133px; vertical-align:text-top; height:20px }
+body div#single tr.captions{ height:20px; background-color:#FF00FF; margin:0px; padding:0px; border-width:5px; border-color:#000000 }
+
+/* 
+body div#empty table{ background-color:#ff0000; width:200px; height:100px; border:solid 5px #000000; border: medium double blue; border-collapse: separate; border-spacing: 10pt 5pt  }
+body div#empty tr.captions{ background-color:#ffffff; width:50px; height:50px; border:solid 2px #000000  }
+*/
+/*
+	- CSS is used to set a fixed table width and height, and the outside border.
+	- Border-spacing doesn't work in IE 7 and before, so CELLSPACING can be used in the HTML to set the
+	  amount of space between the cells.  It appears that this setting controls both vertical and horizontal
+	  spacing.
+	- The width can be set to a % of the screen width by changing px to % and vice versa.
+	- Height only seems to be settable by px (?)
+	- Inner borders are set by adding the "border" statement to the td element
+	- Outter borders are set by adding the "border" statement to the table element
+*/
+body div#empty table{ width:40%; height:200px; border: medium double blue; border-collapse: separate; border-spacing: 5pt 15pt  }
+body div#empty td{ text-align:center; height:25px; border: solid 1px #C0C0C0;padding: 3px}
+

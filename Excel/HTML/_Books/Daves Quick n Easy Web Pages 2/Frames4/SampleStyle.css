@@ -1,0 +1,21 @@
+﻿/*  A sample style-sheet which dictates style for the h3 tags */
+
+/* Styles can be specified individually...*/
+h5{color:Green}
+h5{background-color:Navy}
+
+/* ... or they can be specified in a group */
+h3{color:Gray;background-color:Black}
+
+/* Note that parameters may be overridden by style settings for the page, or a tag */
+body{color:Orange;background-color:Gray}
+
+/* Shorcuts specify formatting for a family of characteristics, such as:
+background = -color, -image, -repeat, -attachment, -position*/
+p{background: #000000 url("ntimage.gif") repeat; color:Black}
+
+/* Conditional formatting:
+- Change the text red if an italic is a child of a bold
+*/
+
+b i{color:Red}

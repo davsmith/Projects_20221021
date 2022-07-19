@@ -1,0 +1,9 @@
+{
+    "editor.formatOnSave": false,
+    
+    // Controls the font size in pixels.
+    "editor.fontSize": 14,
+
+      // Whether to lint Python files.
+      "python.linting.enabled": false,
+}

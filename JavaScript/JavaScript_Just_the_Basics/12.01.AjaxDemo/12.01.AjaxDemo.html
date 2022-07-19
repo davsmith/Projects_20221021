@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Ajax Weather Widget</title>
+<style type="text/css">
+table.normal
+  {
+  table-layout:fixed;
+  background-color:#efedde;
+  border-collapse:collapse;
+  width:378px;
+  }
+table.normal td
+  {
+  padding:6px;
+  }
+</style>
+<script>
+/* SCRIPT FOR "AN AJAX WEATHER WIDGET" DEMO */
+
+window.onload = function ()
+  {
+  /* get initial weather data: */
+  updateWeather ();
+
+  /* then update weather data every 5 minutes: */
+  setInterval (updateWeather, 300000);
+  }
+
+/* 'updateWeather()' uses an XMLHttpRequest object to obtain current weather information from a PHP script on the server: */
+function updateWeather ()
+  {
+  /* header cell in table; displays title and error messages: */
+  var weatherheaderTD;
+
+  /* get XMLHttpRequest object inside 'try' block because constructor is not supported in IE prior to version 7: */
+  try
+    {
+    var requestObj = new XMLHttpRequest ();
+    }
+  catch (e)
+    {
+    weatherheaderTD = document.getElementById ("weatherheader");
+    weatherheaderTD.firstChild.data = "Your browser doesn't support the latest Ajax standard. Please upgrade!";
+    return;
+    }
+
+  /* define & register 'onreadystatechange' handler: */
+  requestObj.onreadystatechange = function ()
+    {
+    /* readyState === 4 means document has been fully received: */
+    if (requestObj.readyState === 4)
+      {
+      /* check that a valid XML Document object has been obtained: */
+        /* status 200 indicates success: */
+      if (requestObj.status !== 200 ||
+        /* 'responseXML' is the XML Document object: */
+        !requestObj.responseXML   ||
+        /* 'documentElement' is the root XML element, which must exist: */
+        !requestObj.responseXML.documentElement)
+        {
+        weatherheaderTD = document.getElementById ("weatherheader");
+        weatherheaderTD.firstChild.data = "Error: Could not access weather script (AjaxDemo.php)."
+        return;
+        }
+
+      /* get XML Document object from request object: */
+      var xmlDoc = requestObj.responseXML;
+
+      /* test for presence of an XML element indicating an error: */
+      var errorElements = xmlDoc.getElementsByTagName ("error");
+      if (errorElements && errorElements.length)
+        {
+        weatherheaderTD = document.getElementById ("weatherheader");
+        weatherheaderTD.firstChild.data = errorElements[0].firstChild.data;
+        return;
+        }
+
+      /* set date/time: */
+      var d = new Date ();
+      var timeTD = document.getElementById ("time");
+      timeTD.firstChild.data = d.toLocaleDateString () + " at " + d.toLocaleTimeString ();
+
+      /* set temperature: */
+      var tempTD = document.getElementById ("temp");
+      tempTD.firstChild.data = xmlDoc.getElementsByTagName ("temp")[0].firstChild.data;
+
+      /* set conditions: */
+      var condTD = document.getElementById ("cond");
+      condTD.firstChild.data = xmlDoc.getElementsByTagName ("cond")[0].firstChild.data;
+
+      /* set wind: */
+      var windTD = document.getElementById ("wind");
+      windTD.firstChild.data = xmlDoc.getElementsByTagName ("wind")[0].firstChild.data;
+      }
+    }
+
+  /* call 'open()' method to initialize the request parameters: */
+  requestObj.open ("POST", "AjaxDemo.php", true);
+
+  /* call 'send()' method to initiate the Ajax request: */
+  requestObj.send (null);
+  }
+</script>
+</head>
+<body>
+<h2>An Ajax Weather Widget</h2>
+<table class="normal">
+  <colgroup>
+    <col style="width:9px;">
+    <col style="width:150px;">
+    <col style="width:210px;">
+    <col style="width:9px;">
+  </colgroup>
+  <tr>
+    <td style="padding:0; vertical-align:top;"><img src="ULC.png" align="top" alt=""></td>
+    <td id="weatherheader" style="text-align:center;" colspan="2">San Francisco Weather</td>
+    <td style="padding:0; vertical-align:top;"><img src="URC.png" align="top" alt=""></td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td>Last Update:</td>
+    <td id="time">&nbsp;</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td>Temperature (<sup>o</sup>F):</td>
+    <td id="temp">&nbsp;</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td>&nbsp;</td>
+    <td>Conditions:</td>
+    <td id="cond">&nbsp;</td>
+    <td>&nbsp;</td>
+  </tr>
+  <tr>
+    <td style="padding:0; vertical-align:bottom;"><img src="LLC.png" align="absbottom" alt=""></td>
+    <td>Wind:</td>
+    <td id="wind">&nbsp;</td>
+    <td style="padding:0; vertical-align:bottom;"><img src="LRC.png" align="absbottom" alt=""></td>
+  </tr>
+</table>
+</body>
+</html>

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Collapsible/Expandable List Demo</title>
+<script>
+function toggleVisible ()
+  {
+  /* delay between timer events: */
+  var delay = 22;
+  /* next list item to hide or show: */
+  var next;
+
+  /* get a list of all items within the unordered list: */
+  var list = document.getElementById ("list");
+  var childListItems = list.getElementsByTagName ("li");
+
+  /* get an object for the image in the list header, so the image can be toggled between a minus and a plus sign: */
+  var img = document.getElementById ("minusPlus");
+
+  /* if the list items are visible, then call collapse() to begin hiding them: */
+  if (childListItems[0].style.display === "list-item" || childListItems[0].style.display === "")
+    {
+    img.src = "Plus.gif";
+
+    next = childListItems.length - 1;
+    collapse ();
+    }
+  /* if the list items are hidden, then call expand() to begin showing them: */
+  else
+    {
+    img.src = "Minus.gif";
+
+    next = 0;
+    expand ();
+    }
+  function collapse ()
+    {
+    childListItems[next--].style.display = "none";
+    if (next >= 0)
+      setTimeout (collapse, delay);
+    }
+  function expand ()
+    {
+    childListItems[next++].style.display = "list-item";
+    if (next < childListItems.length)
+      setTimeout (expand, delay);
+    }
+  }
+</script>
+</head>
+<body>
+<h2>Collapsible/Expandable List Demo</h2>
+<div onclick="toggleVisible ();">
+  <img id="minusPlus" src="Minus.gif" alt="minus/plus"> Grocery List
+</div>
+<ul id="list" style="margin-top: 0px;">
+  <li>waffle mix</li>
+  <li>cheese</li>
+  <li>Tofurkey</li>
+  <li>eggs</li>
+  <li>maple syrup</li>
+  <li>OJ</li>
+  <li>soy milk</li>
+  <li>bread</li>
+  <li>apples</li>
+  <li>tomatoes</li>
+  <li>lettuce</li>
+  <li>cookies</li>
+  <li>cereal</li>
+  <li>chips</li>
+  <li>ghee</li>
+  <li>olive oil</li>
+  <li>curry cashews</li>
+  <li>bananas</li>
+  <li>green tea</li>
+</ul>
+<h2>Collapsible/Expandable List Demo</h2>
+</body>
+</html>

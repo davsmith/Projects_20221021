@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Cookie Demo</title>
+<script>
+window.onload = function ()
+  {
+  /* look for user-name cookie: */
+  var userName = getUserNameCookie ();
+
+  var welcomeMessage;
+
+  if (userName === null)  // no cookie found
+    {
+    userName = prompt ("Please enter your name.", "");
+    /* save user name as cookie: */
+    setUserNameCookie (userName);
+    welcomeMessage = ". Welcome!";
+    }
+  else  // cookie found
+    {
+    welcomeMessage = ". Welcome back!";
+    }
+  /* display the welcome message: */
+  document.getElementById ("welcome").innerHTML = "Hi, " + userName + welcomeMessage;
+  }
+
+function getUserNameCookie ()
+  {
+  /* get all cookies: */
+  var allCookies = document.cookie;
+
+  /* now find the cookie with the name "userName" and return its value; or return 'null' if that cookie isn't found: */
+
+  if (allCookies === "")
+    return null;
+
+  /* break up all-cookie string into an array: */
+  var cookieList = allCookies.split ("; ");
+  /* search through the array for the user-name cookie: */
+  for (var i = 0; i < cookieList.length; ++i)
+    {
+    var cookie = cookieList[i];
+    var idx = cookie.indexOf ("=");
+    /* extract cookie name: */
+    var name = cookie.substring (0, idx);
+    if (name === "userName")
+      {
+      /* correct cookie found: extract, decode, & return cookie value: */
+      var value = cookie.substring (idx+1);
+      return decodeURIComponent (value);
+      }
+    }
+  return null;
+  }
+
+function setUserNameCookie (userName)
+  {
+  /* set 'date' to one hour from now: */
+  var date = new Date();
+  date.setHours (date.getHours()+1);
+
+  /* write the user-name cookie, so that it expires in one hour: */
+  document.cookie = "userName=" + encodeURIComponent (userName) + "; expires=" + date.toUTCString();
+  }
+
+function deleteUserNameCookie ()
+  {
+  document.cookie = "userName=xxx; expires=" + new Date().toUTCString();
+  }
+
+</script>
+</head>
+<body>
+<h2>A Cookie Demo</h2>
+<h3 id="welcome"></h3>
+<p>
+  <button onclick="deleteUserNameCookie();">Delete Cookie</button>
+</p>
+</body>
+</html>

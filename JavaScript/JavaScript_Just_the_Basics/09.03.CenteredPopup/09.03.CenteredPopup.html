@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Centered Popup Demo</title>
+<script>
+
+function showPopup ()
+  {
+  var x = (window.screen.width - 300) / 2;
+  var y = (window.screen.height - 300) / 2;
+
+  var w = window.open
+    ("http://example.com",
+    "",
+    "left=" + x + ", top=" + y + ", width=300, height=300, resizable=yes, scrollbars=yes");
+  }
+
+</script>
+</head>
+<body>
+<h2>Centered Popup Demo</h2>
+
+<button onclick='showPopup ();'>Show Centered Popup Window</button>
+
+<p>End of Centered Popup Demo</p>
+</body>
+</html>

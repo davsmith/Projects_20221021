@@ -1,0 +1,9 @@
+D:\LiveDog\Projects\JavaScript\LayoutTest2\LayoutTest2\bin\Debug\resources.pri
+D:\LiveDog\Projects\JavaScript\LayoutTest2\LayoutTest2\bin\Debug\AppxManifest.xml
+D:\LiveDog\Projects\JavaScript\LayoutTest2\LayoutTest2\bin\Debug\LayoutTest2.build.appxrecipe
+D:\LiveDog\Projects\JavaScript\LayoutTest2\LayoutTest2\bld\Debug\priconfig.xml
+D:\LiveDog\Projects\JavaScript\LayoutTest2\LayoutTest2\bld\Debug\layout.resfiles
+D:\LiveDog\Projects\JavaScript\LayoutTest2\LayoutTest2\bld\Debug\resources.resfiles
+D:\LiveDog\Projects\JavaScript\LayoutTest2\LayoutTest2\bld\Debug\pri.resfiles
+D:\LiveDog\Projects\JavaScript\LayoutTest2\LayoutTest2\bld\Debug\LanguageQualifiers.txt
+D:\LiveDog\Projects\JavaScript\LayoutTest2\LayoutTest2\bld\Debug\ProjectArchitectures.txt

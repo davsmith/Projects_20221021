@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Window Test</title>
+<script>
+var win = null;
+</script>
+</head>
+<body>
+<h2>JavaScript Window Test</h2>
+<p>
+<button onclick='win = window.open ("WinTest.html", "test");'>Open Test Window</button>
+</p>
+<p>
+<button onclick='if (win) win.close ();'>Close Test Window</button>
+</p>
+<p>
+<button onclick='window.close ();'>Close This Window</button><br>
+(On some browsers this command will fail.)
+</p>
+<p>End of Window Test</p>
+</body>
+</html>

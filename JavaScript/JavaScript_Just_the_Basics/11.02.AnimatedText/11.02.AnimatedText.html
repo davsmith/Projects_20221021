@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Animated Text Demo</title>
+
+<style type="text/css">
+/* style declarations that apply to the element with ID "animated" (i.e. the animated text): */
+#animated
+  {
+  color: red;
+
+  /* position text 325 pixels left of its normal location on the page: */
+  position: relative;
+  left: -325px;
+  }
+</style>
+
+<script>
+window.onload = function ()
+  {
+  /* number of pixels to move text on each timer event: */
+  var movement = 3;
+  /* delay between timer events: */
+  var delay = 25;
+
+  /* initialize 'left' (value of text's 'left' property) and 'text' (object for the animated text): */
+  var left = -325;
+  var text = document.getElementById ("animated");
+
+  /* do first text movement: */
+  moveText ();
+
+  function moveText ()
+    {
+    left += movement;
+
+    /* if 'left' is > 0 (0 = normal text position), set it back to 0: */
+    if (left > 0)
+      {
+      left = 0;
+      }
+    /* if 'left' is still < 0, set timer for another movement: */
+    if (left < 0)
+      {
+      setTimeout (moveText, delay);
+      }
+
+    /* now move the text by setting its 'left' property: */
+    text.style.left = left + "px";
+    }
+  }
+</script>
+
+</head>
+<body>
+
+<h1 id="animated">An Animated Heading</h1>
+
+<p>End of Animated Text Demo</p>
+</body>
+</html>

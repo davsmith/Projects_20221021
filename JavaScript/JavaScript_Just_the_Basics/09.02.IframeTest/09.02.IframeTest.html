@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Iframe Test</title>
+<script>
+
+window.name = "IframeTest";
+
+</script>
+</head>
+<body>
+<h2>Iframe Test</h2>
+
+<iframe src="Iframe01.html" name="Iframe01"></iframe>
+
+<iframe src="Iframe02.html" name="Iframe02"></iframe>
+
+<p>
+<script>
+for (var i = 0; i < window.frames.length; ++i)
+  document.write ("iframe " + i + " name: " + window.frames[i].name + "<br>");
+</script>
+</p>
+
+<p>End of Iframe Test</p>
+</body>
+</html>

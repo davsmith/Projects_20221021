@@ -1,0 +1,13 @@
+D:\LiveDog\Projects\JavaScript\jQuery_For_Designers\App2\App2\bin\Debug\resources.pri
+D:\LiveDog\Projects\JavaScript\jQuery_For_Designers\App2\App2\bin\Debug\AppxManifest.xml
+D:\LiveDog\Projects\JavaScript\jQuery_For_Designers\App2\App2\bin\Debug\App2.build.appxrecipe
+D:\LiveDog\Projects\JavaScript\jQuery_For_Designers\App2\App2\bld\Debug\priconfig.xml.intermediate
+D:\LiveDog\Projects\JavaScript\jQuery_For_Designers\App2\App2\bld\Debug\layout.resfiles.intermediate
+D:\LiveDog\Projects\JavaScript\jQuery_For_Designers\App2\App2\bld\Debug\resources.resfiles.intermediate
+D:\LiveDog\Projects\JavaScript\jQuery_For_Designers\App2\App2\bld\Debug\pri.resfiles.intermediate
+D:\LiveDog\Projects\JavaScript\jQuery_For_Designers\App2\App2\bld\Debug\priconfig.xml
+D:\LiveDog\Projects\JavaScript\jQuery_For_Designers\App2\App2\bld\Debug\layout.resfiles
+D:\LiveDog\Projects\JavaScript\jQuery_For_Designers\App2\App2\bld\Debug\resources.resfiles
+D:\LiveDog\Projects\JavaScript\jQuery_For_Designers\App2\App2\bld\Debug\pri.resfiles
+D:\LiveDog\Projects\JavaScript\jQuery_For_Designers\App2\App2\bld\Debug\LanguageQualifiers.txt
+D:\LiveDog\Projects\JavaScript\jQuery_For_Designers\App2\App2\bld\Debug\ProjectArchitectures.txt

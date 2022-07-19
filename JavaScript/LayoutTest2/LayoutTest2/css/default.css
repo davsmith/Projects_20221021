@@ -1,0 +1,29 @@
+﻿body {
+}
+
+.mainBaseClass {
+	display: -ms-grid;
+	-ms-grid-rows: 1fr 1fr 1fr;
+	-ms-grid-columns: 1fr 1fr 1fr;
+	background-color: #5E1313;
+}
+
+#txtContent {
+	-ms-grid-column:2;
+	-ms-grid-row:2;
+	color: #28AD32;
+	background-color: #2530AD;
+	-ms-grid-column-align: center;
+}
+
+@media screen and (-ms-view-state: fullscreen-landscape) {
+}
+
+@media screen and (-ms-view-state: filled) {
+}
+
+@media screen and (-ms-view-state: snapped) {
+}
+
+@media screen and (-ms-view-state: fullscreen-portrait) {
+}

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Fading Text Box Demo</title>
+<style type="text/css">
+/* styles for the text box: */
+div.popup
+  {
+  position: absolute;
+  left: 175px; top: 20px;
+  width: 200px; height: 200px;
+  border: solid 1px #000000;
+  border-radius: 8px;
+  background-color: #fffede;
+  opacity: 0;
+  filter: alpha(opacity=0);
+  }
+
+/* styles for the header inside the text box: */
+div.header
+  {
+  border: solid 1px #000000;
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+  background-color: #000000;
+  color: #ffffff;
+  text-align: center;
+  }
+</style>
+<script>
+var opacity = 0;
+
+/* toggles text box between visible and invisible states: */
+function fadeInOut ()
+  {
+  /* amount to change opacity on each timer event: */
+  var changeOpacity = 5;
+  /* delay between timer events: */
+  var delay = 35;
+
+  /* get the object for the text box element: */
+  var textbox = document.getElementById ("textbox");
+
+  /* call either fadeIn() or fadeOut() depending on current visibility of text box: */
+  if (opacity === 0)
+    {
+    fadeIn ();
+    }
+  else
+    {
+    fadeOut ();
+    }
+
+  function fadeIn ()
+    {
+    opacity += changeOpacity;
+
+    /* if 'opacity' > 100 (100 = fully opaque) set it back to 100: */
+    if (opacity > 100)
+      opacity = 100;
+    /* if text box not yet fully opaque, schedule another call to this function: */
+    if (opacity < 100)
+      setTimeout (fadeIn, delay);
+
+    /* now change the opacity: */
+    textbox.style.opacity = String (opacity / 100);
+    /* for IE <= 8: */
+    textbox.style.filter = "alpha(opacity=" + opacity + ")";
+    }
+
+  function fadeOut ()
+    {
+    opacity -= changeOpacity;
+
+    /* if 'opacity' < 0 (0 = fully transparent) set it back to 0: */
+    if (opacity < 0)
+      opacity = 0;
+    /* if text box not yet fully transparent, schedule another call to this function: */
+    if (opacity > 0)
+      setTimeout (fadeOut, delay);
+
+    /* now change the opacity: */
+    textbox.style.opacity = String (opacity / 100);
+    /* for IE <= 8: */
+    textbox.style.filter = "alpha(opacity=" + opacity + ")";
+    }
+  }
+</script>
+</head>
+<body>
+<h2>Fading Text Box Demo</h2>
+<p>Click the button to have the popup text box fade in.</p>
+<p>Click the button again to have the popup text box fade out.</p>
+<h2>Fading Text Box Demo</h2>
+<button onclick="fadeInOut ();">Toggle Popup Text Box</button>
+<div id="textbox" class="popup">
+  <div class="header">
+    Demo Popup Text Box
+  </div>
+  <div style="padding: 10px; text-align: center;">
+    This is a demonstration of a popup text box that fades in and fades out. The fading effect is created by using a timer to gradually adjust the text-box element's <i>opacity</i> style (or, for IE8 and earlier, its <i>filter</i> style).
+  </div>
+</div>
+</body>
+</html>

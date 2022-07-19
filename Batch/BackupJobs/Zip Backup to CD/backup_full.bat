@@ -1,0 +1,11 @@
+set progpath="C:\\program files\\datahjaelp\\zip backup to cd\\zipbackup.exe"
+%progpath% /="D:\DaveDocs\Backup Jobs\Zip Backup to CD\AngDocsComplete_Full.dat" /c
+%progpath% /="D:\DaveDocs\Backup Jobs\Zip Backup to CD\DaveDocs_Full.dat" /c
+%progpath% /="D:\DaveDocs\Backup Jobs\Zip Backup to CD\DaveDownload_Full.dat" /c
+%progpath% /="D:\DaveDocs\Backup Jobs\Zip Backup to CD\DaveMusic_Full.dat" /c
+%progpath% /="D:\DaveDocs\Backup Jobs\Zip Backup to CD\DavePictures_Full.dat" /c
+%progpath% /="D:\DaveDocs\Backup Jobs\Zip Backup to CD\DaveVideos_Full.dat" /c
+%progpath% /="D:\DaveDocs\Backup Jobs\Zip Backup to CD\SharedPhotos_Full.dat" /c
+%progpath% /="D:\DaveDocs\Backup Jobs\Zip Backup to CD\SharedDocs_Full.dat" /c
+%progpath% /="D:\DaveDocs\Backup Jobs\Zip Backup to CD\SharedMusic_Full.dat" /c
+%progpath% /="D:\DaveDocs\Backup Jobs\Zip Backup to CD\SharedVideo_Full.dat" /c

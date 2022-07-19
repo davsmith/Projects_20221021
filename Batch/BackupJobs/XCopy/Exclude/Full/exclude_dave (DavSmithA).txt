@@ -1,0 +1,4 @@
+\My Music\
+\My Pictures\
+\My Videos\
+\Temp\

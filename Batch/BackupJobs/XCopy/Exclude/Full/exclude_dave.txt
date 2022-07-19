@@ -1,0 +1,8 @@
+\My Music\
+\My Pictures\
+\My Videos\
+\Temp\
+\DropBox\
+\DVDInfoCache\
+\Home\Temp\
+\Work\Temp\

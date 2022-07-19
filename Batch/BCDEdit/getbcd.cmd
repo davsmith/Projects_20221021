@@ -1,0 +1,1 @@
+bcdedit /store \boot\bcd

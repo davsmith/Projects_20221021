@@ -1,0 +1,7 @@
+\Temp\
+\CDs\
+\Channels\
+\Downloads\
+\Favorite Singles\
+\Playlists\
+\Subscription\

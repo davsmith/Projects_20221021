@@ -1,0 +1,1 @@
+F:\FolderShare\Projects\AutoHotkey\_Utils\PDFToolKit\pdftk.exe A=f:\foldershare\home\statements\test_in1.pdf B=f:\foldershare\home\statements\test_in2.pdf cat A1 B4 A2 B3 A3 B2 A4 B1 output f:\foldershare\home\statements\test_out.pdf

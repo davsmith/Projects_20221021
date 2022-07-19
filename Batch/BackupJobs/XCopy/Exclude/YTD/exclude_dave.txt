@@ -1,0 +1,5 @@
+\Temp\
+\DVDInfoCache\
+\Home\Temp\
+\Work\Temp\
+\Downloads

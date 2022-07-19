@@ -1,0 +1,65 @@
+<VisualMicro>
+  <Program Name="Blink" Ext=".ino" Location="C:\Users\Dave\SkyDrive\Projects\Arduino\00.Templates\Blink">
+    <Platform Name="arduino10x" Package="arduino" Platform="avr" Architecture="avr">
+      <Board Name="uno" Description="Arduino Uno" CoreFolder="c:\Program Files (x86)\Arduino\hardware\arduino\cores\arduino" VariantFullPath="c:\Program Files (x86)\Arduino\hardware\arduino\variants\standard" McuIdePath="c:\Program Files (x86)\Arduino" McuSketchBookPath="c:\users\dave\SkyDrive\Projects\Arduino" name="Arduino Uno" upload.protocol="arduino" upload.maximum_size="32256" upload.speed="115200" bootloader.low_fuses="0xff" bootloader.high_fuses="0xde" bootloader.extended_fuses="0x05" bootloader.path="optiboot" bootloader.file="optiboot_atmega328.hex" bootloader.unlock_bits="0x3F" bootloader.lock_bits="0x0F" build.mcu="atmega328p" build.f_cpu="16000000L" build.core="arduino" build.variant="standard" runtime.ide.path="c:\Program Files (x86)\Arduino" build.system.path="c:\Program Files (x86)\Arduino\hardware\arduino\system" runtime.ide.version="106" originalid="uno" vm.platform.root.path="C:\Program Files (x86)\Visual Micro\Visual Micro for Arduino\Micro Platforms\arduino10x" build.core.vmresolved="c:\Program Files (x86)\Arduino\hardware\arduino\cores\arduino" build.core.parentfolder.vmresolved="c:\Program Files (x86)\Arduino\hardware\arduino\cores" build.core.coresparentfolder.vmresolved="c:\Program Files (x86)\Arduino\hardware\arduino" vm.core.include="arduino.h" ide.hint="Arduino 0023 and 1.0.x Ide" ide.location.key="Arduino" ide.location.ide.winreg="Arduino 1.0.x Application" ide.location.sketchbook.winreg="Arduino 1.0.x Sketchbook" ide.location.sketchbook.preferences="sketchbook.path" ide.location.sketchbook.default="%MYDOCUMENTS%\arduino" ide.location.preferences="%VM_APPDATA_ROAMING%\arduino\preferences.txt" ide.default.package="arduino" ide.default.platform="avr" ide.multiplatform="true" ide.includes="arduino.h" ide.platformswithoutpackage="true" ide.includes.fallback="wprogram.h" ide.extension="ino" ide.extension.fallback="pde" ide.versionLTEQ="149" ide.exe="arduino.exe" ide.hosts="atmel" ide.url="http://arduino.cc/en/Main/Software" vm.debug="true" software="ARDUINO" ide.appid="arduino10x" location.sketchbook="c:\users\dave\SkyDrive\Projects\Arduino" build.board="AVR_UNO" vm.boardsource.path="c:\Program Files (x86)\Arduino\hardware\arduino" runtime.platform.path="c:\Program Files (x86)\Arduino\hardware\arduino" vm.platformname.name="avr" build.arch="AVR" build.variant.vmresolved="c:\Program Files (x86)\Arduino\hardware\arduino\variants\standard" vm.runtime.compiler.showwarnings="false" compiler.path="c:\Program Files (x86)\Arduino\hardware\tools\avr\bin\" includes=" -I&quot;c:\Program Files (x86)\Arduino\hardware\arduino\cores\arduino&quot;  -I&quot;c:\Program Files (x86)\Arduino\hardware\arduino\variants\standard&quot;  -I&quot;C:\Program Files (x86)\Visual Micro\Visual Micro for Arduino\Micro Platforms\default\debuggers\VM_DBG&quot;  -I&quot;c:\Program Files (x86)\Arduino\libraries&quot;  -I&quot;c:\Program Files (x86)\Arduino\hardware\arduino\libraries&quot;  -I&quot;C:\Program Files (x86)\Visual Micro\Visual Micro for Arduino\Micro Platforms\default\debuggers&quot;  -I&quot;c:\users\dave\SkyDrive\Projects\Arduino\libraries&quot; " build.path="C:\Users\Dave\AppData\Local\VMicro\Arduino\Builds\Blink\uno" build.project_name="Blink" build.variant.path="c:\Program Files (x86)\Arduino\hardware\arduino\variants\standard" archive_file="core.a" object_file="C:\Users\Dave\AppData\Local\VMicro\Arduino\Builds\Blink\uno\VM_DBG\VM_DBG.cpp.o" source_file="C:\Program Files (x86)\Visual Micro\Visual Micro for Arduino\Micro Platforms\default\debuggers\VM_DBG\VM_DBG.cpp" object_files="&quot;C:\Users\Dave\AppData\Local\VMicro\Arduino\Builds\Blink\uno\Blink.cpp.o&quot; &quot;C:\Users\Dave\AppData\Local\VMicro\Arduino\Builds\Blink\uno\VM_DBG\VM_mem_check.c.o&quot; &quot;C:\Users\Dave\AppData\Local\VMicro\Arduino\Builds\Blink\uno\VM_DBG\VM_DBG.cpp.o&quot; " build.architecture="avr" vmresolved.compiler.path="c:\Program Files (x86)\Arduino\hardware\tools\avr\bin\" vmresolved.tools.path="c:\Program Files (x86)\Arduino\hardware\tools\avr" />
+    </Platform>
+    <Compile CompilerErrors="0" ConfigurationName="Debug" StopOnError="False" OptimiseLibs="True" OptimiseCore="True" BuildPath="C:\Users\Dave\AppData\Local\VMicro\Arduino\Builds\Blink\uno" IsDebugStart="1" SketchName="Blink" ReportDigitalPins="0" ReportAnalogPins="0" ReportI2C="0" ReportFreeMemory="0" IncludeDebug="1" LastDebugPreProcessorDefinitions="VM_DEBUG;VM_DEBUG_ENABLE 1;VM_DEBUG_BANDWIDTH_THROTTLE_MS 50;VM_DEBUGGER_TYPE_HARDWARESERIAL 0;VM_DEBUGGER_TYPE_SOFTWARESERIAL 1;VM_DEBUGGER_TYPE_FASTSERIAL 2;VM_DEBUGGER_TYPE_USB 3;VM_DEBUGGER_TYPE_TEENSY 4;VM_DEBUGGER_TYPE_UART 5;VM_DEBUGGER_TYPE_USART 6;VM_DEBUGGER_TYPE_USBSERIAL 7;VM_DEBUGGER_TYPE_TTYUART 8;VM_DEBUGGER_TYPE_NET_CONSOLE 9;VM_DEBUGGER_TYPE VM_DEBUGGER_TYPE_HARDWARESERIAL;" IncludesDebug="1" IsCompiled="1" />
+    <Debug EnableBreak="0" DebugEnabled="1" />
+    <VCCodeModel>
+      <VCCodeMacros />
+    </VCCodeModel>
+    <BreakPoints>
+      <BreakPoint Index="1" Name="Blink.ino, line 20" Id="4c8086b7-b07d-446e-8ed5-3b35435bbc77" Enabled="1" Message="millis is currently {millis()}" MessageTextType="0" PreProcessedMessage="millis is currently {0}" Condition="millis()&gt;0 || millis()&gt;1" ConditionType="1" CurrentHits="0" File="c:\users\dave\skydrive\projects\arduino\00.templates\blink\blink.ino" FileLine="20" FileColumn="1" FunctionName="" FunctionLineOffset="1" FunctionColumnOffset="1" HitCountTarget="250" HitCountType="4" Language="C++" LocationType="3" Tag="&lt;vmbp Id='4c8086b7-b07d-446e-8ed5-3b35435bbc77'/&gt;" Type="1" ToString="System.__ComObject" BreakWhenHit="1">
+        <Source>13	void setup() {             
+14		Serial.begin(115200);
+15	  // initialize the digital pin as an output.
+16	  pinMode(led, OUTPUT);     
+17	}
+18	
+19	// the loop routine runs over and over again forever:
+--&gt;20	void loop() {
+21	  digitalWrite(led, HIGH);   // turn the LED on (HIGH is the voltage level)
+22	  delay(200);               // wait for a second
+23	  digitalWrite(led, LOW);    // turn the LED off by making the voltage LOW
+24	  delay(200);               // wait for a second
+25	  Serial.println("This is a test.");
+26	  delay(1000);
+27	}
+</Source>
+        <MessageVariables>
+          <MessageVariable Name="millis()" Index="1" />
+        </MessageVariables>
+      </BreakPoint>
+      <BreakPoint Index="2" Name="Blink.ino, line 21" Id="344da6a2-20b2-4aa7-a2d0-53879fd679f7" Enabled="1" Message="" MessageTextType="2" PreProcessedMessage="" Condition="" ConditionType="1" CurrentHits="0" File="c:\users\dave\skydrive\projects\arduino\00.templates\blink\blink.ino" FileLine="21" FileColumn="1" FunctionName="loop()" FunctionLineOffset="2" FunctionColumnOffset="1" HitCountTarget="1" HitCountType="1" Language="C++" LocationType="3" Tag="&lt;vmbp Id='344da6a2-20b2-4aa7-a2d0-53879fd679f7'/&gt;" Type="1" ToString="System.__ComObject" BreakWhenHit="1">
+        <Source>14		Serial.begin(115200);
+15	  // initialize the digital pin as an output.
+16	  pinMode(led, OUTPUT);     
+17	}
+18	
+19	// the loop routine runs over and over again forever:
+20	void loop() {
+--&gt;21	  digitalWrite(led, HIGH);   // turn the LED on (HIGH is the voltage level)
+22	  delay(200);               // wait for a second
+23	  digitalWrite(led, LOW);    // turn the LED off by making the voltage LOW
+24	  delay(200);               // wait for a second
+25	  Serial.println("This is a test.");
+26	  delay(1000);
+27	}
+</Source>
+      </BreakPoint>
+      <BreakPoint Index="3" Name="Blink.ino, line 25" Id="8dd4228f-5a21-4c19-b696-56ff48982b81" Enabled="1" Message="" MessageTextType="2" PreProcessedMessage="" Condition="" ConditionType="1" CurrentHits="0" File="c:\users\dave\skydrive\projects\arduino\00.templates\blink\blink.ino" FileLine="25" FileColumn="1" FunctionName="loop()" FunctionLineOffset="6" FunctionColumnOffset="1" HitCountTarget="1" HitCountType="1" Language="C++" LocationType="3" Tag="&lt;vmbp Id='8dd4228f-5a21-4c19-b696-56ff48982b81'/&gt;" Type="1" ToString="System.__ComObject" BreakWhenHit="1">
+        <Source>18	
+19	// the loop routine runs over and over again forever:
+20	void loop() {
+21	  digitalWrite(led, HIGH);   // turn the LED on (HIGH is the voltage level)
+22	  delay(200);               // wait for a second
+23	  digitalWrite(led, LOW);    // turn the LED off by making the voltage LOW
+24	  delay(200);               // wait for a second
+--&gt;25	  Serial.println("This is a test.");
+26	  delay(1000);
+27	}
+</Source>
+      </BreakPoint>
+    </BreakPoints>
+  </Program>
+</VisualMicro>

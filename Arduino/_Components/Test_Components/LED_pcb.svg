@@ -1,0 +1,20 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<!-- Created with Fritzing (http://www.fritzing.org/) -->
+<svg xmlns:svg='http://www.w3.org/2000/svg' xmlns='http://www.w3.org/2000/svg' version='1.2' baseProfile='tiny' x='0in' y='0in' width='0.2441in' height='0.2441in' viewBox='0 0 17.5752 17.5752' >
+<g partID='20450'><g xmlns="http://www.w3.org/2000/svg" id="copper0">
+ <g xmlns="http://www.w3.org/2000/svg" id="copper1">
+  <circle xmlns="http://www.w3.org/2000/svg" r="1.7008" cx="8.7876" cy="10.6336" stroke="#F7BD13" stroke-width="1.13384" fill="none" id="connector1pad"/>
+  <rect xmlns="http://www.w3.org/2000/svg" width="3.4016" stroke="#F7BD13" stroke-width="1.13384" x="7.0868" y="8.9328" height="3.4016" fill="none"/>
+  <circle xmlns="http://www.w3.org/2000/svg" r="1.7008" cx="8.7876" cy="3.5464" stroke="#F7BD13" stroke-width="1.13384" fill="none" id="connector0pad"/>
+ </g>
+</g>
+</g><g partID='20452'><g xmlns="http://www.w3.org/2000/svg" id="copper1">
+ <circle xmlns="http://www.w3.org/2000/svg" r="1.7008" cx="8.7876" cy="10.6336" stroke="#F7BD13" stroke-width="1.13384" fill="none" id="connector1pad"/>
+ <rect xmlns="http://www.w3.org/2000/svg" width="3.4016" stroke="#F7BD13" stroke-width="1.13384" x="7.0868" y="8.9328" height="3.4016" fill="none"/>
+ <circle xmlns="http://www.w3.org/2000/svg" r="1.7008" cx="8.7876" cy="3.5464" stroke="#F7BD13" stroke-width="1.13384" fill="none" id="connector0pad"/>
+</g>
+</g><g partID='20451'><g xmlns="http://www.w3.org/2000/svg" id="silkscreen">
+ <path xmlns="http://www.w3.org/2000/svg" d="M13.912,0.3048c3.748,2.8296,4.4912,8.1624,1.6608,11.9112c-2.8304,3.748,-8.1632,4.4912,-11.9112,1.6608S-0.8288,5.7128,2.0016,1.9656C2.4824,1.328,3.0504,0.7616,3.6904,0.2832" stroke="#FFFFFF" stroke-width="0.56696" stroke-linejoin="round" stroke-linecap="round" fill="none" id="path2820"/>
+ <path xmlns="http://www.w3.org/2000/svg" d="M13.8896,0.2872L3.6848,0.2872" stroke="#FFFFFF" stroke-width="0.56696" stroke-linecap="round" fill="none" id="path3707"/>
+</g>
+</g></svg>

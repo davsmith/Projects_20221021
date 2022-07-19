@@ -1,0 +1,4 @@
+\Public\
+\Home\Temp
+\Work\Temp
+

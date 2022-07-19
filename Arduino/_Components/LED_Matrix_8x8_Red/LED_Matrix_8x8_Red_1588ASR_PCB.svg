@@ -1,0 +1,30 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<!-- Created with Fritzing (http://www.fritzing.org/) -->
+<svg xmlns:svg='http://www.w3.org/2000/svg' xmlns='http://www.w3.org/2000/svg' version='1.2' baseProfile='tiny' x='0in' y='0in' width='1.48229in' height='1.48229in' viewBox='0 0 106.725 106.725' >
+<g partID='854200260'><g xmlns="http://www.w3.org/2000/svg" id="copper0" gorn="0.2.0">
+ <circle xmlns="http://www.w3.org/2000/svg" stroke="#FFBF00" id="connector3" fill="none" cx="42.885" cy="92.7509" r="1.979" stroke-width="2.25" gorn="0.2.0.0"/>
+ <circle xmlns="http://www.w3.org/2000/svg" stroke="#FFBF00" id="connector5" fill="none" cx="57.2809" cy="92.7519" r="1.978" stroke-width="2.25" gorn="0.2.0.1"/>
+ <circle xmlns="http://www.w3.org/2000/svg" stroke="#FFBF00" id="connector6" fill="none" cx="64.4839" cy="92.7509" r="1.979" stroke-width="2.25" gorn="0.2.0.2"/>
+ <circle xmlns="http://www.w3.org/2000/svg" stroke="#FFBF00" id="connector7" fill="none" cx="71.6779" cy="92.7519" r="1.978" stroke-width="2.25" gorn="0.2.0.3"/>
+ <circle xmlns="http://www.w3.org/2000/svg" stroke="#FFBF00" id="connector8" fill="none" cx="78.8659" cy="92.7519" r="1.978" stroke-width="2.25" gorn="0.2.0.4"/>
+ <circle xmlns="http://www.w3.org/2000/svg" stroke="#FFBF00" id="connector10" fill="none" cx="71.7969" cy="13.267" r="1.977" stroke-width="2.25" gorn="0.2.0.5"/>
+ <circle xmlns="http://www.w3.org/2000/svg" stroke="#FFBF00" id="connector11" fill="none" cx="64.6039" cy="13.267" r="1.977" stroke-width="2.25" gorn="0.2.0.6"/>
+ <circle xmlns="http://www.w3.org/2000/svg" stroke="#FFBF00" id="connector12" fill="none" cx="57.4019" cy="13.267" r="1.977" stroke-width="2.25" gorn="0.2.0.7"/>
+ <circle xmlns="http://www.w3.org/2000/svg" stroke="#FFBF00" id="connector13" fill="none" cx="50.2149" cy="13.267" r="1.977" stroke-width="2.25" gorn="0.2.0.8"/>
+ <circle xmlns="http://www.w3.org/2000/svg" stroke="#FFBF00" id="connector14" fill="none" cx="43.005" cy="13.267" r="1.977" stroke-width="2.25" gorn="0.2.0.9"/>
+ <circle xmlns="http://www.w3.org/2000/svg" stroke="#FFBF00" id="connector15" fill="none" cx="35.799" cy="13.267" r="1.977" stroke-width="2.25" gorn="0.2.0.10"/>
+ <circle xmlns="http://www.w3.org/2000/svg" stroke="#FFBF00" id="connector16pad" fill="none" cx="28.606" cy="13.267" r="1.977" stroke-width="2.25" gorn="0.2.0.11"/>
+ <circle xmlns="http://www.w3.org/2000/svg" stroke="#FFBF00" id="connector9" fill="none" cx="78.8649" cy="13.267" r="1.977" stroke-width="2.25" gorn="0.2.0.12"/>
+ <circle xmlns="http://www.w3.org/2000/svg" stroke="#FFBF00" id="connector4" fill="none" cx="50.2149" cy="92.7519" r="1.978" stroke-width="2.25" gorn="0.2.0.13"/>
+ <circle xmlns="http://www.w3.org/2000/svg" stroke="#FFBF00" id="connector2" fill="none" cx="35.799" cy="92.7519" r="1.978" stroke-width="2.25" gorn="0.2.0.14"/>
+ <circle xmlns="http://www.w3.org/2000/svg" stroke="#FFBF00" id="connector1" fill="none" cx="28.605" cy="92.7499" r="1.978" stroke-width="2.25" gorn="0.2.0.15"/>
+ <rect xmlns="http://www.w3.org/2000/svg" width="5.44999" stroke="#FFBF00" fill="none" height="5.36499" stroke-width="1.152" x="25.88" y="90.0699"/>
+</g>
+</g><g partID='854200261'><g xmlns="http://www.w3.org/2000/svg" id="silkscreen" gorn="0.3.0">
+ <line xmlns="http://www.w3.org/2000/svg" stroke="#FFFFFF" fill="none" y1="0.502999" y2="106.725" x1="0" stroke-width="0.749999" x2="0"/>
+ <line xmlns="http://www.w3.org/2000/svg" stroke="#FFFFFF" fill="none" y1="106.725" y2="106.725" x1="0" stroke-width="0.749999" x2="107.615"/>
+ <line xmlns="http://www.w3.org/2000/svg" stroke="#FFFFFF" fill="none" y1="106.725" y2="0.502999" x1="107.615" stroke-width="0.749999" x2="107.615"/>
+ <line xmlns="http://www.w3.org/2000/svg" stroke="#FFFFFF" fill="none" y1="0.502999" y2="0.502999" x1="0" stroke-width="0.749999" x2="34.065"/>
+ <line xmlns="http://www.w3.org/2000/svg" stroke="#FFFFFF" fill="none" y1="0.502999" y2="0.502999" x1="73.7809" stroke-width="0.749999" x2="107.615"/>
+</g>
+</g></svg>

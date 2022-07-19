@@ -1,0 +1,11 @@
+{
+    "python.pythonPath": "C:\\Users\\dasmit\\.virtualenvs\\experiment_import-KKK_LhN8\\Scripts\\python.exe",
+    "python.testing.pytestArgs": [
+        ".",
+        "--capture=no",
+        "--verbose"
+    ],
+    "python.testing.unittestEnabled": false,
+    "python.testing.nosetestsEnabled": false,
+    "python.testing.pytestEnabled": true
+}

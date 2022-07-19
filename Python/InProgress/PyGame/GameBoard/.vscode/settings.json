@@ -1,0 +1,18 @@
+{
+    "python.pythonPath": "C:\\Users\\dasmit\\.virtualenvs\\GameBoard-oyVLbF0W\\Scripts\\python.exe",
+    "python.linting.enabled": true,
+    "python.linting.pylintEnabled": true,
+    "python.linting.pylintUseMinimalCheckers": false,
+    "python.linting.pylintArgs": [
+        "--generated-members",
+        "pygame.*"
+    ],
+    "python.testing.pytestArgs": [
+        ".",
+        "-v",
+        "-s"
+    ],
+    "python.testing.unittestEnabled": false,
+    "python.testing.nosetestsEnabled": false,
+    "python.testing.pytestEnabled": true
+}

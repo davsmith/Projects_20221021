@@ -3,6 +3,8 @@
 # Modified from https://www.geeksforgeeks.org/python-os-makedirs-method/
 
 import os
+from pathlib import Path
+
 
 #
 # mkdirs
@@ -54,3 +56,21 @@ mode = 0o666
 path = os.path.join(parent_dir, directory)
 os.makedirs(path, mode, exist_ok=True)
 print("Directory '%s' created" %directory)
+
+#
+# Listing the files in a directory
+#
+path = "c:/temp/repo1"
+file_list = os.listdir(path)
+print(file_list)
+
+# Print the files with .txt file extension
+for file in file_list:
+    if file.endswith('.txt'):
+        print(file)
+
+# Print the absolute path and stats for each file
+for file in file_list:
+    full_file_path = Path(path,file)
+    print(full_file_path)
+    print(os.stat(full_file_path))

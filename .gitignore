@@ -1,12 +1,17 @@
-# Created by https://www.toptal.com/developers/gitignore/api/visualstudiocode
-# Edit at https://www.toptal.com/developers/gitignore?templates=visualstudiocode
+# .gitignore file tailored to VS Code from:
+# https://www.toptal.com/developers/gitignore/api/visualstudiocode
+#
+# Edited 8/13/22:
+#   - Added ** before .vscode entries so they work regardless of location of the .gitignore file
+#   - Added lines to ignore files and directories that start with tmp_
+#
 
 ### VisualStudioCode ###
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
+**/.vscode/*
+!**/.vscode/settings.json
+!**/.vscode/tasks.json
+!**/.vscode/launch.json
+!**/.vscode/extensions.json
 *.code-workspace
 
 ### VisualStudioCode Patch ###
@@ -22,3 +27,6 @@ __pycache__/
 venv*/
 
 # End of https://www.toptal.com/developers/gitignore/api/visualstudiocode
+
+tmp_*.*
+**/tmp_*

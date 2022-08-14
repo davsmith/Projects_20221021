@@ -4,8 +4,10 @@
 
 import os
 from pathlib import Path
+import shutil
+import stat
 
-
+'''
 #
 # mkdirs
 #
@@ -74,3 +76,40 @@ for file in file_list:
     full_file_path = Path(path,file)
     print(full_file_path)
     print(os.stat(full_file_path))
+'''
+#
+# Deleting a directory
+#
+
+# Recursively deletes directories including files, subdirectories (including .git)
+# Raises FileNotFoundError if the directory does not exist
+#
+# ignore_errors = True suppresses errors
+# onerror = a callback/exception handler when errors occur
+#
+# Reference:
+# https://tinyurl.com/yc5kxatz
+
+# Change the mode of read only files
+def removeReadOnly(func, path, excinfo):
+    print(f"Setting write access for {path} ")
+    os.chmod(path, stat.S_IWRITE)
+    func(path)
+
+dir_to_delete = Path("c:/temp/test1")
+# shutil.rmtree(dir_to_delete, ignore_errors=False)
+shutil.rmtree(dir_to_delete, onerror=removeReadOnly)
+
+# Would normally fail because the directory has already been deleted
+shutil.rmtree(dir_to_delete, ignore_errors=True)
+
+# Catch the exception and report an error message
+try:
+    shutil.rmtree(dir_to_delete, ignore_errors=False)
+except FileNotFoundError as e:
+    print(f"Could not find file '{dir_to_delete}'")
+
+
+
+
+

@@ -27,6 +27,11 @@ ex.new_example('Attributes of the String class')
 print(dir(str1))
 ex.end_example()
 
+# Append to an existing string
+test_str = "Hello there"
+test_str += ", Dave"    # Method 1
+test_str = f"{test_str}. Have a nice day." # Method 2
+
 '''
 Format using the string.format method
 '''

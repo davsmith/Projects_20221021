@@ -9,7 +9,8 @@ import os
 import shutil
 import glob
 import random
-import datetime;
+import datetime
+import stat
   
 from tempfile import gettempdir
 from pathlib import Path
@@ -53,7 +54,10 @@ def create_repo(repo_name, parent_folder=None):
 
 def remove_repo(repo_path):
     git_path = Path(repo_path, '.git')
-    shutil.rmtree(git_path, ignore_errors=True)
+    try:
+        shutil.rmtree(git_path)
+    except FileNotFoundError:
+        print(f"Couldn't find {repo_path}")
 
 def commit_files(repo_path, file_specifier=None, comment=None):
     os.chdir(repo_path)
@@ -95,20 +99,66 @@ def change_files(file_list, message=None):
     for file in file_list:
         command = f"echo {message} >> {file}"
         os.system(command)
-        
-parent_folder = "c:/temp"
-repo_name = 'repo2'
 
-repo_path = create_repo(repo_name, parent_folder)
+def switch_branch(repo_path, branch_name, create=True):
+    options = ""
 
-create_files(count=10, folder_path=repo_path)
-commit_files(repo_path, '*.txt')
-file_list = get_file_list(repo_path, "*.txt", 4, True)
+    os.chdir(repo_path)
+    if create == True:
+        options = f"{options} -b"
+    
+    command = f'git checkout {options} {branch_name}'
+    os.system(command)
 
-for commit_index in range(1,16):
-    change_files(file_list)
+def populate_branch(repo_path, num_files=1, extra_commits=0):
+    num_files = max(num_files, 1)
+    extra_commits = max(extra_commits,0)
+
+    create_files(count=num_files, folder_path=repo_path)
     commit_files(repo_path, '*.txt')
+    file_list = get_file_list(repo_path, "*.txt", num_files, True)
 
-# remove_repo(repo_path)
+    for commit_index in range(1,extra_commits):
+        change_files(file_list)
+        commit_files(repo_path, '*.txt')
+
+# Change the mode of read only files
+def rmtree_callback_removeReadOnly(func, path, excinfo):
+    if isinstance(excinfo[1], FileNotFoundError):
+        print("File not found.  Ignored.")
+    else:
+        print(f"Setting write access for {path} ")
+        os.chmod(path, stat.S_IWRITE)
+        func(path)
+
+def danger_delete_folder(folder_name=None):
+    if folder_name == None:
+        folder_path = Path("c:/temp/test1")
+    else:
+        folder_path = Path(folder_name)
+
+    shutil.rmtree(folder_path, onerror=rmtree_callback_removeReadOnly)
+
+
+#
+# Main
+#
+if __name__ == '__main__':
+    parent_folder = "c:/temp"
+    repo_name = 'test1'
+
+    danger_delete_folder()
+
+    repo_path = create_repo(repo_name, parent_folder)
+    switch_branch(repo_path, 'master')
+    populate_branch(repo_path, 5, 1)
+
+    switch_branch(repo_path, 'new_feature')
+    file_list = get_file_list(repo_path, "*.txt", limit=3)
+    change_files(file_list)
+    commit_files(repo_path, '*.txt', "C2")
+    
+
+    # remove_repo(repo_path)
 
 

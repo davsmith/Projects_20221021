@@ -40,7 +40,7 @@ print(courses2)
 # for index, course in enumerate(courses):
 #     print(f'Course #{index}: {course}')
 
-# # Using a slicer to retrieve a subset of the list
+# # Using a slicer (slicing) to retrieve a subset of the list
 # print('\nSlicers...')
 # print(f'courses[1:3] is:  {courses[1:3]}')
 # print(f'courses[3:] is {courses[3:]}')

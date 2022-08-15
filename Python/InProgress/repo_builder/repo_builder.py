@@ -76,7 +76,7 @@ def commit_files(repo_path, file_specifier=None, comment=None):
     result = os.system(command)
 
 ''' Generates a list containing a subset of the files in a specified folder '''
-def get_file_list(folder_path, file_spec=None, limit=0, randomize=False):
+def get_file_list(folder_path, file_spec=None, limit=0, start_with=0, randomize=False):
     full_path = Path(folder_path, file_spec)
     full_file_list = glob.glob(str(full_path))
     if limit == 0:
@@ -87,7 +87,7 @@ def get_file_list(folder_path, file_spec=None, limit=0, randomize=False):
     if randomize == True:
         samples = random.sample(full_file_list, num_samples)
     else:
-        samples = full_file_list[0:num_samples]
+        samples = full_file_list[start_with:start_with+num_samples]
 
     return(samples)
 
@@ -126,15 +126,24 @@ def populate_repo(repo_path, num_files=1, msg=None):
     create_files(count=num_files, folder_path=repo_path)
     commit_files(repo_path, '*.txt', msg)
 
-def add_commits(repo_path, num_commits, commit_index=1, num_files=1, branch=None):
+def add_commits(repo_path, num_commits, commit_index=1, num_files=1, allow_conflicts=False, branch=None):
     os.chdir(Path(repo_path))
 
     if branch != None:
         switch_branch(repo_path, branch, create=False)
 
     next_commit = commit_index
+
+    # BUGBUG: This is a hokey algorithm.  Ideally if allow_conflicts is False, the
+    # file list would exclude any files which have already been changed.
+    if allow_conflicts:
+        file_list = get_file_list(repo_path, "*.txt", limit=num_files, start_with=0)
+    else:
+        # If conflicts are not allowed, only a single random file and hope for the best
+        num_files = 1
+        file_list = get_file_list(repo_path, "*.txt", limit=num_files, randomize=True)
+        
     for i in range(1, num_commits+1):
-        file_list = get_file_list(repo_path, "*.txt", limit=num_files)
         change_files(file_list)
         commit_files(repo_path, '*.txt', f"C{next_commit}")
         next_commit += 1
@@ -174,12 +183,12 @@ if __name__ == '__main__':
 
     switch_branch(repo_path, 'new_feature')
     num_commits = 3
-    add_commits(repo_path, num_commits=num_commits, commit_index=next_commit)
+    add_commits(repo_path, num_commits=num_commits, commit_index=next_commit, allow_conflicts=True)
     next_commit += num_commits
 
     switch_branch(repo_path, 'master')
     num_commits = 2
-    add_commits(repo_path, num_commits=num_commits, commit_index=next_commit)
+    add_commits(repo_path, num_commits=num_commits, commit_index=next_commit, allow_conflicts=True)
     next_commit += num_commits
 
     # remove_repo(repo_path)

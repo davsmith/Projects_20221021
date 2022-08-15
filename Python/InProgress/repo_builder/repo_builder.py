@@ -105,10 +105,16 @@ def switch_branch(repo_path, branch_name, create=True):
 
     os.chdir(repo_path)
     if create == True:
-        options = f"{options} -b"
+        # options = f"{options} -b"
+        # Attempt to create the branch
+        # This will fail if the branch already exists
+        command = f'git branch {branch_name}'
+        result = os.system(command)
+        print(f"Attempted to create branch '{branch_name}' (Result:{result})")
     
     command = f'git checkout {options} {branch_name}'
-    os.system(command)
+    result = os.system(command)
+    print(f"Attempted to switch to branch '{branch_name}' (Result: {result})")
 
 ''' Creates files and adds them to the repo '''
 def populate_repo(repo_path, num_files=1, msg=None):
@@ -166,12 +172,12 @@ if __name__ == '__main__':
     populate_repo(repo_path, num_files=5)
     next_commit = 2
 
-    switch_branch(repo_path, 'new_feature', create=True)
+    switch_branch(repo_path, 'new_feature')
     num_commits = 3
     add_commits(repo_path, num_commits=num_commits, commit_index=next_commit)
     next_commit += num_commits
 
-    switch_branch(repo_path, 'master', create=False)
+    switch_branch(repo_path, 'master')
     num_commits = 2
     add_commits(repo_path, num_commits=num_commits, commit_index=next_commit)
     next_commit += num_commits

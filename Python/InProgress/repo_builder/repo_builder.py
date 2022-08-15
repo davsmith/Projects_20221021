@@ -100,6 +100,10 @@ def change_files(file_list, message=None):
         command = f"echo {message} >> {file}"
         os.system(command)
 
+''' Attempts to switch branches using "checkout" '''
+#
+# If the branch does not exist, checkout returns 1
+# 
 def switch_branch(repo_path, branch_name, create=True):
     options = ""
 
@@ -130,7 +134,7 @@ def add_commits(repo_path, num_commits, commit_index=1, num_files=1, allow_confl
     os.chdir(Path(repo_path))
 
     if branch != None:
-        switch_branch(repo_path, branch, create=False)
+        switch_branch(repo_path, branch, create=True)
 
     next_commit = commit_index
 
@@ -157,9 +161,9 @@ def rmtree_callback_removeReadOnly(func, path, excinfo):
         os.chmod(path, stat.S_IWRITE)
         func(path)
 
-def danger_delete_folder(folder_name=None):
+def danger_delete_folder(folder_name):
     if folder_name == None:
-        folder_path = Path("c:/temp/test1")
+        raise ValueError('Path must be specified')
     else:
         folder_path = Path(folder_name)
 
@@ -170,27 +174,62 @@ def danger_delete_folder(folder_name=None):
 # Main
 #
 if __name__ == '__main__':
+    #
+    # Create a repo with an unmerged branch w/o conflicts
+    #
+
+    # Define parameters for the repo
     parent_folder = "c:/temp"
-    repo_name = 'repo1'
+    repo_name = 'no_conflicts'
 
     commit_count = 0
 
+
+    # Delete the existing repo (including files)
     danger_delete_folder(Path(parent_folder, repo_name))
 
+    # Create a new repo containing a set of files
     repo_path = create_repo(repo_name, parent_folder)
     populate_repo(repo_path, num_files=5)
     next_commit = 2
 
-    switch_branch(repo_path, 'new_feature')
+    # Modify and commit changes for a feature branch
     num_commits = 3
-    add_commits(repo_path, num_commits=num_commits, commit_index=next_commit, allow_conflicts=False)
+    add_commits(repo_path, branch='new_feature', num_commits=num_commits, commit_index=next_commit, allow_conflicts=False)
     next_commit += num_commits
 
-    switch_branch(repo_path, 'master')
+    # Modify and commit changes for the main branch
     num_commits = 2
-    add_commits(repo_path, num_commits=num_commits, commit_index=next_commit, allow_conflicts=False)
+    add_commits(repo_path, branch='master', num_commits=num_commits, commit_index=next_commit, allow_conflicts=False)
     next_commit += num_commits
 
-    # remove_repo(repo_path)
+    #
+    # Create a repo with an unmerged branch with conflicts
+    #
+
+    # Define parameters for the repo
+    parent_folder = "c:/temp"
+    repo_name = 'conflicts'
+
+    commit_count = 0
+
+
+    # Delete the existing repo (including files)
+    danger_delete_folder(Path(parent_folder, repo_name))
+
+    # Create a new repo containing a set of files
+    repo_path = create_repo(repo_name, parent_folder)
+    populate_repo(repo_path, num_files=5)
+    next_commit = 2
+
+    # Modify and commit changes for a feature branch
+    num_commits = 3
+    add_commits(repo_path, branch='new_feature', num_commits=num_commits, commit_index=next_commit, allow_conflicts=True)
+    next_commit += num_commits
+
+    # Modify and commit changes for the main branch
+    num_commits = 2
+    add_commits(repo_path, branch='master', num_commits=num_commits, commit_index=next_commit, allow_conflicts=True)
+    next_commit += num_commits
 
 

@@ -110,17 +110,28 @@ def switch_branch(repo_path, branch_name, create=True):
     command = f'git checkout {options} {branch_name}'
     os.system(command)
 
-def populate_branch(repo_path, num_files=1, extra_commits=0):
+''' Creates files and adds them to the repo '''
+def populate_repo(repo_path, num_files=1, msg=None):
     num_files = max(num_files, 1)
-    extra_commits = max(extra_commits,0)
+
+    if msg == None:
+        msg = 'C1'
 
     create_files(count=num_files, folder_path=repo_path)
-    commit_files(repo_path, '*.txt')
-    file_list = get_file_list(repo_path, "*.txt", num_files, True)
+    commit_files(repo_path, '*.txt', msg)
 
-    for commit_index in range(1,extra_commits):
+def add_commits(repo_path, num_commits, commit_index=1, num_files=1, branch=None):
+    os.chdir(Path(repo_path))
+
+    if branch != None:
+        switch_branch(repo_path, branch, create=False)
+
+    next_commit = commit_index
+    for i in range(1, num_commits+1):
+        file_list = get_file_list(repo_path, "*.txt", limit=num_files)
         change_files(file_list)
-        commit_files(repo_path, '*.txt')
+        commit_files(repo_path, '*.txt', f"C{next_commit}")
+        next_commit += 1
 
 # Change the mode of read only files
 def rmtree_callback_removeReadOnly(func, path, excinfo):
@@ -147,17 +158,23 @@ if __name__ == '__main__':
     parent_folder = "c:/temp"
     repo_name = 'test1'
 
-    danger_delete_folder()
+    commit_count = 0
+
+    danger_delete_folder(Path(parent_folder, repo_name))
 
     repo_path = create_repo(repo_name, parent_folder)
-    switch_branch(repo_path, 'master')
-    populate_branch(repo_path, 5, 1)
+    populate_repo(repo_path, num_files=5)
+    next_commit = 2
 
-    switch_branch(repo_path, 'new_feature')
-    file_list = get_file_list(repo_path, "*.txt", limit=3)
-    change_files(file_list)
-    commit_files(repo_path, '*.txt', "C2")
-    
+    switch_branch(repo_path, 'new_feature', create=True)
+    num_commits = 3
+    add_commits(repo_path, num_commits=num_commits, commit_index=next_commit)
+    next_commit += num_commits
+
+    switch_branch(repo_path, 'master', create=False)
+    num_commits = 2
+    add_commits(repo_path, num_commits=num_commits, commit_index=next_commit)
+    next_commit += num_commits
 
     # remove_repo(repo_path)
 

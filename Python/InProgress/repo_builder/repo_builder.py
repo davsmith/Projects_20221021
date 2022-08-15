@@ -171,7 +171,7 @@ def danger_delete_folder(folder_name=None):
 #
 if __name__ == '__main__':
     parent_folder = "c:/temp"
-    repo_name = 'test1'
+    repo_name = 'repo1'
 
     commit_count = 0
 
@@ -183,12 +183,12 @@ if __name__ == '__main__':
 
     switch_branch(repo_path, 'new_feature')
     num_commits = 3
-    add_commits(repo_path, num_commits=num_commits, commit_index=next_commit, allow_conflicts=True)
+    add_commits(repo_path, num_commits=num_commits, commit_index=next_commit, allow_conflicts=False)
     next_commit += num_commits
 
     switch_branch(repo_path, 'master')
     num_commits = 2
-    add_commits(repo_path, num_commits=num_commits, commit_index=next_commit, allow_conflicts=True)
+    add_commits(repo_path, num_commits=num_commits, commit_index=next_commit, allow_conflicts=False)
     next_commit += num_commits
 
     # remove_repo(repo_path)

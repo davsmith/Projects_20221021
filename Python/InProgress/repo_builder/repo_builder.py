@@ -232,4 +232,52 @@ if __name__ == '__main__':
     add_commits(repo_path, branch='master', num_commits=num_commits, commit_index=next_commit, allow_conflicts=True)
     next_commit += num_commits
 
+    #
+    # Create a repo with multiple unmerged branches
+    #
+
+    # Define parameters for the repo
+    parent_folder = "c:/temp"
+    repo_name = 'multi_branch'
+
+    commit_count = 0
+
+    # Delete the existing repo (including files)
+    danger_delete_folder(Path(parent_folder, repo_name))
+
+    # Create a new repo containing a set of files
+    repo_path = create_repo(repo_name, parent_folder)
+    populate_repo(repo_path, num_files=20)
+    next_commit = 2
+
+    # Modify and commit changes for a feature branch
+    num_commits = 3
+    add_commits(repo_path, branch='new_feature', num_commits=num_commits, commit_index=next_commit, allow_conflicts=False)
+    next_commit += num_commits
+
+    # Modify and commit changes for the main branch
+    num_commits = 2
+    add_commits(repo_path, branch='master', num_commits=num_commits, commit_index=next_commit, allow_conflicts=False)
+    next_commit += num_commits
+
+    # Modify and commit changes for a hotfix branch
+    num_commits = 3
+    add_commits(repo_path, branch='hotfix', num_commits=num_commits, commit_index=next_commit, allow_conflicts=False)
+    next_commit += num_commits
+
+    # Try another idea for the hotfix branch
+    num_commits = 3
+    add_commits(repo_path, branch='hotfix_v2', num_commits=num_commits, commit_index=next_commit, allow_conflicts=False)
+    next_commit += num_commits
+
+    # Iterate on the first idea
+    num_commits = 3
+    add_commits(repo_path, branch='hotfix', num_commits=num_commits, commit_index=next_commit, allow_conflicts=False)
+    next_commit += num_commits
+
+    # Modify and commit changes for the main branch
+    num_commits = 2
+    add_commits(repo_path, branch='master', num_commits=num_commits, commit_index=next_commit, allow_conflicts=False)
+    next_commit += num_commits
+
 

@@ -15,7 +15,7 @@ import stat
 from tempfile import gettempdir
 from pathlib import Path
 
-
+''' Create a Path object from a string '''
 def get_folder_path(folder=None):
     if folder == None:
         folder = gettempdir()
@@ -43,7 +43,7 @@ def create_files(count, prefix=None, folder_path=None):
         command = f"echo This is file {i} > {filename}"
         result = os.system(command)
 
-''' Initializes a repo under the current or specified folder '''
+''' Initialize a repo under the current or specified folder '''
 def create_repo(repo_name, parent_folder=None):
     path = create_folder(repo_name, parent_folder)
     os.chdir(path)
@@ -52,6 +52,7 @@ def create_repo(repo_name, parent_folder=None):
     result = os.system(command)
     return path
 
+''' Delete a repo by deleting the .git subfolder '''
 def remove_repo(repo_path):
     git_path = Path(repo_path, '.git')
     try:
@@ -59,6 +60,7 @@ def remove_repo(repo_path):
     except FileNotFoundError:
         print(f"Couldn't find {repo_path}")
 
+''' Call git add and git commit on the specified files '''
 def commit_files(repo_path, file_specifier=None, comment=None):
     os.chdir(repo_path)
 
@@ -75,7 +77,7 @@ def commit_files(repo_path, file_specifier=None, comment=None):
     print(f"Command: {command}")
     result = os.system(command)
 
-''' Generates a list containing a subset of the files in a specified folder '''
+''' Generate a list containing a subset of the files in a specified folder '''
 def get_file_list(folder_path, file_spec=None, limit=0, start_with=0, randomize=False):
     full_path = Path(folder_path, file_spec)
     full_file_list = glob.glob(str(full_path))
@@ -91,6 +93,7 @@ def get_file_list(folder_path, file_spec=None, limit=0, start_with=0, randomize=
 
     return(samples)
 
+''' Modify the specified files by appending a string '''
 def change_files(file_list, message=None):
     if message == None:
         current_time = datetime.datetime.now()
@@ -100,7 +103,7 @@ def change_files(file_list, message=None):
         command = f"echo {message} >> {file}"
         os.system(command)
 
-''' Attempts to switch branches using "checkout" '''
+''' Switch branches using "checkout" '''
 #
 # If the branch does not exist, checkout returns 1
 # 
@@ -120,7 +123,7 @@ def switch_branch(repo_path, branch_name, create=True):
     result = os.system(command)
     print(f"Attempted to switch to branch '{branch_name}' (Result: {result})")
 
-''' Creates files and adds them to the repo '''
+''' Create files and adds them to the repo '''
 def populate_repo(repo_path, num_files=1, msg=None):
     num_files = max(num_files, 1)
 
@@ -130,6 +133,7 @@ def populate_repo(repo_path, num_files=1, msg=None):
     create_files(count=num_files, folder_path=repo_path)
     commit_files(repo_path, '*.txt', msg)
 
+''' Generate and commit a set of changes '''
 def add_commits(repo_path, num_commits, commit_index=1, num_files=1, allow_conflicts=False, branch=None):
     os.chdir(Path(repo_path))
 
@@ -152,7 +156,7 @@ def add_commits(repo_path, num_commits, commit_index=1, num_files=1, allow_confl
         commit_files(repo_path, '*.txt', f"C{next_commit}")
         next_commit += 1
 
-# Change the mode of read only files
+''' Change the mode of read only files '''
 def rmtree_callback_removeReadOnly(func, path, excinfo):
     if isinstance(excinfo[1], FileNotFoundError):
         print("File not found.  Ignored.")
@@ -161,6 +165,7 @@ def rmtree_callback_removeReadOnly(func, path, excinfo):
         os.chmod(path, stat.S_IWRITE)
         func(path)
 
+''' Delete an entire folder and subfolders '''
 def danger_delete_folder(folder_name):
     if folder_name == None:
         raise ValueError('Path must be specified')
@@ -183,7 +188,6 @@ if __name__ == '__main__':
     repo_name = 'no_conflicts'
 
     commit_count = 0
-
 
     # Delete the existing repo (including files)
     danger_delete_folder(Path(parent_folder, repo_name))
@@ -212,7 +216,6 @@ if __name__ == '__main__':
     repo_name = 'conflicts'
 
     commit_count = 0
-
 
     # Delete the existing repo (including files)
     danger_delete_folder(Path(parent_folder, repo_name))
@@ -279,5 +282,3 @@ if __name__ == '__main__':
     num_commits = 2
     add_commits(repo_path, branch='master', num_commits=num_commits, commit_index=next_commit, allow_conflicts=False)
     next_commit += num_commits
-
-

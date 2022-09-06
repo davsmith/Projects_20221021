@@ -20,7 +20,7 @@ import subprocess
 # The output from the shell command is returned as a string
 #
 print('----------------------------------------------------------')
-cmd = ['git', 'show', 'HEAD']
+cmd = ['git', 'status', '--short']
 result = subprocess.check_output(cmd, text=True, shell=True)
 print(result)
 print('----------------------------------------------------------')
@@ -65,7 +65,7 @@ p = subprocess.Popen(['abadacus', '-a'], stdout=subprocess.PIPE, stderr=subproce
 out, err = p.communicate()
 
 # The shell command is run when the Popen method runs (i.e. not when communicate() runs)
-p = subprocess.Popen(['echo', 'test', '>>', 'test.txt'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+p = subprocess.Popen(['echo', 'test', '>>', 'tmp_1.txt'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
 out, err = p.communicate()
 print('----------------------------------------------------------')
 

@@ -17,29 +17,45 @@ from tempfile import gettempdir
 from pathlib import Path
 
 class FileBuilder:
-    def __init__(self, name, path):
-        print(f'self: {self}')
-        print(f'arg1: {name}')
-        print(f'arg2: {path}')
+    def __init__(self, name, parent_path):
+        self.name = Path(name)
+        self.last_name = last_name
 
-''' Create a Path object from a string '''
-def get_folder_path(folder=None):
-    if folder == None:
-        folder = gettempdir()
+    def print_greeting(self):
+        print(f'Hello {self.prefix} {self.first_name} {self.last_name}')
 
-    return Path(folder)
+class Repo:
+    def __init__(self, repo_name, parent_folder=None):
+        self.repo_name = repo_name
+        self.parent_folder = parent_folder
 
-''' Create a folder '''
-def create_folder(directory, parent_folder=None):
+    ''' Initialize a repo under the current or specified folder '''
+    def create_repo(self):
+        path = self.create_folder(self.repo_name, self.parent_folder)
+        os.chdir(path)
+        
+        command = "git init"
+        result = os.system(command)
+        return path
 
-    # Parent path to the directory
-    parent = get_folder_path(parent_folder)
+    ''' Create a Path object from a string '''
+    def get_folder_path(self, folder=None):
+        if folder == None:
+            folder = gettempdir()
 
-    # Full path
-    folder_path = os.path.join(parent, directory)
-    os.makedirs(folder_path, exist_ok=True)
+        return Path(folder)
 
-    return folder_path
+    ''' Create a folder '''
+    def create_folder(self, directory, parent_folder=None):
+
+        # Parent path to the directory
+        parent = self.get_folder_path(parent_folder)
+
+        # Full path
+        folder_path = os.path.join(parent, directory)
+        os.makedirs(folder_path, exist_ok=True)
+
+        return folder_path
 
 ''' Create a set of files '''
 def create_files(count, prefix=None, folder_path=None):
@@ -50,14 +66,14 @@ def create_files(count, prefix=None, folder_path=None):
         command = f"echo This is file {i} > {filename}"
         result = os.system(command)
 
-''' Initialize a repo under the current or specified folder '''
-def create_repo(repo_name, parent_folder=None):
-    path = create_folder(repo_name, parent_folder)
-    os.chdir(path)
+# ''' Initialize a repo under the current or specified folder '''
+# def create_repo(repo_name, parent_folder=None):
+#     path = create_folder(repo_name, parent_folder)
+#     os.chdir(path)
     
-    command = "git init"
-    result = os.system(command)
-    return path
+#     command = "git init"
+#     result = os.system(command)
+#     return path
 
 ''' Delete a repo by deleting the .git subfolder '''
 def remove_repo(repo_path):
@@ -199,9 +215,11 @@ if __name__ == '__main__':
     # Delete the existing repo (including files)
     danger_delete_folder(Path(parent_folder, repo_name))
 
-    file1 = FileBuilder(parent_folder, 'file1.txt')
+    # file1 = FileBuilder(parent_folder, 'file1.txt')
 
     # # Create a new repo containing a set of files
+    repo = Repo(repo_name, parent_folder)
+    repo.create_repo()
     # repo_path = create_repo(repo_name, parent_folder)
     # populate_repo(repo_path, num_files=5)
     # next_commit = 2

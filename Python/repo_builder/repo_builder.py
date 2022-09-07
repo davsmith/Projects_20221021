@@ -11,9 +11,16 @@ import glob
 import random
 import datetime
 import stat
+import subprocess
   
 from tempfile import gettempdir
 from pathlib import Path
+
+class FileBuilder:
+    def __init__(self, name, path):
+        print(f'self: {self}')
+        print(f'arg1: {name}')
+        print(f'arg2: {path}')
 
 ''' Create a Path object from a string '''
 def get_folder_path(folder=None):
@@ -192,93 +199,95 @@ if __name__ == '__main__':
     # Delete the existing repo (including files)
     danger_delete_folder(Path(parent_folder, repo_name))
 
-    # Create a new repo containing a set of files
-    repo_path = create_repo(repo_name, parent_folder)
-    populate_repo(repo_path, num_files=5)
-    next_commit = 2
+    file1 = FileBuilder(parent_folder, 'file1.txt')
 
-    # Modify and commit changes for a feature branch
-    num_commits = 3
-    add_commits(repo_path, branch='new_feature', num_commits=num_commits, commit_index=next_commit, allow_conflicts=False)
-    next_commit += num_commits
+    # # Create a new repo containing a set of files
+    # repo_path = create_repo(repo_name, parent_folder)
+    # populate_repo(repo_path, num_files=5)
+    # next_commit = 2
 
-    # Modify and commit changes for the main branch
-    num_commits = 2
-    add_commits(repo_path, branch='master', num_commits=num_commits, commit_index=next_commit, allow_conflicts=False)
-    next_commit += num_commits
+    # # Modify and commit changes for a feature branch
+    # num_commits = 3
+    # add_commits(repo_path, branch='new_feature', num_commits=num_commits, commit_index=next_commit, allow_conflicts=False)
+    # next_commit += num_commits
 
-    #
-    # Create a repo with an unmerged branch with conflicts
-    #
+    # # Modify and commit changes for the main branch
+    # num_commits = 2
+    # add_commits(repo_path, branch='master', num_commits=num_commits, commit_index=next_commit, allow_conflicts=False)
+    # next_commit += num_commits
 
-    # Define parameters for the repo
-    parent_folder = "c:/temp"
-    repo_name = 'conflicts'
+    # #
+    # # Create a repo with an unmerged branch with conflicts
+    # #
 
-    commit_count = 0
+    # # Define parameters for the repo
+    # parent_folder = "c:/temp"
+    # repo_name = 'conflicts'
 
-    # Delete the existing repo (including files)
-    danger_delete_folder(Path(parent_folder, repo_name))
+    # commit_count = 0
 
-    # Create a new repo containing a set of files
-    repo_path = create_repo(repo_name, parent_folder)
-    populate_repo(repo_path, num_files=5)
-    next_commit = 2
+    # # Delete the existing repo (including files)
+    # danger_delete_folder(Path(parent_folder, repo_name))
 
-    # Modify and commit changes for a feature branch
-    num_commits = 3
-    add_commits(repo_path, branch='new_feature', num_commits=num_commits, commit_index=next_commit, allow_conflicts=True)
-    next_commit += num_commits
+    # # Create a new repo containing a set of files
+    # repo_path = create_repo(repo_name, parent_folder)
+    # populate_repo(repo_path, num_files=5)
+    # next_commit = 2
 
-    # Modify and commit changes for the main branch
-    num_commits = 2
-    add_commits(repo_path, branch='master', num_commits=num_commits, commit_index=next_commit, allow_conflicts=True)
-    next_commit += num_commits
+    # # Modify and commit changes for a feature branch
+    # num_commits = 3
+    # add_commits(repo_path, branch='new_feature', num_commits=num_commits, commit_index=next_commit, allow_conflicts=True)
+    # next_commit += num_commits
 
-    #
-    # Create a repo with multiple unmerged branches
-    #
+    # # Modify and commit changes for the main branch
+    # num_commits = 2
+    # add_commits(repo_path, branch='master', num_commits=num_commits, commit_index=next_commit, allow_conflicts=True)
+    # next_commit += num_commits
 
-    # Define parameters for the repo
-    parent_folder = "c:/temp"
-    repo_name = 'multi_branch'
+    # #
+    # # Create a repo with multiple unmerged branches
+    # #
 
-    commit_count = 0
+    # # Define parameters for the repo
+    # parent_folder = "c:/temp"
+    # repo_name = 'multi_branch'
 
-    # Delete the existing repo (including files)
-    danger_delete_folder(Path(parent_folder, repo_name))
+    # commit_count = 0
 
-    # Create a new repo containing a set of files
-    repo_path = create_repo(repo_name, parent_folder)
-    populate_repo(repo_path, num_files=20)
-    next_commit = 2
+    # # Delete the existing repo (including files)
+    # danger_delete_folder(Path(parent_folder, repo_name))
 
-    # Modify and commit changes for a feature branch
-    num_commits = 3
-    add_commits(repo_path, branch='new_feature', num_commits=num_commits, commit_index=next_commit, allow_conflicts=False)
-    next_commit += num_commits
+    # # Create a new repo containing a set of files
+    # repo_path = create_repo(repo_name, parent_folder)
+    # populate_repo(repo_path, num_files=20)
+    # next_commit = 2
 
-    # Modify and commit changes for the main branch
-    num_commits = 2
-    add_commits(repo_path, branch='master', num_commits=num_commits, commit_index=next_commit, allow_conflicts=False)
-    next_commit += num_commits
+    # # Modify and commit changes for a feature branch
+    # num_commits = 3
+    # add_commits(repo_path, branch='new_feature', num_commits=num_commits, commit_index=next_commit, allow_conflicts=False)
+    # next_commit += num_commits
 
-    # Modify and commit changes for a hotfix branch
-    num_commits = 3
-    add_commits(repo_path, branch='hotfix', num_commits=num_commits, commit_index=next_commit, allow_conflicts=False)
-    next_commit += num_commits
+    # # Modify and commit changes for the main branch
+    # num_commits = 2
+    # add_commits(repo_path, branch='master', num_commits=num_commits, commit_index=next_commit, allow_conflicts=False)
+    # next_commit += num_commits
 
-    # Try another idea for the hotfix branch
-    num_commits = 3
-    add_commits(repo_path, branch='hotfix_v2', num_commits=num_commits, commit_index=next_commit, allow_conflicts=False)
-    next_commit += num_commits
+    # # Modify and commit changes for a hotfix branch
+    # num_commits = 3
+    # add_commits(repo_path, branch='hotfix', num_commits=num_commits, commit_index=next_commit, allow_conflicts=False)
+    # next_commit += num_commits
 
-    # Iterate on the first idea
-    num_commits = 3
-    add_commits(repo_path, branch='hotfix', num_commits=num_commits, commit_index=next_commit, allow_conflicts=False)
-    next_commit += num_commits
+    # # Try another idea for the hotfix branch
+    # num_commits = 3
+    # add_commits(repo_path, branch='hotfix_v2', num_commits=num_commits, commit_index=next_commit, allow_conflicts=False)
+    # next_commit += num_commits
 
-    # Modify and commit changes for the main branch
-    num_commits = 2
-    add_commits(repo_path, branch='master', num_commits=num_commits, commit_index=next_commit, allow_conflicts=False)
-    next_commit += num_commits
+    # # Iterate on the first idea
+    # num_commits = 3
+    # add_commits(repo_path, branch='hotfix', num_commits=num_commits, commit_index=next_commit, allow_conflicts=False)
+    # next_commit += num_commits
+
+    # # Modify and commit changes for the main branch
+    # num_commits = 2
+    # add_commits(repo_path, branch='master', num_commits=num_commits, commit_index=next_commit, allow_conflicts=False)
+    # next_commit += num_commits

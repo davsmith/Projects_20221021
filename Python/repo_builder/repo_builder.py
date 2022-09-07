@@ -3,7 +3,6 @@
 # Created 8/12/2022 by Dave Smith
 #
 
-
 from operator import truediv
 import os
 import shutil
@@ -17,33 +16,21 @@ from tempfile import gettempdir
 from pathlib import Path
 
 class FileBuilder:
-    def __init__(self, name, parent_path):
-        self.name = Path(name)
-        self.last_name = last_name
+    def __init__(self, prefix, parent_path):
+        self.prefix = Path(prefix)
+        self.parent_path = parent_path
 
-    def print_greeting(self):
-        print(f'Hello {self.prefix} {self.first_name} {self.last_name}')
+    ''' Create a set of files '''
+    def create_files(self, count, prefix=None, folder_path=None):
+        if prefix == None:
+            prefix = self.prefix
+            
+        for i in range(1, count+1):
+            filename = Path(get_folder_path(folder_path),f"{prefix}{i}.txt")
+            command = f"echo This is file {i} > {filename}"
+            result = os.system(command)
 
-class Repo:
-    def __init__(self, repo_name, parent_folder=None):
-        self.repo_name = repo_name
-        self.parent_folder = parent_folder
-
-
-
-    ''' Initialize a repo under the current or specified folder '''
-    def create_repo(self):
-        # Delete the existing repo (including files)
-        danger_delete_folder(Path(parent_folder, repo_name))
-
-        path = self.create_folder(self.repo_name, self.parent_folder)
-        os.chdir(path)
-        
-        command = "git init"
-        result = os.system(command)
-        return path
-
-    ''' Create a Path object from a string '''
+        ''' Create a Path object from a string '''
     def get_folder_path(self, folder=None):
         if folder == None:
             folder = gettempdir()
@@ -65,9 +52,10 @@ class Repo:
     ''' Delete an entire folder and subfolders '''
     def danger_delete_folder(self):
         folder_path = Path(self.parent_folder, self.repo_name)
-        shutil.rmtree(folder_path, onerror=self.rmtree_callback_removeReadOnly)
+        shutil.rmtree(folder_path, onerror=Repo.rmtree_callback_removeReadOnly)
 
     ''' Change the mode of read only files '''
+    @staticmethod
     def rmtree_callback_removeReadOnly(func, path, excinfo):
         if isinstance(excinfo[1], FileNotFoundError):
             print("File not found.  Ignored.")
@@ -76,14 +64,24 @@ class Repo:
             os.chmod(path, stat.S_IWRITE)
             func(path)
 
-''' Create a set of files '''
-def create_files(count, prefix=None, folder_path=None):
-    if prefix == None:
-        prefix = "tmp_file"
-    for i in range(1, count+1):
-        filename = Path(get_folder_path(folder_path),f"{prefix}{i}.txt")
-        command = f"echo This is file {i} > {filename}"
+
+class Repo:
+    def __init__(self, repo_name, parent_folder=None):
+        self.repo_name = repo_name
+        self.parent_folder = parent_folder
+
+    ''' Initialize a repo under the current or specified folder '''
+    def create_repo(self):
+        # Delete the existing repo (including files)
+        self.danger_delete_folder()
+
+        path = self.create_folder(self.repo_name, self.parent_folder)
+        os.chdir(path)
+        
+        command = "git init"
         result = os.system(command)
+        return path
+
 
 # ''' Initialize a repo under the current or specified folder '''
 # def create_repo(repo_name, parent_folder=None):

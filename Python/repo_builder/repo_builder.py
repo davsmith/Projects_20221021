@@ -29,8 +29,13 @@ class Repo:
         self.repo_name = repo_name
         self.parent_folder = parent_folder
 
+
+
     ''' Initialize a repo under the current or specified folder '''
     def create_repo(self):
+        # Delete the existing repo (including files)
+        danger_delete_folder(Path(parent_folder, repo_name))
+
         path = self.create_folder(self.repo_name, self.parent_folder)
         os.chdir(path)
         
@@ -56,6 +61,20 @@ class Repo:
         os.makedirs(folder_path, exist_ok=True)
 
         return folder_path
+
+    ''' Delete an entire folder and subfolders '''
+    def danger_delete_folder(self):
+        folder_path = Path(self.parent_folder, self.repo_name)
+        shutil.rmtree(folder_path, onerror=self.rmtree_callback_removeReadOnly)
+
+    ''' Change the mode of read only files '''
+    def rmtree_callback_removeReadOnly(func, path, excinfo):
+        if isinstance(excinfo[1], FileNotFoundError):
+            print("File not found.  Ignored.")
+        else:
+            print(f"Setting write access for {path} ")
+            os.chmod(path, stat.S_IWRITE)
+            func(path)
 
 ''' Create a set of files '''
 def create_files(count, prefix=None, folder_path=None):
@@ -179,24 +198,6 @@ def add_commits(repo_path, num_commits, commit_index=1, num_files=1, allow_confl
         commit_files(repo_path, '*.txt', f"C{next_commit}")
         next_commit += 1
 
-''' Change the mode of read only files '''
-def rmtree_callback_removeReadOnly(func, path, excinfo):
-    if isinstance(excinfo[1], FileNotFoundError):
-        print("File not found.  Ignored.")
-    else:
-        print(f"Setting write access for {path} ")
-        os.chmod(path, stat.S_IWRITE)
-        func(path)
-
-''' Delete an entire folder and subfolders '''
-def danger_delete_folder(folder_name):
-    if folder_name == None:
-        raise ValueError('Path must be specified')
-    else:
-        folder_path = Path(folder_name)
-
-    shutil.rmtree(folder_path, onerror=rmtree_callback_removeReadOnly)
-
 
 #
 # Main
@@ -212,15 +213,11 @@ if __name__ == '__main__':
 
     commit_count = 0
 
-    # Delete the existing repo (including files)
-    danger_delete_folder(Path(parent_folder, repo_name))
-
     # file1 = FileBuilder(parent_folder, 'file1.txt')
 
     # # Create a new repo containing a set of files
     repo = Repo(repo_name, parent_folder)
     repo.create_repo()
-    # repo_path = create_repo(repo_name, parent_folder)
     # populate_repo(repo_path, num_files=5)
     # next_commit = 2
 

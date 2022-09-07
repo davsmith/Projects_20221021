@@ -19,11 +19,11 @@ import subprocess
 #
 # The output from the shell command is returned as a string
 #
-# print('----------------------------------------------------------')
-# cmd = ['git', 'status', '--short']
-# result = subprocess.check_output(cmd, text=True, shell=True)
-# print(result)
-# print('----------------------------------------------------------')
+print('----------------------------------------------------------')
+cmd = ['git', 'status', '--short']
+result = subprocess.check_output(cmd, text=True, shell=True)
+print(result)
+print('----------------------------------------------------------')
 
 #
 # Run shell commands using run()
@@ -36,13 +36,13 @@ import subprocess
 #   returncode: The exit code from the shell command
 #   stdout: The captured output from the shell command (in bytes by default)
 #
-# print('----------------------------------------------------------')
-# result = subprocess.run(['git', '--version'], stdout=subprocess.PIPE)
-# result.stdout
+print('----------------------------------------------------------')
+result = subprocess.run(['git', '--version'], stdout=subprocess.PIPE)
+result.stdout
 
-# # Use the .decode method on the byte class to convert the byte string to a string
-# print(result.stdout.decode('utf-8'))
-# print('----------------------------------------------------------')
+# Use the .decode method on the byte class to convert the byte string to a string
+print(result.stdout.decode('utf-8'))
+print('----------------------------------------------------------')
 
 #
 # Run shell commands using Popen()
@@ -57,38 +57,38 @@ import subprocess
 #
 # The results of the command are retrieved using the communicate() or wait() methods
 #
-# print('----------------------------------------------------------')
-# p = subprocess.Popen(['git', '--version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-# out, err = p.communicate()
+print('----------------------------------------------------------')
+p = subprocess.Popen(['git', '--version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+out, err = p.communicate()
 
-# # Supplemental
-# # If the shell command is not recognized, the output is recorded on stderr
-# p = subprocess.Popen(['abadacus', '-a'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-# out, err = p.communicate()
+# Supplemental
+# If the shell command is not recognized, the output is recorded on stderr
+p = subprocess.Popen(['abadacus', '-a'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+out, err = p.communicate()
 
-# # The shell command is run when the Popen method runs (i.e. not when communicate() runs)
-# p = subprocess.Popen(['echo', 'test', '>>', 'tmp_1.txt'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-# out, err = p.communicate()
-# print('----------------------------------------------------------')
+# The shell command is run when the Popen method runs (i.e. not when communicate() runs)
+p = subprocess.Popen(['echo', 'test', '>>', 'tmp_1.txt'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+out, err = p.communicate()
+print('----------------------------------------------------------')
 
 
 #
 # More examples of using Popen to run shell commands
 #
-# print('----------------------------------------------------------')
+print('----------------------------------------------------------')
 
-# # Define command as string
-# cmd = 'dir /s'
+# Define command as string
+cmd = 'dir /s'
 
-# # Use shell to execute the command and store it in sp variable
-# p = subprocess.Popen(cmd,shell=True)
+# Use shell to execute the command and store it in sp variable
+p = subprocess.Popen(cmd,shell=True)
 
-# # Wait up to 3 seconds for the process to exit, and store the result code
-# result_code = p.wait(3)
+# Wait up to 3 seconds for the process to exit, and store the result code
+result_code = p.wait(3)
 
-# # Print the content of sp variable
-# print(p)
-# print('----------------------------------------------------------')
+# Print the content of sp variable
+print(p)
+print('----------------------------------------------------------')
 
 #
 # Demonstrate a timeout
@@ -106,10 +106,18 @@ try:
 except subprocess.TimeoutExpired:
     print('Command took too long to run')
 
-# Separate the output and error by communicating with sp variable.
-# This is similar to Tuple where we store two values to two different variables
+# Separate the output and error by communicating with the process variable.
+# Use unpacking to populate two variables from a tuple
 out,err = p.communicate()
 
 print('output is: \n', out)
 print('error is: \n', err)
+print('----------------------------------------------------------')
+
+
+#
+# Example supplying input via redirecting stdin
+#
+print('----------------------------------------------------------')
+print('TODO: Add example for suppling input via stdin')
 print('----------------------------------------------------------')

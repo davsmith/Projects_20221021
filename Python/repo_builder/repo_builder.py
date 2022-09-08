@@ -66,18 +66,14 @@ class FileBuilder:
             os.chmod(path, stat.S_IWRITE)
             func(path)
 
-
 class Repo:
     def __init__(self, repo_name, parent_folder=None):
         self.repo_name = repo_name
         self.parent_folder = parent_folder
-        self.full_path = Path(self.repo_name, self.parent_folder)
+        self.full_path = Path(self.parent_folder, self.repo_name)
 
     ''' Initialize a repo under the current or specified folder '''
     def create_repo(self):
-        # Delete the existing repo (including files)
-        FileBuilder.danger_delete_folder(Path(self.parent_folder, self.repo_name))
-
         path = FileBuilder.create_folder(self.repo_name, self.parent_folder)
         os.chdir(path)
         
@@ -85,23 +81,13 @@ class Repo:
         result = os.system(command)
         return path
 
-
-# ''' Initialize a repo under the current or specified folder '''
-# def create_repo(repo_name, parent_folder=None):
-#     path = create_folder(repo_name, parent_folder)
-#     os.chdir(path)
-    
-#     command = "git init"
-#     result = os.system(command)
-#     return path
-
-# ''' Delete a repo by deleting the .git subfolder '''
-# def remove_repo(repo_path):
-#     git_path = Path(repo_path, '.git')
-#     try:
-#         shutil.rmtree(git_path)
-#     except FileNotFoundError:
-#         print(f"Couldn't find {repo_path}")
+    ''' Delete a repo by deleting the .git subfolder '''
+    def remove_repo(self):
+        git_path = Path(self.full_path, '.git')
+        try:
+            shutil.rmtree(git_path)
+        except FileNotFoundError:
+            print(f"Couldn't find {git_path}")
 
 # ''' Call git add and git commit on the specified files '''
 # def commit_files(repo_path, file_specifier=None, comment=None):
@@ -217,8 +203,12 @@ if __name__ == '__main__':
     # file1 = FileBuilder(parent_folder, 'file1.txt')
 
     # # Create a new repo containing a set of files
+            # Delete the existing repo (including files)
+    FileBuilder.danger_delete_folder(Path(parent_folder, repo_name))
+
     repo = Repo(repo_name, parent_folder)
     repo.create_repo()
+    repo.remove_repo()
     # populate_repo(repo_path, num_files=5)
     # next_commit = 2
 

@@ -18,15 +18,18 @@ from pathlib import Path
 class FileBuilder:
     def __init__(self, prefix, parent_path):
         self.prefix = Path(prefix)
-        self.parent_path = parent_path
+        self.parent_path = Path(parent_path)
 
     ''' Create a set of files '''
     def create_files(self, count, prefix=None, folder_path=None):
         if prefix == None:
             prefix = self.prefix
+
+        if folder_path == None:
+            folder_path = self.parent_path
             
         for i in range(1, count+1):
-            filename = Path(get_folder_path(folder_path),f"{prefix}{i}.txt")
+            filename = Path(folder_path,f"{prefix}{i}.txt")
             command = f"echo This is file {i} > {filename}"
             result = os.system(command)
 
@@ -71,6 +74,7 @@ class Repo:
         self.repo_name = repo_name
         self.parent_folder = parent_folder
         self.full_path = Path(self.parent_folder, self.repo_name)
+        self.file_builder = FileBuilder('tmp_', self.full_path)
 
     ''' Initialize a repo under the current or specified folder '''
     def create_repo(self):
@@ -89,22 +93,22 @@ class Repo:
         except FileNotFoundError:
             print(f"Couldn't find {git_path}")
 
-# ''' Call git add and git commit on the specified files '''
-# def commit_files(repo_path, file_specifier=None, comment=None):
-#     os.chdir(repo_path)
+    ''' Call git add and git commit on the specified files '''
+    def commit_files(self, file_specifier=None, comment=None):
+        os.chdir(self.full_path)
 
-#     if file_specifier == None:
-#         file_specifier = "*.txt"
+        if file_specifier == None:
+            file_specifier = "*.txt"
 
-#     if comment == None:
-#         comment = 'Automatically committing changes'
+        if comment == None:
+            comment = 'Automatically committing changes'
 
-#     command = f"git add {file_specifier} "
-#     result = os.system(command)
+        command = f"git add {file_specifier} "
+        result = os.system(command)
 
-#     command = f'git commit -m "{comment}"'
-#     print(f"Command: {command}")
-#     result = os.system(command)
+        command = f'git commit -m "{comment}"'
+        print(f"Command: {command}")
+        result = os.system(command)
 
 # ''' Generate a list containing a subset of the files in a specified folder '''
 # def get_file_list(folder_path, file_spec=None, limit=0, start_with=0, randomize=False):
@@ -202,15 +206,13 @@ if __name__ == '__main__':
 
     # file1 = FileBuilder(parent_folder, 'file1.txt')
 
-    # # Create a new repo containing a set of files
-            # Delete the existing repo (including files)
+    # Delete the existing repo (including files)
     FileBuilder.danger_delete_folder(Path(parent_folder, repo_name))
 
+    # Create a new repo containing a set of files
     repo = Repo(repo_name, parent_folder)
     repo.create_repo()
-    repo.remove_repo()
-    # populate_repo(repo_path, num_files=5)
-    # next_commit = 2
+    repo.populate_repo(num_files=5)
 
     # # Modify and commit changes for a feature branch
     # num_commits = 3

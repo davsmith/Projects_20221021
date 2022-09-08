@@ -30,18 +30,20 @@ class FileBuilder:
             command = f"echo This is file {i} > {filename}"
             result = os.system(command)
 
-        ''' Create a Path object from a string '''
-    def get_folder_path(self, folder=None):
+    ''' Create a Path object from a string '''
+    @staticmethod
+    def get_folder_path(folder=None):
         if folder == None:
             folder = gettempdir()
 
         return Path(folder)
 
     ''' Create a folder '''
-    def create_folder(self, directory, parent_folder=None):
+    @staticmethod
+    def create_folder(directory, parent_folder=None):
 
         # Parent path to the directory
-        parent = self.get_folder_path(parent_folder)
+        parent = FileBuilder.get_folder_path(parent_folder)
 
         # Full path
         folder_path = os.path.join(parent, directory)
@@ -50,9 +52,9 @@ class FileBuilder:
         return folder_path
 
     ''' Delete an entire folder and subfolders '''
-    def danger_delete_folder(self):
-        folder_path = Path(self.parent_folder, self.repo_name)
-        shutil.rmtree(folder_path, onerror=Repo.rmtree_callback_removeReadOnly)
+    @staticmethod
+    def danger_delete_folder(folder_path):
+        shutil.rmtree(folder_path, onerror=FileBuilder.rmtree_callback_removeReadOnly)
 
     ''' Change the mode of read only files '''
     @staticmethod
@@ -69,13 +71,14 @@ class Repo:
     def __init__(self, repo_name, parent_folder=None):
         self.repo_name = repo_name
         self.parent_folder = parent_folder
+        self.full_path = Path(self.repo_name, self.parent_folder)
 
     ''' Initialize a repo under the current or specified folder '''
     def create_repo(self):
         # Delete the existing repo (including files)
-        self.danger_delete_folder()
+        FileBuilder.danger_delete_folder(Path(self.parent_folder, self.repo_name))
 
-        path = self.create_folder(self.repo_name, self.parent_folder)
+        path = FileBuilder.create_folder(self.repo_name, self.parent_folder)
         os.chdir(path)
         
         command = "git init"
@@ -92,109 +95,109 @@ class Repo:
 #     result = os.system(command)
 #     return path
 
-''' Delete a repo by deleting the .git subfolder '''
-def remove_repo(repo_path):
-    git_path = Path(repo_path, '.git')
-    try:
-        shutil.rmtree(git_path)
-    except FileNotFoundError:
-        print(f"Couldn't find {repo_path}")
+# ''' Delete a repo by deleting the .git subfolder '''
+# def remove_repo(repo_path):
+#     git_path = Path(repo_path, '.git')
+#     try:
+#         shutil.rmtree(git_path)
+#     except FileNotFoundError:
+#         print(f"Couldn't find {repo_path}")
 
-''' Call git add and git commit on the specified files '''
-def commit_files(repo_path, file_specifier=None, comment=None):
-    os.chdir(repo_path)
+# ''' Call git add and git commit on the specified files '''
+# def commit_files(repo_path, file_specifier=None, comment=None):
+#     os.chdir(repo_path)
 
-    if file_specifier == None:
-        file_specifier = "*.txt"
+#     if file_specifier == None:
+#         file_specifier = "*.txt"
 
-    if comment == None:
-        comment = 'Automatically committing changes'
+#     if comment == None:
+#         comment = 'Automatically committing changes'
 
-    command = f"git add {file_specifier} "
-    result = os.system(command)
+#     command = f"git add {file_specifier} "
+#     result = os.system(command)
 
-    command = f'git commit -m "{comment}"'
-    print(f"Command: {command}")
-    result = os.system(command)
+#     command = f'git commit -m "{comment}"'
+#     print(f"Command: {command}")
+#     result = os.system(command)
 
-''' Generate a list containing a subset of the files in a specified folder '''
-def get_file_list(folder_path, file_spec=None, limit=0, start_with=0, randomize=False):
-    full_path = Path(folder_path, file_spec)
-    full_file_list = glob.glob(str(full_path))
-    if limit == 0:
-            limit = len(full_file_list)
-            print(limit)
-    num_samples = min(limit, len(full_file_list))
+# ''' Generate a list containing a subset of the files in a specified folder '''
+# def get_file_list(folder_path, file_spec=None, limit=0, start_with=0, randomize=False):
+#     full_path = Path(folder_path, file_spec)
+#     full_file_list = glob.glob(str(full_path))
+#     if limit == 0:
+#             limit = len(full_file_list)
+#             print(limit)
+#     num_samples = min(limit, len(full_file_list))
 
-    if randomize == True:
-        samples = random.sample(full_file_list, num_samples)
-    else:
-        samples = full_file_list[start_with:start_with+num_samples]
+#     if randomize == True:
+#         samples = random.sample(full_file_list, num_samples)
+#     else:
+#         samples = full_file_list[start_with:start_with+num_samples]
 
-    return(samples)
+#     return(samples)
 
-''' Modify the specified files by appending a string '''
-def change_files(file_list, message=None):
-    if message == None:
-        current_time = datetime.datetime.now()
-        message = f"Updated file at {current_time}"
+# ''' Modify the specified files by appending a string '''
+# def change_files(file_list, message=None):
+#     if message == None:
+#         current_time = datetime.datetime.now()
+#         message = f"Updated file at {current_time}"
 
-    for file in file_list:
-        command = f"echo {message} >> {file}"
-        os.system(command)
+#     for file in file_list:
+#         command = f"echo {message} >> {file}"
+#         os.system(command)
 
-''' Switch branches using "checkout" '''
-#
-# If the branch does not exist, checkout returns 1
-# 
-def switch_branch(repo_path, branch_name, create=True):
-    options = ""
+# ''' Switch branches using "checkout" '''
+# #
+# # If the branch does not exist, checkout returns 1
+# # 
+# def switch_branch(repo_path, branch_name, create=True):
+#     options = ""
 
-    os.chdir(repo_path)
-    if create == True:
-        # options = f"{options} -b"
-        # Attempt to create the branch
-        # This will fail if the branch already exists
-        command = f'git branch {branch_name}'
-        result = os.system(command)
-        print(f"Attempted to create branch '{branch_name}' (Result:{result})")
+#     os.chdir(repo_path)
+#     if create == True:
+#         # options = f"{options} -b"
+#         # Attempt to create the branch
+#         # This will fail if the branch already exists
+#         command = f'git branch {branch_name}'
+#         result = os.system(command)
+#         print(f"Attempted to create branch '{branch_name}' (Result:{result})")
     
-    command = f'git checkout {options} {branch_name}'
-    result = os.system(command)
-    print(f"Attempted to switch to branch '{branch_name}' (Result: {result})")
+#     command = f'git checkout {options} {branch_name}'
+#     result = os.system(command)
+#     print(f"Attempted to switch to branch '{branch_name}' (Result: {result})")
 
-''' Create files and adds them to the repo '''
-def populate_repo(repo_path, num_files=1, msg=None):
-    num_files = max(num_files, 1)
+# ''' Create files and adds them to the repo '''
+# def populate_repo(repo_path, num_files=1, msg=None):
+#     num_files = max(num_files, 1)
 
-    if msg == None:
-        msg = 'C1'
+#     if msg == None:
+#         msg = 'C1'
 
-    create_files(count=num_files, folder_path=repo_path)
-    commit_files(repo_path, '*.txt', msg)
+#     create_files(count=num_files, folder_path=repo_path)
+#     commit_files(repo_path, '*.txt', msg)
 
-''' Generate and commit a set of changes '''
-def add_commits(repo_path, num_commits, commit_index=1, num_files=1, allow_conflicts=False, branch=None):
-    os.chdir(Path(repo_path))
+# ''' Generate and commit a set of changes '''
+# def add_commits(repo_path, num_commits, commit_index=1, num_files=1, allow_conflicts=False, branch=None):
+#     os.chdir(Path(repo_path))
 
-    if branch != None:
-        switch_branch(repo_path, branch, create=True)
+#     if branch != None:
+#         switch_branch(repo_path, branch, create=True)
 
-    next_commit = commit_index
+#     next_commit = commit_index
 
-    # BUGBUG: This is a hokey algorithm.  Ideally if allow_conflicts is False, the
-    # file list would exclude any files which have already been changed.
-    if allow_conflicts:
-        file_list = get_file_list(repo_path, "*.txt", limit=num_files, start_with=0)
-    else:
-        # If conflicts are not allowed, only a single random file and hope for the best
-        num_files = 1
-        file_list = get_file_list(repo_path, "*.txt", limit=num_files, randomize=True)
+#     # BUGBUG: This is a hokey algorithm.  Ideally if allow_conflicts is False, the
+#     # file list would exclude any files which have already been changed.
+#     if allow_conflicts:
+#         file_list = get_file_list(repo_path, "*.txt", limit=num_files, start_with=0)
+#     else:
+#         # If conflicts are not allowed, only a single random file and hope for the best
+#         num_files = 1
+#         file_list = get_file_list(repo_path, "*.txt", limit=num_files, randomize=True)
         
-    for i in range(1, num_commits+1):
-        change_files(file_list)
-        commit_files(repo_path, '*.txt', f"C{next_commit}")
-        next_commit += 1
+#     for i in range(1, num_commits+1):
+#         change_files(file_list)
+#         commit_files(repo_path, '*.txt', f"C{next_commit}")
+#         next_commit += 1
 
 
 #

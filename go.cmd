@@ -1,2 +1,2 @@
-cd \Source\Projects\Python\Examples\_example_subprocess_module
+cd \Source\Projects\Python\repo_builder
 start code .

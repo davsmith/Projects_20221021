@@ -29,19 +29,6 @@ class FileBuilder:
         self.file_type = file_type
         self.index = 1
 
-    # ''' Create a set of files '''
-    # def create_files(self, count, prefix=None, folder_path=None):
-    #     if prefix == None:
-    #         prefix = self.prefix
-
-    #     if folder_path == None:
-    #         folder_path = self.parent_path
-            
-    #     for i in range(1, count+1):
-    #         filename = Path(folder_path,f"{prefix}{i}.txt")
-    #         command = f"echo This is file {i} > {filename}"
-    #         result = os.system(command)
-
     ''' Make a change to a file so it shows as "dirty" '''
     def touch_files(self, count, create=True):
         prefix = self.prefix
@@ -66,7 +53,7 @@ class FileBuilder:
 
         return Path(folder)
 
-    ''' Create a folder '''
+    ''' Create a folder from the folder name and parent path '''
     @staticmethod
     def create_folder(directory, parent_folder=None):
 

@@ -16,22 +16,47 @@ from tempfile import gettempdir
 from pathlib import Path
 
 class FileBuilder:
-    def __init__(self, prefix, parent_path):
+    def __init__(self, parent_path, prefix=None, file_type=None):
+        
+        if prefix == None:
+            prefix = 'tmp_'
+        
+        if file_type == None:
+            file_type = '.txt'
+
         self.prefix = Path(prefix)
         self.parent_path = Path(parent_path)
+        self.file_type = file_type
+        self.index = 1
 
-    ''' Create a set of files '''
-    def create_files(self, count, prefix=None, folder_path=None):
-        if prefix == None:
-            prefix = self.prefix
+    # ''' Create a set of files '''
+    # def create_files(self, count, prefix=None, folder_path=None):
+    #     if prefix == None:
+    #         prefix = self.prefix
 
-        if folder_path == None:
-            folder_path = self.parent_path
+    #     if folder_path == None:
+    #         folder_path = self.parent_path
             
-        for i in range(1, count+1):
+    #     for i in range(1, count+1):
+    #         filename = Path(folder_path,f"{prefix}{i}.txt")
+    #         command = f"echo This is file {i} > {filename}"
+    #         result = os.system(command)
+
+    ''' Make a change to a file so it shows as "dirty" '''
+    def touch_files(self, count, create=True):
+        prefix = self.prefix
+        folder_path = self.parent_path
+
+        if create == True:
+            start = self.index
+        else:
+            start = 1
+            
+        for i in range(start, start+count):
             filename = Path(folder_path,f"{prefix}{i}.txt")
-            command = f"echo This is file {i} > {filename}"
+            command = f"echo This is file {i} >> {filename}"
             result = os.system(command)
+            self.index += 1
 
     ''' Create a Path object from a string '''
     @staticmethod
@@ -202,17 +227,26 @@ if __name__ == '__main__':
     parent_folder = "c:/temp"
     repo_name = 'no_conflicts'
 
-    commit_count = 0
-
-    # file1 = FileBuilder(parent_folder, 'file1.txt')
-
     # Delete the existing repo (including files)
-    FileBuilder.danger_delete_folder(Path(parent_folder, repo_name))
+    full_path = Path(parent_folder, repo_name)
+    FileBuilder.danger_delete_folder(full_path)
+    FileBuilder.create_folder(repo_name, parent_folder)
+
+    file_builder = FileBuilder(full_path)
 
     # Create a new repo containing a set of files
     repo = Repo(repo_name, parent_folder)
     repo.create_repo()
-    repo.populate_repo(num_files=5)
+    file_builder.touch_files(5)
+    file_builder.touch_files(5, create=False)
+
+    # repo.populate_repo(num_files=5)
+
+
+
+
+
+
 
     # # Modify and commit changes for a feature branch
     # num_commits = 3

@@ -38,9 +38,9 @@ class FileBuilder:
         else:
             start = 1
 
-        for i in range(start, start+count):
-            filename = Path(folder_path,f"{prefix}{i}.txt")
-            command = f"echo This is file {i} >> {filename}"
+        for j in range(start, start+count):
+            filename = Path(folder_path,f"{prefix}{j}.txt")
+            command = f"echo This is file {j} >> {filename}"
             os.system(command)
             self.index += 1
 
@@ -135,7 +135,8 @@ class Repo:
 
         self.commit_count += 1
 
-    def add_commits(self, num_commits, allow_conflicts=False, branch=None, comment=None):
+    def add_commits(self, num_commits, create_conflicts=False, branch=None,
+                    comment=None, num_files=1):
         ''' Generate and commit a set of changes '''
 
         os.chdir(Path(self.full_path))
@@ -144,7 +145,7 @@ class Repo:
             self.switch_branch(branch, create=True)
 
         for _i in range(1, num_commits+1):
-            self.file_builder.touch_files(2, not allow_conflicts)
+            self.file_builder.touch_files(num_files, not create_conflicts)
             self.commit_files(comment=comment)
 
     def switch_branch(self, branch_name, create=True):
@@ -174,39 +175,48 @@ if __name__ == '__main__':
     PARENT_FOLDER = 'c:/temp'
 
     # Create a new repo with a feature branch, no conflicts
-    REPO_NAME = 'simple'
-    repo = Repo(REPO_NAME, PARENT_FOLDER)
-    repo.create_repo(num_commits=5)
-
-    # Create a new repo with a feature branch, no conflicts
-    REPO_NAME = 'no_conflicts'
+    REPO_NAME = 'scratch'
     repo = Repo(REPO_NAME, PARENT_FOLDER)
     repo.create_repo(first_branch='main', num_commits=1)
     repo.add_commits(5, branch='new_feature')
-    repo.add_commits(4, branch='main')
+    # repo.add_commits(3, branch='main')
+    repo.add_commits(4, branch='hotfix')
+    # repo.add_commits(1, branch='main')
 
-    # Create a new repo with a feature branch, conflicts
-    REPO_NAME = 'conflicts'
-    repo = Repo(REPO_NAME, PARENT_FOLDER)
-    repo.create_repo(first_branch='main')
-    repo.add_commits(5, branch='new_feature', allow_conflicts=True)
-    repo.add_commits(2, branch='main', allow_conflicts=True)
 
-    # Create a new repo with multiple branches, no conflicts
-    REPO_NAME = 'multi_branch'
-    repo = Repo(REPO_NAME, PARENT_FOLDER)
-    repo.create_repo(first_branch='main', num_commits=1)
-    repo.add_commits(3, branch='new_feature')
-    repo.add_commits(2, branch='main')
-    repo.add_commits(3, branch='hotfix')
-    repo.add_commits(3, branch='hotfix_v2')
-    repo.add_commits(3, branch='hotfix')
-    repo.add_commits(2, branch='main')
+    # # Create a new repo with a feature branch, no conflicts
+    # REPO_NAME = 'simple'
+    # repo = Repo(REPO_NAME, PARENT_FOLDER)
+    # repo.create_repo(num_commits=5)
 
-    # Create a new repo with multiple branches, no conflicts
-    REPO_NAME = 'cherry_pick'
-    repo = Repo(REPO_NAME, PARENT_FOLDER)
-    repo.create_repo(first_branch='main', num_commits=0)
-    for i in range(1, 11):
-        repo.add_commits(1, branch='cherry_pick', comment=f'Add file {i}')
+    # # Create a new repo with a feature branch, no conflicts
+    # REPO_NAME = 'no_conflicts'
+    # repo = Repo(REPO_NAME, PARENT_FOLDER)
+    # repo.create_repo(first_branch='main', num_commits=1)
+    # repo.add_commits(5, branch='new_feature')
+    # repo.add_commits(4, branch='main')
 
+    # # Create a new repo with a feature branch, conflicts
+    # REPO_NAME = 'conflicts'
+    # repo = Repo(REPO_NAME, PARENT_FOLDER)
+    # repo.create_repo(first_branch='main')
+    # repo.add_commits(5, branch='new_feature', create_conflicts=True)
+    # repo.add_commits(2, branch='main', create_conflicts=True)
+
+    # # Create a new repo with multiple branches, no conflicts
+    # REPO_NAME = 'multi_branch'
+    # repo = Repo(REPO_NAME, PARENT_FOLDER)
+    # repo.create_repo(first_branch='main', num_commits=1)
+    # repo.add_commits(3, branch='new_feature')
+    # repo.add_commits(2, branch='main')
+    # repo.add_commits(3, branch='hotfix')
+    # repo.add_commits(3, branch='hotfix_v2')
+    # repo.add_commits(3, branch='hotfix')
+    # repo.add_commits(2, branch='main')
+
+    # # Create a new repo with multiple branches, no conflicts
+    # REPO_NAME = 'cherry_pick'
+    # repo = Repo(REPO_NAME, PARENT_FOLDER)
+    # repo.create_repo(first_branch='main', num_commits=0)
+    # for i in range(1, 11):
+    #     repo.add_commits(1, branch='cherry_pick', comment=f'Add file {i}')

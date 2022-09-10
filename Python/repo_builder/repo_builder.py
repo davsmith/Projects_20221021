@@ -144,17 +144,13 @@ class Repo:
     # If the branch does not exist, checkout returns 1
     # 
     def switch_branch(self, branch_name, create=True):
-        if create:
-            options = "-c"
-        else:
-            options = ""
 
         os.chdir(self.full_path)
         
         if create == True:
             # Attempt to create the branch
             # This will fail if the branch already exists
-            command = f'git switch {options} {branch_name}'
+            command = f'git switch -c {branch_name}'
             result = os.system(command)
         
         command = f'git switch {branch_name}'
@@ -216,7 +212,8 @@ if __name__ == '__main__':
     # Create a new repo containing a set of files
     repo = Repo(repo_name, parent_folder)
     repo.create_repo()
-    repo.add_commits(5)
+    # repo.add_commits(5)
+    # repo.switch_branch('branch1', True)
 
     # repo.populate_repo(num_files=5)
 

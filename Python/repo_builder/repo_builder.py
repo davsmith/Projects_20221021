@@ -86,16 +86,18 @@ class Repo:
         self.repo_name = repo_name
         self.parent_folder = parent_folder
         self.full_path = Path(self.parent_folder, self.repo_name)
-        self.file_builder = FileBuilder('tmp_', self.full_path)
+        self.commit_count = 0
+        self.file_builder = FileBuilder(self.full_path, 'tmp_')
 
     ''' Initialize a repo under the current or specified folder '''
     def create_repo(self):
-        path = FileBuilder.create_folder(self.repo_name, self.parent_folder)
-        os.chdir(path)
+        # Delete the existing repo (including files)
+        FileBuilder.danger_delete_folder(self.full_path)
+        FileBuilder.create_folder(self.repo_name, self.parent_folder)
+        os.chdir(self.full_path)
         
         command = "git init"
         result = os.system(command)
-        return path
 
     ''' Delete a repo by deleting the .git subfolder '''
     def remove_repo(self):
@@ -113,7 +115,7 @@ class Repo:
             file_specifier = "*.txt"
 
         if comment == None:
-            comment = 'Automatically committing changes'
+            comment = 'C{}'.format(self.commit_count+1)
 
         command = f"git add {file_specifier} "
         result = os.system(command)
@@ -121,6 +123,44 @@ class Repo:
         command = f'git commit -m "{comment}"'
         print(f"Command: {command}")
         result = os.system(command)
+
+        self.commit_count += 1
+
+    # ''' Generate and commit a set of changes '''
+    def add_commits(self, num_commits, allow_conflicts=False, branch=None):
+        os.chdir(Path(self.full_path))
+
+        # if branch != None:
+        #     switch_branch(repo_path, branch, create=True)
+
+        next_commit = self.commit_count
+
+        for i in range(1, num_commits+1):
+            self.file_builder.touch_files(3, not allow_conflicts)
+            self.commit_files()
+
+    ''' Change branches using "switch" '''
+    #
+    # If the branch does not exist, checkout returns 1
+    # 
+    def switch_branch(self, branch_name, create=True):
+        if create:
+            options = "-c"
+        else:
+            options = ""
+
+        os.chdir(self.full_path)
+        
+        if create == True:
+            # Attempt to create the branch
+            # This will fail if the branch already exists
+            command = f'git switch {options} {branch_name}'
+            result = os.system(command)
+        
+        command = f'git switch {branch_name}'
+        result = os.system(command)
+        print(f"Attempted to switch to branch '{branch_name}' (Result: {result})")
+
 
 # ''' Generate a list containing a subset of the files in a specified folder '''
 # def get_file_list(folder_path, file_spec=None, limit=0, start_with=0, randomize=False):
@@ -148,25 +188,6 @@ class Repo:
 #         command = f"echo {message} >> {file}"
 #         os.system(command)
 
-# ''' Switch branches using "checkout" '''
-# #
-# # If the branch does not exist, checkout returns 1
-# # 
-# def switch_branch(repo_path, branch_name, create=True):
-#     options = ""
-
-#     os.chdir(repo_path)
-#     if create == True:
-#         # options = f"{options} -b"
-#         # Attempt to create the branch
-#         # This will fail if the branch already exists
-#         command = f'git branch {branch_name}'
-#         result = os.system(command)
-#         print(f"Attempted to create branch '{branch_name}' (Result:{result})")
-    
-#     command = f'git checkout {options} {branch_name}'
-#     result = os.system(command)
-#     print(f"Attempted to switch to branch '{branch_name}' (Result: {result})")
 
 # ''' Create files and adds them to the repo '''
 # def populate_repo(repo_path, num_files=1, msg=None):
@@ -178,28 +199,6 @@ class Repo:
 #     create_files(count=num_files, folder_path=repo_path)
 #     commit_files(repo_path, '*.txt', msg)
 
-# ''' Generate and commit a set of changes '''
-# def add_commits(repo_path, num_commits, commit_index=1, num_files=1, allow_conflicts=False, branch=None):
-#     os.chdir(Path(repo_path))
-
-#     if branch != None:
-#         switch_branch(repo_path, branch, create=True)
-
-#     next_commit = commit_index
-
-#     # BUGBUG: This is a hokey algorithm.  Ideally if allow_conflicts is False, the
-#     # file list would exclude any files which have already been changed.
-#     if allow_conflicts:
-#         file_list = get_file_list(repo_path, "*.txt", limit=num_files, start_with=0)
-#     else:
-#         # If conflicts are not allowed, only a single random file and hope for the best
-#         num_files = 1
-#         file_list = get_file_list(repo_path, "*.txt", limit=num_files, randomize=True)
-        
-#     for i in range(1, num_commits+1):
-#         change_files(file_list)
-#         commit_files(repo_path, '*.txt', f"C{next_commit}")
-#         next_commit += 1
 
 
 #
@@ -214,18 +213,10 @@ if __name__ == '__main__':
     parent_folder = "c:/temp"
     repo_name = 'no_conflicts'
 
-    # Delete the existing repo (including files)
-    full_path = Path(parent_folder, repo_name)
-    FileBuilder.danger_delete_folder(full_path)
-    FileBuilder.create_folder(repo_name, parent_folder)
-
-    file_builder = FileBuilder(full_path)
-
     # Create a new repo containing a set of files
     repo = Repo(repo_name, parent_folder)
     repo.create_repo()
-    file_builder.touch_files(5)
-    file_builder.touch_files(5, create=False)
+    repo.add_commits(5)
 
     # repo.populate_repo(num_files=5)
 

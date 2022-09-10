@@ -96,8 +96,10 @@ class Repo:
         FileBuilder.create_folder(self.repo_name, self.parent_folder)
         os.chdir(self.full_path)
         
-        command = "git init"
-        result = os.system(command)
+        result = os.system('git init')
+        result = os.system('git switch -c main')
+
+
 
     ''' Delete a repo by deleting the .git subfolder '''
     def remove_repo(self):
@@ -136,7 +138,7 @@ class Repo:
         next_commit = self.commit_count
 
         for i in range(1, num_commits+1):
-            self.file_builder.touch_files(3, not allow_conflicts)
+            self.file_builder.touch_files(2, not allow_conflicts)
             self.commit_files()
 
     ''' Change branches using "switch" '''
@@ -212,8 +214,8 @@ if __name__ == '__main__':
     # Create a new repo containing a set of files
     repo = Repo(repo_name, parent_folder)
     repo.create_repo()
-    # repo.add_commits(5)
-    # repo.switch_branch('branch1', True)
+    repo.add_commits(5)
+    repo.switch_branch('branch1', True)
 
     # repo.populate_repo(num_files=5)
 

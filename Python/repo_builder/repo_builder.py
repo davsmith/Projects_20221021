@@ -3,25 +3,24 @@
 # Created 8/12/2022 by Dave Smith
 #
 
-from operator import truediv
+# from operator import truediv
 import os
 import shutil
-import glob
-import random
-import datetime
 import stat
-import subprocess
-  
+
 from tempfile import gettempdir
 from pathlib import Path
 
 class FileBuilder:
+    ''' Creates folders and dummy files '''
+
     def __init__(self, parent_path, prefix=None, file_type=None):
-        
-        if prefix == None:
+        ''' Initializes FileBuilder class '''
+
+        if prefix is None:
             prefix = 'tmp_'
-        
-        if file_type == None:
+
+        if file_type is None:
             file_type = '.txt'
 
         self.prefix = Path(prefix)
@@ -29,33 +28,34 @@ class FileBuilder:
         self.file_type = file_type
         self.index = 1
 
-    ''' Make a change to a file so it shows as "dirty" '''
     def touch_files(self, count, create=True):
+        ''' Makes a change to a file so it shows as dirty '''
         prefix = self.prefix
         folder_path = self.parent_path
 
-        if create == True:
+        if create is True:
             start = self.index
         else:
             start = 1
-            
+
         for i in range(start, start+count):
             filename = Path(folder_path,f"{prefix}{i}.txt")
             command = f"echo This is file {i} >> {filename}"
-            result = os.system(command)
+            os.system(command)
             self.index += 1
 
-    ''' Create a Path object from a string '''
     @staticmethod
     def get_folder_path(folder=None):
-        if folder == None:
+        ''' Creates a Path object from a string '''
+
+        if folder is None:
             folder = gettempdir()
 
         return Path(folder)
 
-    ''' Create a folder from the folder name and parent path '''
     @staticmethod
     def create_folder(directory, parent_folder=None):
+        ''' Create a folder from the folder name and parent path '''
 
         # Parent path to the directory
         parent = FileBuilder.get_folder_path(parent_folder)
@@ -66,14 +66,16 @@ class FileBuilder:
 
         return folder_path
 
-    ''' Delete an entire folder and subfolders '''
     @staticmethod
     def danger_delete_folder(folder_path):
-        shutil.rmtree(folder_path, onerror=FileBuilder.rmtree_callback_removeReadOnly)
+        ''' Delete an entire folder and subfolders '''
 
-    ''' Change the mode of read only files '''
+        shutil.rmtree(folder_path, onerror=FileBuilder.rmtree_callback_remove_readonly)
+
     @staticmethod
-    def rmtree_callback_removeReadOnly(func, path, excinfo):
+    def rmtree_callback_remove_readonly(func, path, excinfo):
+        ''' Change the mode of read only files '''
+
         if isinstance(excinfo[1], FileNotFoundError):
             print("File not found.  Ignored.")
         else:
@@ -82,6 +84,7 @@ class FileBuilder:
             func(path)
 
 class Repo:
+    ''' Class representing a git repository '''
     def __init__(self, repo_name, parent_folder=None):
         self.repo_name = repo_name
         self.parent_folder = parent_folder
@@ -89,115 +92,75 @@ class Repo:
         self.commit_count = 0
         self.file_builder = FileBuilder(self.full_path, 'tmp_')
 
-    ''' Initialize a repo under the current or specified folder '''
-    def create_repo(self):
+    def create_repo(self, first_branch=None, num_commits=0):
+        ''' Initialize a repo under the current or specified folder '''
         # Delete the existing repo (including files)
         FileBuilder.danger_delete_folder(self.full_path)
         FileBuilder.create_folder(self.repo_name, self.parent_folder)
         os.chdir(self.full_path)
-        
-        result = os.system('git init')
-        result = os.system('git switch -c main')
 
+        os.system('git init')
 
+        if first_branch:
+            os.system(f'git switch -c {first_branch}')
 
-    ''' Delete a repo by deleting the .git subfolder '''
+        self.add_commits(num_commits)
+
     def remove_repo(self):
+        ''' Delete a repo by deleting the .git subfolder '''
+
         git_path = Path(self.full_path, '.git')
         try:
             shutil.rmtree(git_path)
         except FileNotFoundError:
             print(f"Couldn't find {git_path}")
 
-    ''' Call git add and git commit on the specified files '''
     def commit_files(self, file_specifier=None, comment=None):
+        ''' Call git add and git commit on the specified files '''
+
         os.chdir(self.full_path)
 
-        if file_specifier == None:
+        if file_specifier is None:
             file_specifier = "*.txt"
 
-        if comment == None:
-            comment = 'C{}'.format(self.commit_count+1)
+        if comment is None:
+            comment = f'C{self.commit_count+1}'
 
         command = f"git add {file_specifier} "
-        result = os.system(command)
+        os.system(command)
 
         command = f'git commit -m "{comment}"'
         print(f"Command: {command}")
-        result = os.system(command)
+        os.system(command)
 
         self.commit_count += 1
 
-    # ''' Generate and commit a set of changes '''
-    def add_commits(self, num_commits, allow_conflicts=False, branch=None):
+    def add_commits(self, num_commits, allow_conflicts=False, branch=None, comment=None):
+        ''' Generate and commit a set of changes '''
+
         os.chdir(Path(self.full_path))
 
-        # if branch != None:
-        #     switch_branch(repo_path, branch, create=True)
+        if branch is not None:
+            self.switch_branch(branch, create=True)
 
-        next_commit = self.commit_count
-
-        for i in range(1, num_commits+1):
+        for _i in range(1, num_commits+1):
             self.file_builder.touch_files(2, not allow_conflicts)
-            self.commit_files()
+            self.commit_files(comment=comment)
 
-    ''' Change branches using "switch" '''
-    #
-    # If the branch does not exist, checkout returns 1
-    # 
     def switch_branch(self, branch_name, create=True):
+        ''' Change branches using "switch" '''
 
         os.chdir(self.full_path)
-        
-        if create == True:
+
+        if create is True:
             # Attempt to create the branch
             # This will fail if the branch already exists
             command = f'git switch -c {branch_name}'
             result = os.system(command)
-        
+
         command = f'git switch {branch_name}'
         result = os.system(command)
         print(f"Attempted to switch to branch '{branch_name}' (Result: {result})")
-
-
-# ''' Generate a list containing a subset of the files in a specified folder '''
-# def get_file_list(folder_path, file_spec=None, limit=0, start_with=0, randomize=False):
-#     full_path = Path(folder_path, file_spec)
-#     full_file_list = glob.glob(str(full_path))
-#     if limit == 0:
-#             limit = len(full_file_list)
-#             print(limit)
-#     num_samples = min(limit, len(full_file_list))
-
-#     if randomize == True:
-#         samples = random.sample(full_file_list, num_samples)
-#     else:
-#         samples = full_file_list[start_with:start_with+num_samples]
-
-#     return(samples)
-
-# ''' Modify the specified files by appending a string '''
-# def change_files(file_list, message=None):
-#     if message == None:
-#         current_time = datetime.datetime.now()
-#         message = f"Updated file at {current_time}"
-
-#     for file in file_list:
-#         command = f"echo {message} >> {file}"
-#         os.system(command)
-
-
-# ''' Create files and adds them to the repo '''
-# def populate_repo(repo_path, num_files=1, msg=None):
-#     num_files = max(num_files, 1)
-
-#     if msg == None:
-#         msg = 'C1'
-
-#     create_files(count=num_files, folder_path=repo_path)
-#     commit_files(repo_path, '*.txt', msg)
-
-
 
 #
 # Main
@@ -208,105 +171,42 @@ if __name__ == '__main__':
     #
 
     # Define parameters for the repo
-    parent_folder = "c:/temp"
-    repo_name = 'no_conflicts'
+    PARENT_FOLDER = 'c:/temp'
 
-    # Create a new repo containing a set of files
-    repo = Repo(repo_name, parent_folder)
-    repo.create_repo()
-    repo.add_commits(5)
-    repo.switch_branch('branch1', True)
+    # Create a new repo with a feature branch, no conflicts
+    REPO_NAME = 'simple'
+    repo = Repo(REPO_NAME, PARENT_FOLDER)
+    repo.create_repo(num_commits=5)
 
-    # repo.populate_repo(num_files=5)
+    # Create a new repo with a feature branch, no conflicts
+    REPO_NAME = 'no_conflicts'
+    repo = Repo(REPO_NAME, PARENT_FOLDER)
+    repo.create_repo(first_branch='main', num_commits=1)
+    repo.add_commits(5, branch='new_feature')
+    repo.add_commits(4, branch='main')
 
+    # Create a new repo with a feature branch, conflicts
+    REPO_NAME = 'conflicts'
+    repo = Repo(REPO_NAME, PARENT_FOLDER)
+    repo.create_repo(first_branch='main')
+    repo.add_commits(5, branch='new_feature', allow_conflicts=True)
+    repo.add_commits(2, branch='main', allow_conflicts=True)
 
+    # Create a new repo with multiple branches, no conflicts
+    REPO_NAME = 'multi_branch'
+    repo = Repo(REPO_NAME, PARENT_FOLDER)
+    repo.create_repo(first_branch='main', num_commits=1)
+    repo.add_commits(3, branch='new_feature')
+    repo.add_commits(2, branch='main')
+    repo.add_commits(3, branch='hotfix')
+    repo.add_commits(3, branch='hotfix_v2')
+    repo.add_commits(3, branch='hotfix')
+    repo.add_commits(2, branch='main')
 
+    # Create a new repo with multiple branches, no conflicts
+    REPO_NAME = 'cherry_pick'
+    repo = Repo(REPO_NAME, PARENT_FOLDER)
+    repo.create_repo(first_branch='main', num_commits=0)
+    for i in range(1, 11):
+        repo.add_commits(1, branch='cherry_pick', comment=f'Add file {i}')
 
-
-
-
-    # # Modify and commit changes for a feature branch
-    # num_commits = 3
-    # add_commits(repo_path, branch='new_feature', num_commits=num_commits, commit_index=next_commit, allow_conflicts=False)
-    # next_commit += num_commits
-
-    # # Modify and commit changes for the main branch
-    # num_commits = 2
-    # add_commits(repo_path, branch='master', num_commits=num_commits, commit_index=next_commit, allow_conflicts=False)
-    # next_commit += num_commits
-
-    # #
-    # # Create a repo with an unmerged branch with conflicts
-    # #
-
-    # # Define parameters for the repo
-    # parent_folder = "c:/temp"
-    # repo_name = 'conflicts'
-
-    # commit_count = 0
-
-    # # Delete the existing repo (including files)
-    # danger_delete_folder(Path(parent_folder, repo_name))
-
-    # # Create a new repo containing a set of files
-    # repo_path = create_repo(repo_name, parent_folder)
-    # populate_repo(repo_path, num_files=5)
-    # next_commit = 2
-
-    # # Modify and commit changes for a feature branch
-    # num_commits = 3
-    # add_commits(repo_path, branch='new_feature', num_commits=num_commits, commit_index=next_commit, allow_conflicts=True)
-    # next_commit += num_commits
-
-    # # Modify and commit changes for the main branch
-    # num_commits = 2
-    # add_commits(repo_path, branch='master', num_commits=num_commits, commit_index=next_commit, allow_conflicts=True)
-    # next_commit += num_commits
-
-    # #
-    # # Create a repo with multiple unmerged branches
-    # #
-
-    # # Define parameters for the repo
-    # parent_folder = "c:/temp"
-    # repo_name = 'multi_branch'
-
-    # commit_count = 0
-
-    # # Delete the existing repo (including files)
-    # danger_delete_folder(Path(parent_folder, repo_name))
-
-    # # Create a new repo containing a set of files
-    # repo_path = create_repo(repo_name, parent_folder)
-    # populate_repo(repo_path, num_files=20)
-    # next_commit = 2
-
-    # # Modify and commit changes for a feature branch
-    # num_commits = 3
-    # add_commits(repo_path, branch='new_feature', num_commits=num_commits, commit_index=next_commit, allow_conflicts=False)
-    # next_commit += num_commits
-
-    # # Modify and commit changes for the main branch
-    # num_commits = 2
-    # add_commits(repo_path, branch='master', num_commits=num_commits, commit_index=next_commit, allow_conflicts=False)
-    # next_commit += num_commits
-
-    # # Modify and commit changes for a hotfix branch
-    # num_commits = 3
-    # add_commits(repo_path, branch='hotfix', num_commits=num_commits, commit_index=next_commit, allow_conflicts=False)
-    # next_commit += num_commits
-
-    # # Try another idea for the hotfix branch
-    # num_commits = 3
-    # add_commits(repo_path, branch='hotfix_v2', num_commits=num_commits, commit_index=next_commit, allow_conflicts=False)
-    # next_commit += num_commits
-
-    # # Iterate on the first idea
-    # num_commits = 3
-    # add_commits(repo_path, branch='hotfix', num_commits=num_commits, commit_index=next_commit, allow_conflicts=False)
-    # next_commit += num_commits
-
-    # # Modify and commit changes for the main branch
-    # num_commits = 2
-    # add_commits(repo_path, branch='master', num_commits=num_commits, commit_index=next_commit, allow_conflicts=False)
-    # next_commit += num_commits

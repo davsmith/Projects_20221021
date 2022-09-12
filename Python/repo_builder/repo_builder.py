@@ -1,6 +1,11 @@
 ''' Library to build a series of files, commits, and branches for a git repo '''
 
-# Created 8/12/2022 by Dave Smith
+# Changes
+# -------------------------------------------------------
+# - Created 8/12/2022 by Dave Smith
+# - 9/10/2022 (972aec) Finished v2 which changes design to be class based
+# - 9/12/2022 () Started v3 - Add graph and merge functionality
+
 #
 
 # from operator import truediv
@@ -163,6 +168,21 @@ class Repo:
         result = os.system(command)
         print(f"Attempted to switch to branch '{branch_name}' (Result: {result})")
 
+    def graph_branch(self, branch_name=None):
+        ''' Shows a git graph of the specified branch (or current) '''
+        if branch_name is not None:
+            os.system(f'git switch {branch_name}')
+
+        os.system('git log --oneline --decorate --all --graph')
+
+    def merge_branch(self, source_branch, target_branch=None):
+        ''' Merges the source branch into the target branch '''
+        if target_branch is not None:
+            os.system(f'git switch {target_branch}')
+
+        os.system(f'git merge {source_branch}')
+
+
 #
 # Main
 #
@@ -179,9 +199,12 @@ if __name__ == '__main__':
     repo = Repo(REPO_NAME, PARENT_FOLDER)
     repo.create_repo(first_branch='main', num_commits=1)
     repo.add_commits(5, branch='new_feature')
-    # repo.add_commits(3, branch='main')
+    repo.add_commits(3, branch='main')
     repo.add_commits(4, branch='hotfix')
-    # repo.add_commits(1, branch='main')
+    repo.add_commits(1, branch='main')
+    repo.graph_branch()
+    repo.merge_branch('new_feature', 'main')
+    repo.graph_branch()
 
 
     # # Create a new repo with a feature branch, no conflicts

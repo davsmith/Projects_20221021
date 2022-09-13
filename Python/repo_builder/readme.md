@@ -1,1 +1,2 @@
-[![Build Status](https://travis-ci.org/railsbridge/docs.png)](https://travis-ci.org/railsbridge/docs)
+# Repo Builder
+A library (class) for building Git repos

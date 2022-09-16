@@ -195,32 +195,30 @@ if __name__ == '__main__':
     PARENT_FOLDER = 'c:/temp'
 
     # Create a new repo with a feature branch, no conflicts
-    # REPO_NAME = 'scratch'
+    REPO_NAME = 'scratch'
+    repo = Repo(REPO_NAME, PARENT_FOLDER)
+    repo.create_repo(first_branch='main', num_commits=10)
+    # repo.add_commits(4, branch='new_feature')
+    # repo.add_commits(1, branch='main')
+    # repo.switch_branch('new_feature')
+    # repo.add_commits(4, branch='hotfix')
+    # repo.add_commits(1, branch='main')
+
+    # # Demonstrates merging branches where a fast-forward is possible
+    # REPO_NAME = 'fast_forward'
     # repo = Repo(REPO_NAME, PARENT_FOLDER)
     # repo.create_repo(first_branch='main', num_commits=1)
     # repo.add_commits(5, branch='new_feature')
-    # repo.add_commits(3, branch='main')
     # repo.add_commits(4, branch='hotfix')
-    # repo.add_commits(1, branch='main')
     # repo.graph_branch()
+    # k = input('Press a key')
+
     # repo.merge_branch('new_feature', 'main')
     # repo.graph_branch()
+    # k = input('Press a key')
 
-    # Demonstrates merging branches where a fast-forward is possible
-    REPO_NAME = 'fast_forward'
-    repo = Repo(REPO_NAME, PARENT_FOLDER)
-    repo.create_repo(first_branch='main', num_commits=1)
-    repo.add_commits(5, branch='new_feature')
-    repo.add_commits(4, branch='hotfix')
-    repo.graph_branch()
-    k = input('Press a key')
-
-    repo.merge_branch('new_feature', 'main')
-    repo.graph_branch()
-    k = input('Press a key')
-
-    repo.merge_branch('hotfix', 'main')
-    repo.graph_branch()
+    # repo.merge_branch('hotfix', 'main')
+    # repo.graph_branch()
 
     # # Create a new repo with a feature branch, no conflicts
     # REPO_NAME = 'simple'

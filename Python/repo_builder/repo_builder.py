@@ -5,10 +5,9 @@
 # - Created 8/12/2022 by Dave Smith
 # - 9/10/2022 (972aec) Finished v2 which changes design to be class based
 # - 9/12/2022 () Started v3 - Add graph and merge functionality
+# - 9/16/2022 () Refectored 'main' to split out example repos into separate files
 
 #
-
-# from operator import truediv
 import os
 import shutil
 import stat
@@ -187,72 +186,15 @@ class Repo:
 # Main
 #
 if __name__ == '__main__':
-    #
-    # Create a repo with an unmerged branch w/o conflicts
-    #
-
     # Define parameters for the repo
     PARENT_FOLDER = 'c:/temp'
 
-    # Create a new repo with a feature branch, no conflicts
-    REPO_NAME = 'scratch'
+    # Create a new repo with a feature branch,
+    # a hotfix branch, and no conflicts
+    REPO_NAME = 'demo_branches'
     repo = Repo(REPO_NAME, PARENT_FOLDER)
     repo.create_repo(first_branch='main', num_commits=10)
-    # repo.add_commits(4, branch='new_feature')
-    # repo.add_commits(1, branch='main')
-    # repo.switch_branch('new_feature')
-    # repo.add_commits(4, branch='hotfix')
-    # repo.add_commits(1, branch='main')
-
-    # # Demonstrates merging branches where a fast-forward is possible
-    # REPO_NAME = 'fast_forward'
-    # repo = Repo(REPO_NAME, PARENT_FOLDER)
-    # repo.create_repo(first_branch='main', num_commits=1)
-    # repo.add_commits(5, branch='new_feature')
-    # repo.add_commits(4, branch='hotfix')
-    # repo.graph_branch()
-    # k = input('Press a key')
-
-    # repo.merge_branch('new_feature', 'main')
-    # repo.graph_branch()
-    # k = input('Press a key')
-
-    # repo.merge_branch('hotfix', 'main')
-    # repo.graph_branch()
-
-    # # Create a new repo with a feature branch, no conflicts
-    # REPO_NAME = 'simple'
-    # repo = Repo(REPO_NAME, PARENT_FOLDER)
-    # repo.create_repo(num_commits=5)
-
-    # # Create a new repo with a feature branch, no conflicts
-    # REPO_NAME = 'no_conflicts'
-    # repo = Repo(REPO_NAME, PARENT_FOLDER)
-    # repo.create_repo(first_branch='main', num_commits=1)
-    # repo.add_commits(5, branch='new_feature')
-    # repo.add_commits(4, branch='main')
-
-    # # Create a new repo with a feature branch, conflicts
-    # REPO_NAME = 'conflicts'
-    # repo = Repo(REPO_NAME, PARENT_FOLDER)
-    # repo.create_repo(first_branch='main')
-    # repo.add_commits(5, branch='new_feature', create_conflicts=True)
-    # repo.add_commits(2, branch='main', create_conflicts=True)
-
-    # # Create a new repo with multiple branches, no conflicts
-    # REPO_NAME = 'multi_branch'
-    # repo = Repo(REPO_NAME, PARENT_FOLDER)
-    # repo.create_repo(first_branch='main', num_commits=1)
-    # repo.add_commits(3, branch='new_feature')
-    # repo.add_commits(2, branch='main')
-    # repo.add_commits(3, branch='hotfix')
-    # repo.add_commits(3, branch='hotfix_v2')
-    # repo.add_commits(3, branch='hotfix')
-    # repo.add_commits(2, branch='main')
-
-    # # Create a new repo with multiple branches, no conflicts
-    # REPO_NAME = 'cherry_pick'
-    # repo = Repo(REPO_NAME, PARENT_FOLDER)
-    # repo.create_repo(first_branch='main', num_commits=0)
-    # for i in range(1, 11):
-    #     repo.add_commits(1, branch='cherry_pick', comment=f'Add file {i}')
+    repo.add_commits(4, branch='new_feature')
+    repo.add_commits(1, branch='main')
+    repo.add_commits(4, branch='hotfix')
+    repo.add_commits(1, branch='main')

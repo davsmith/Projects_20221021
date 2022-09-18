@@ -139,6 +139,14 @@ class Repo:
 
         self.commit_count += 1
 
+    def create_branch(self, branch, num_commits, from_branch=None):
+        ''' Create a new branch from the current or specified branch '''
+        if from_branch is not None:
+            self.switch_branch(from_branch, create=False)
+       
+        self.switch_branch(branch, create=True)
+        self.add_commits(num_commits, branch=branch)
+
     def add_commits(self, num_commits, create_conflicts=False, branch=None,
                     comment=None, num_files=1):
         ''' Generate and commit a set of changes '''

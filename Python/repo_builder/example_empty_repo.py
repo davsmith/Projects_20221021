@@ -2,9 +2,13 @@
 
 from repo_builder import Repo
 
-# Define parameters for the repo
-PARENT_FOLDER = 'c:/temp'
-REPO_NAME = 'empty_repo'
+def build(repo_name, parent_folder=None):
+    ''' Build a repo with no commits '''
+    if parent_folder is None:
+        parent_folder = 'c:/temp'
 
-repo = Repo(REPO_NAME, PARENT_FOLDER)
-repo.create_repo()
+    repo = Repo(repo_name, parent_folder)
+    repo.create_repo()
+
+if __name__ == '__main__':
+    build('empty_repo')

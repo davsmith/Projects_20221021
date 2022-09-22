@@ -60,8 +60,14 @@ repo.merge_branch(source_branch='repo_builder', target_branch='main')
 repo.add_commits(num_commits=3, branch='main')
 repo.add_commits(num_commits=5, branch='repo_builder')
 
+
+
 # repo.add_commits(num_commits=1, branch='new_feature_2')
 # repo.add_commits(num_commits=8, branch='main')
+
+
+
+
 
 # repo.graph_branch()
 # input('Press a key')

@@ -17,4 +17,4 @@ def build(repo_name, parent_folder=None):
     repo.add_commits(num_commits=2, branch='main')
 
 if __name__ == '__main__':
-    build('three_branch')
+    build('scratch')

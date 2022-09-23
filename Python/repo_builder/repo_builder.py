@@ -143,7 +143,7 @@ class Repo:
         ''' Create a new branch from the current or specified branch '''
         if from_branch is not None:
             self.switch_branch(from_branch, create=False)
-       
+
         self.switch_branch(branch, create=True)
         self.add_commits(num_commits, branch=branch)
 
@@ -206,3 +206,4 @@ if __name__ == '__main__':
     repo.add_commits(1, branch='main')
     repo.add_commits(4, branch='hotfix')
     repo.add_commits(1, branch='main')
+    

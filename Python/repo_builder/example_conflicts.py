@@ -2,7 +2,7 @@
 
 from repo_builder import Repo
 
-def build(repo_name, parent_folder=None):
+def build(repo_name, parent_folder=None, interactive=False):
     ''' Build a repo with no commits '''
     if parent_folder is None:
         parent_folder = 'c:/temp'
@@ -13,7 +13,6 @@ def build(repo_name, parent_folder=None):
     repo.create_repo(first_branch='main', num_commits=2)
     repo.add_commits(5, branch='new_feature', create_conflicts=True)
     repo.add_commits(2, branch='main', create_conflicts=True)
-    input('Press <Enter>')
 
     # Attempting to merge will cause a merge conflict
     #
@@ -25,7 +24,9 @@ def build(repo_name, parent_folder=None):
     #
     # After the conflict has been resolved, stage and commit the file
     #
-    repo.merge_branch('new_feature')
+    if interactive:
+        input('Press <Enter>')
+        repo.merge_branch('new_feature')
 
 if __name__ == '__main__':
-    build('merge_conflicts')
+    build('merge_conflicts', 'c:/temp', True)

@@ -139,12 +139,12 @@ class Repo:
 
         self.commit_count += 1
 
-    def create_branch(self, branch, num_commits, from_branch=None):
+    def create_branch(self, branch, num_commits, from_branch=None, orphan=False):
         ''' Create a new branch from the current or specified branch '''
         if from_branch is not None:
             self.switch_branch(from_branch, create=False)
 
-        self.switch_branch(branch, create=True)
+        self.switch_branch(branch, create=True, orphan=orphan)
         self.add_commits(num_commits, branch=branch)
 
     def add_commits(self, num_commits, create_conflicts=False, branch=None,
@@ -160,7 +160,7 @@ class Repo:
             self.file_builder.touch_files(num_files, not create_conflicts)
             self.commit_files(comment=comment)
 
-    def switch_branch(self, branch_name, create=True):
+    def switch_branch(self, branch_name, create=True, orphan=False):
         ''' Change branches using "switch" '''
 
         os.chdir(self.full_path)
@@ -168,7 +168,12 @@ class Repo:
         if create is True:
             # Attempt to create the branch
             # This will fail if the branch already exists
-            command = f'git switch -c {branch_name}'
+            command = 'git switch -c '
+
+            if orphan:
+                command += '--orphan'
+
+            command += f'{branch_name}'
             result = os.system(command)
 
         command = f'git switch {branch_name}'
@@ -199,7 +204,7 @@ if __name__ == '__main__':
 
     # Create a new repo with a feature branch,
     # a hotfix branch, and no conflicts
-    REPO_NAME = 'demo_branches'
+    REPO_NAME = 'scratch'
     repo = Repo(REPO_NAME, PARENT_FOLDER)
     repo.create_repo(first_branch='main', num_commits=10)
     repo.add_commits(4, branch='new_feature')

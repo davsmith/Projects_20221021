@@ -168,10 +168,12 @@ class Repo:
         if create is True:
             # Attempt to create the branch
             # This will fail if the branch already exists
-            command = 'git switch -c '
+            command = 'git switch '
 
             if orphan:
-                command += '--orphan'
+                command += '--orphan '
+            else:
+                command += '-c '
 
             command += f'{branch_name}'
             result = os.system(command)
@@ -206,9 +208,8 @@ if __name__ == '__main__':
     # a hotfix branch, and no conflicts
     REPO_NAME = 'scratch'
     repo = Repo(REPO_NAME, PARENT_FOLDER)
-    repo.create_repo(first_branch='main', num_commits=10)
-    repo.add_commits(4, branch='new_feature')
+    repo.create_repo(first_branch='main', num_commits=5)
+    repo.add_commits(3, branch='new_feature')
     repo.add_commits(1, branch='main')
-    repo.add_commits(4, branch='hotfix')
-    repo.add_commits(1, branch='main')
+    repo.create_branch(num_commits=1, branch='new_root', orphan=True)
     

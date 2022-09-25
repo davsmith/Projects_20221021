@@ -96,18 +96,23 @@ class Repo:
         self.commit_count = 0
         self.file_builder = FileBuilder(self.full_path, 'tmp_')
 
-    def create_repo(self, first_branch=None, num_commits=0):
+    def create_repo(self, initial_branch=None, num_commits=0):
         ''' Initialize a repo under the current or specified folder '''
         # Delete the existing repo (including files)
         FileBuilder.danger_delete_folder(self.full_path)
+
+        # Create and set the working directory
         FileBuilder.create_folder(self.repo_name, self.parent_folder)
         os.chdir(self.full_path)
 
-        os.system('git init')
+        # Initialize the repo with an optional first branch (defaults to master)
+        command = 'git init'
+        if initial_branch:
+            command += f' --initial-branch {initial_branch}'
 
-        if first_branch:
-            os.system(f'git switch -c {first_branch}')
+        os.system(command)
 
+        # Add the first commits
         self.add_commits(num_commits)
 
     def remove_repo(self):
@@ -208,7 +213,7 @@ if __name__ == '__main__':
     # a hotfix branch, and no conflicts
     REPO_NAME = 'scratch'
     repo = Repo(REPO_NAME, PARENT_FOLDER)
-    repo.create_repo(first_branch='main', num_commits=5)
+    repo.create_repo(initial_branch='main', num_commits=5)
     repo.add_commits(3, branch='new_feature')
     repo.add_commits(1, branch='main')
     repo.create_branch(num_commits=1, branch='new_root', orphan=True)

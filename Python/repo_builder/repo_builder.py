@@ -133,7 +133,7 @@ class Repo:
             file_specifier = "*.txt"
 
         if comment is None:
-            comment = f'C{self.commit_count+1}'
+            comment = f'Committed {file_specifier} files'
 
         command = f"git add {file_specifier} "
         os.system(command)
@@ -155,14 +155,21 @@ class Repo:
     def add_commits(self, num_commits, create_conflicts=False, branch=None, comment=None):
         ''' Generate and commit a set of changes '''
 
+        if comment is None:
+            comment = 'C'
+
+        base_index = self.commit_count
+
         os.chdir(Path(self.full_path))
 
         if branch is not None:
             self.switch_branch(branch, create=True)
 
         for _i in range(1, num_commits+1):
+            full_comment = f"{comment}{_i+base_index}"
+
             self.file_builder.touch_files(count=1, create=not create_conflicts)
-            self.commit_files(comment=comment)
+            self.commit_files(comment=full_comment)
 
     def switch_branch(self, branch_name, create=True, orphan=False):
         ''' Change branches using "switch" '''
@@ -212,8 +219,10 @@ if __name__ == '__main__':
     # a hotfix branch, and no conflicts
     REPO_NAME = 'scratch'
     repo = Repo(REPO_NAME, PARENT_FOLDER)
-    repo.create_repo(initial_branch='main', num_commits=5)
-    repo.add_commits(3, branch='new_feature')
-    repo.add_commits(1, branch='main')
-    repo.create_branch(num_commits=1, branch='new_root', orphan=True)
+    repo.create_repo(initial_branch='main')
+    repo.add_commits(1, branch='main', comment='M')
+    repo.add_commits(3, branch='new_feature', comment='F')
+    repo.add_commits(1, branch='main', comment='M')
+    repo.create_branch(num_commits=0, branch='new_root', orphan=True)
+    repo.add_commits(1, branch='new_root', comment='O')
     

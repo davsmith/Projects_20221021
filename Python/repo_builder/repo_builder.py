@@ -152,8 +152,7 @@ class Repo:
         self.switch_branch(branch, create=True, orphan=orphan)
         self.add_commits(num_commits, branch=branch)
 
-    def add_commits(self, num_commits, create_conflicts=False, branch=None,
-                    comment=None, num_files=1):
+    def add_commits(self, num_commits, create_conflicts=False, branch=None, comment=None):
         ''' Generate and commit a set of changes '''
 
         os.chdir(Path(self.full_path))
@@ -162,7 +161,7 @@ class Repo:
             self.switch_branch(branch, create=True)
 
         for _i in range(1, num_commits+1):
-            self.file_builder.touch_files(num_files, not create_conflicts)
+            self.file_builder.touch_files(count=1, create=not create_conflicts)
             self.commit_files(comment=comment)
 
     def switch_branch(self, branch_name, create=True, orphan=False):

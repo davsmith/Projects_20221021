@@ -14,6 +14,7 @@ import stat
 
 from tempfile import gettempdir
 from pathlib import Path
+from time import sleep
 
 class FileBuilder:
     ''' Creates folders and dummy files '''
@@ -101,6 +102,7 @@ class Repo:
         self.full_path = Path(self.parent_folder, self.repo_name)
         self.commit_count = 0
         self.file_builder = FileBuilder(self.full_path, 'tmp_')
+        self.commit_delay = 0
 
     def create_repo(self, initial_branch=None, num_commits=0):
         ''' Initialize a repo under the current or specified folder '''
@@ -144,6 +146,7 @@ class Repo:
         command = f"git add {file_specifier} "
         os.system(command)
 
+        sleep(self.commit_delay)
         command = f'git commit -m "{comment}"'
         print(f"Command: {command}")
         os.system(command)
@@ -225,6 +228,7 @@ if __name__ == '__main__':
     # a hotfix branch, and no conflicts
     REPO_NAME = 'scratch'
     repo = Repo(REPO_NAME, PARENT_FOLDER)
+    repo.commit_delay = 1
     repo.create_repo(initial_branch='main')
     repo.add_commits(1, branch='main', comment='M')
     repo.add_commits(3, branch='new_feature', comment='F')

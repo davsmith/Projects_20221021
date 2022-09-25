@@ -82,10 +82,16 @@ class FileBuilder:
 
         if isinstance(excinfo[1], FileNotFoundError):
             print("File not found.  Ignored.")
-        else:
-            print(f"Setting write access for {path} ")
-            os.chmod(path, stat.S_IWRITE)
-            func(path)
+        elif isinstance(excinfo[1], PermissionError):
+            # type, value, traceback = excinfo[1]
+            if 'Access is denied' in excinfo[1].strerror:
+                print(f"Setting write access for {path} ")
+                os.chmod(path, stat.S_IWRITE)
+                func(path)
+            elif 'used by another process' in excinfo[1].strerror:
+                print(f'**** Cannot delete {path} because the path is in use ****')
+        # else:
+            # print(f"Couldn't delete the file")
 
 class Repo:
     ''' Class representing a git repository '''
@@ -224,5 +230,5 @@ if __name__ == '__main__':
     repo.add_commits(3, branch='new_feature', comment='F')
     repo.add_commits(1, branch='main', comment='M')
     repo.create_branch(num_commits=0, branch='new_root', orphan=True)
-    repo.add_commits(1, branch='new_root', comment='O')
+    repo.add_commits(1, branch='new_root', comment='S')
     

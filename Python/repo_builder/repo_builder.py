@@ -228,11 +228,13 @@ if __name__ == '__main__':
     # a hotfix branch, and no conflicts
     REPO_NAME = 'scratch'
     repo = Repo(REPO_NAME, PARENT_FOLDER)
-    repo.commit_delay = 1
+    # repo.commit_delay = 1
     repo.create_repo(initial_branch='main')
     repo.add_commits(1, branch='main', comment='M')
     repo.add_commits(3, branch='new_feature', comment='F')
-    repo.add_commits(1, branch='main', comment='M')
+    repo.add_commits(4, branch='main', comment='M')
     repo.create_branch(num_commits=0, branch='new_root', orphan=True)
-    repo.add_commits(1, branch='new_root', comment='S')
+    repo.add_commits(1, branch='new_root', comment='O')
+    # repo.switch_branch('main')
+    # repo.merge_branch(source_branch='new_feature', target_branch='main')
     

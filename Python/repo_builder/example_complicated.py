@@ -13,7 +13,7 @@ def build(repo_name, parent_folder=None):
 
     # Create a repo with two branches
     repo = Repo(repo_name, parent_folder)
-    # repo.create_repo(first_branch='main', num_commits=13)
+    # repo.create_repo(initial_branch='main', num_commits=13)
     # repo.create_branch(branch='new_feature', num_commits=0, from_branch='main')
     # repo.add_commits(num_commits=1, branch='main')
     # repo.add_commits(num_commits=17, branch='new_feature')
@@ -46,7 +46,7 @@ def build(repo_name, parent_folder=None):
 
     # Part B
     # Comment VVVVVVVVV out, when Parts are combined
-    repo.create_repo(first_branch='repo_builder', num_commits=4)
+    repo.create_repo(initial_branch='repo_builder', num_commits=4)
     repo.create_branch(branch='main', num_commits=0)
     repo.add_commits(num_commits=4, branch='repo_builder')
     repo.create_branch(branch='small_1', num_commits=2)

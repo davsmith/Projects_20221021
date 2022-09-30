@@ -10,7 +10,7 @@ def build(repo_name, parent_folder=None):
 
     # repo_name = 'rebase1'
     # repo = Repo(repo_name, parent_folder)
-    # repo.create_repo(first_branch='branch_2', num_commits=2)
+    # repo.create_repo(initial_branch='branch_2', num_commits=2)
     # repo.create_branch(branch='branch_1', num_commits=0)
     # sleep(.5)
     # repo.add_commits(branch='branch_2', num_commits=1)
@@ -25,7 +25,7 @@ def build(repo_name, parent_folder=None):
 
     repo_name = 'rebase2'
     repo = Repo(repo_name, parent_folder)
-    repo.create_repo(first_branch='branch_1', num_commits=2)
+    repo.create_repo(initial_branch='branch_1', num_commits=2)
     repo.create_branch(branch='branch_2', num_commits=3)
     sleep(.5)
     repo.add_commits(branch='branch_1', num_commits=2)

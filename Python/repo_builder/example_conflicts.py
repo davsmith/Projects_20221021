@@ -10,7 +10,7 @@ def build(repo_name, parent_folder=None, interactive=False):
     # Create a new repo with a feature branch in which
     # some files have been changed in both branches
     repo = Repo(repo_name, parent_folder)
-    repo.create_repo(first_branch='main', num_commits=2)
+    repo.create_repo(initial_branch='main', num_commits=2)
     repo.add_commits(5, branch='new_feature', create_conflicts=True)
     repo.add_commits(2, branch='main', create_conflicts=True)
 

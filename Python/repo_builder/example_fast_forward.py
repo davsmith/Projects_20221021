@@ -31,3 +31,4 @@ def build(repo_name, parent_folder=None, interactive=False):
 
 if __name__ == '__main__':
     build('fast_forward', 'c:/temp', True)
+    

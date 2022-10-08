@@ -76,8 +76,32 @@ Template_Startup()
     #ifwinactive 
         ;********************************************************************
     ^!h::
-        MsgBox Hello there
+        Click
+        Click
+        Click
+        Click
+        Click
     Return
+
+    ^!s::
+        Click 124, 236
+	Sleep, 100
+    	Click 416, 720
+	Sleep, 100
+	Click 600, 375
+	Sleep, 100
+	Click 1414, 325
+    Return
+
+    ^!p::
+	PixelSearch, Px, Py, 0, 0, 1600, 1100, 0x333857, 3, Fast
+        if ErrorLevel
+            MsgBox, That color was not found in the specified region.
+        else
+            Click %Px% %Py%
+    Return
+
+
 
     ::_gfd::
         colours := Object("red", 0xFF0000, "blue", 0x0000FF, "green", 0x00FF00)

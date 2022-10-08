@@ -1,4 +1,6 @@
-# Projects
+# Projects - Dev branch
+This branch holds code which is in-progress
+
 Coding projects in various languages including Python among others.
 
 ## Nomenclature

@@ -20,7 +20,6 @@ def build(repo_name, parent_folder=None):
     repo.add_commits(3, branch='hotfix')
     repo.add_commits(2, branch='main')
     repo.merge_branch('hotfix_v2', 'hotfix')
-    repo.add_commits(1, branch='hotfix')
     repo.switch_branch('main')
 
     # repo.create_branch('root2', orphan=True, num_commits=1)

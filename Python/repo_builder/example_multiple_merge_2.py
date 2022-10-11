@@ -23,5 +23,5 @@ def build(repo_name, parent_folder=None):
     repo.add_commits(2, branch='main')
 
 if __name__ == '__main__':
-    build('multi_branch')
+    build('multi_merge_2')
     

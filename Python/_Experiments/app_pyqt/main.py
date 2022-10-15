@@ -1,3 +1,4 @@
+''' Code from How to Build Your First Desktop App in Python (https://tinyurl.com/y3zdk646) '''
 import sys
 import os
 from PyQt6.QtGui import QGuiApplication

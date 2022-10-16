@@ -18,7 +18,7 @@ def build(repo_name, parent_folder=None):
     repo.add_commits(2, branch='main')
     repo.merge_branch('new_feature_1', 'main')
     repo.add_commits(2, branch='main')
-    repo.add_commits(2, branch='new_feature_2')
+    repo.add_commits(3, branch='new_feature_2')
     repo.add_commits(2, branch='main')
     repo.merge_branch('new_feature_2', 'main')
     repo.add_commits(1, branch='main')

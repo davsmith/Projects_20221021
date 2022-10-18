@@ -16,10 +16,12 @@ def build(repo_name, parent_folder=None):
     repo.add_commits(3, branch='hotfix')
     repo.add_commits(3, branch='hotfix_v2')
     repo.add_commits(3, branch='hotfix')
+    repo.merge_branch('hotfix_v2', 'hotfix')
     repo.add_commits(2, branch='main')
-    repo.merge_branch(source_branch='hotfix_v2', target_branch='hotfix')
-    repo.merge_branch(source_branch='hotfix', target_branch='main')
+    repo.add_commits(2,'hotfix')
+    repo.merge_branch('hotfix', 'main')
+    repo.add_commits(2, branch='main')
 
 if __name__ == '__main__':
-    build('multi_branch')
+    build('multi_merge_2')
     

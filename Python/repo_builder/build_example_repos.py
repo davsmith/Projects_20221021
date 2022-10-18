@@ -7,6 +7,7 @@ import example_simple
 import example_three_branch
 import example_multiple_branches
 import example_multiple_merge
+import example_multiple_merge_2
 import example_split_branch
 
 example_empty_repo.build('1_empty_repo')
@@ -16,5 +17,6 @@ example_split_branch.build('4_split')
 example_three_branch.build('5_three_branch')
 example_multiple_branches.build('6_multi_branch')
 example_multiple_merge.build('7_multi_merge')
+example_multiple_merge_2.build('7a_multi_merge')
 example_conflicts.build('8_conflicts')
 example_complicated.build('9_complicated')
